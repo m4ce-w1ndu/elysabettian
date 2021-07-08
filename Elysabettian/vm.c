@@ -7,6 +7,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -23,6 +24,12 @@ VM vm;
 static Value clock_native(int arg_count, Value* args)
 {
     return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+}
+
+static Value exit_native(int arg_count, Value* args)
+{
+    exit(EXIT_SUCCESS);
+    return NUMBER_VAL((int)0);
 }
 
 /* Reset VM stack */
@@ -85,6 +92,7 @@ void init_vm()
     vm.init_strings = NULL;
     vm.init_strings = copy_string("init", 4);
     define_native("clock", clock_native);
+    define_native("exit", exit_native);
 }
 
 void free_vm()
