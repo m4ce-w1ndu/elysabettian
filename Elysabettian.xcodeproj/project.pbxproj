@@ -8,6 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		FC46EA532694E8BF0040A0AB /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA522694E8BF0040A0AB /* main.c */; };
+		FC46EA5C2694E9960040A0AB /* value.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA5B2694E9960040A0AB /* value.c */; };
+		FC46EA5F2694EEBB0040A0AB /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA5E2694EEBB0040A0AB /* memory.c */; };
+		FC46EA622694F03D0040A0AB /* object.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA612694F03D0040A0AB /* object.c */; };
+		FC46EA652694F5170040A0AB /* chunk.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA642694F5170040A0AB /* chunk.c */; };
+		FC46EA682694F8630040A0AB /* table.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA672694F8630040A0AB /* table.c */; };
+		FC46EA6B2694FE8D0040A0AB /* vm.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA6A2694FE8D0040A0AB /* vm.c */; };
+		FC46EA6E269528F30040A0AB /* compiler.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA6D269528F30040A0AB /* compiler.c */; };
+		FC46EA712695E8C30040A0AB /* debug.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA702695E8C30040A0AB /* debug.c */; };
+		FC46EA742695F2650040A0AB /* scanner.c in Sources */ = {isa = PBXBuildFile; fileRef = FC46EA732695F2650040A0AB /* scanner.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +34,25 @@
 /* Begin PBXFileReference section */
 		FC46EA4F2694E8BF0040A0AB /* Elysabettian */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Elysabettian; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC46EA522694E8BF0040A0AB /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		FC46EA592694E8D00040A0AB /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		FC46EA5A2694E9960040A0AB /* value.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = value.h; sourceTree = "<group>"; };
+		FC46EA5B2694E9960040A0AB /* value.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = value.c; sourceTree = "<group>"; };
+		FC46EA5D2694EEBB0040A0AB /* memory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = memory.h; sourceTree = "<group>"; };
+		FC46EA5E2694EEBB0040A0AB /* memory.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = memory.c; sourceTree = "<group>"; };
+		FC46EA602694F03D0040A0AB /* object.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = object.h; sourceTree = "<group>"; };
+		FC46EA612694F03D0040A0AB /* object.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = object.c; sourceTree = "<group>"; };
+		FC46EA632694F5170040A0AB /* chunk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = chunk.h; sourceTree = "<group>"; };
+		FC46EA642694F5170040A0AB /* chunk.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = chunk.c; sourceTree = "<group>"; };
+		FC46EA662694F8630040A0AB /* table.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = table.h; sourceTree = "<group>"; };
+		FC46EA672694F8630040A0AB /* table.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = table.c; sourceTree = "<group>"; };
+		FC46EA692694FE8D0040A0AB /* vm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vm.h; sourceTree = "<group>"; };
+		FC46EA6A2694FE8D0040A0AB /* vm.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = vm.c; sourceTree = "<group>"; };
+		FC46EA6C269528F30040A0AB /* compiler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = compiler.h; sourceTree = "<group>"; };
+		FC46EA6D269528F30040A0AB /* compiler.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = compiler.c; sourceTree = "<group>"; };
+		FC46EA6F2695E8C30040A0AB /* debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = debug.h; sourceTree = "<group>"; };
+		FC46EA702695E8C30040A0AB /* debug.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = debug.c; sourceTree = "<group>"; };
+		FC46EA722695F2650040A0AB /* scanner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scanner.h; sourceTree = "<group>"; };
+		FC46EA732695F2650040A0AB /* scanner.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = scanner.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +86,25 @@
 			isa = PBXGroup;
 			children = (
 				FC46EA522694E8BF0040A0AB /* main.c */,
+				FC46EA592694E8D00040A0AB /* common.h */,
+				FC46EA5A2694E9960040A0AB /* value.h */,
+				FC46EA5B2694E9960040A0AB /* value.c */,
+				FC46EA5D2694EEBB0040A0AB /* memory.h */,
+				FC46EA5E2694EEBB0040A0AB /* memory.c */,
+				FC46EA602694F03D0040A0AB /* object.h */,
+				FC46EA612694F03D0040A0AB /* object.c */,
+				FC46EA632694F5170040A0AB /* chunk.h */,
+				FC46EA642694F5170040A0AB /* chunk.c */,
+				FC46EA662694F8630040A0AB /* table.h */,
+				FC46EA672694F8630040A0AB /* table.c */,
+				FC46EA692694FE8D0040A0AB /* vm.h */,
+				FC46EA6A2694FE8D0040A0AB /* vm.c */,
+				FC46EA6C269528F30040A0AB /* compiler.h */,
+				FC46EA6D269528F30040A0AB /* compiler.c */,
+				FC46EA6F2695E8C30040A0AB /* debug.h */,
+				FC46EA702695E8C30040A0AB /* debug.c */,
+				FC46EA722695F2650040A0AB /* scanner.h */,
+				FC46EA732695F2650040A0AB /* scanner.c */,
 			);
 			path = Elysabettian;
 			sourceTree = "<group>";
@@ -118,7 +165,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FC46EA682694F8630040A0AB /* table.c in Sources */,
+				FC46EA652694F5170040A0AB /* chunk.c in Sources */,
+				FC46EA742695F2650040A0AB /* scanner.c in Sources */,
+				FC46EA622694F03D0040A0AB /* object.c in Sources */,
+				FC46EA712695E8C30040A0AB /* debug.c in Sources */,
 				FC46EA532694E8BF0040A0AB /* main.c in Sources */,
+				FC46EA5F2694EEBB0040A0AB /* memory.c in Sources */,
+				FC46EA5C2694E9960040A0AB /* value.c in Sources */,
+				FC46EA6E269528F30040A0AB /* compiler.c in Sources */,
+				FC46EA6B2694FE8D0040A0AB /* vm.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
