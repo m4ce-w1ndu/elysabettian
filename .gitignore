@@ -1,0 +1,10 @@
+build/
+*.xcodeproj/
+cmake-build-debug/
+cmake-build-release/
+.vscode/
+.vs/
+*.sln
+*.vcxproj
+*.vcproj.filters
+*.vxproj.user
