@@ -28,7 +28,14 @@ static Value clock_native(int arg_count, Value* args)
 
 static Value exit_native(int arg_count, Value* args)
 {
+    printf("Bye...\n");
     exit(EXIT_SUCCESS);
+    return NUMBER_VAL((int)0);
+}
+
+static Value version_native(int arg_count, Value* args)
+{
+    printf("CElysabettian 1.0 Maurizio\n");
     return NUMBER_VAL((int)0);
 }
 
@@ -93,6 +100,7 @@ void init_vm()
     vm.init_strings = copy_string("init", 4);
     define_native("clock", clock_native);
     define_native("exit", exit_native);
+    define_native("version", version_native);
 }
 
 void free_vm()
