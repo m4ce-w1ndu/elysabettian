@@ -143,7 +143,7 @@ std::ostream& operator<<(std::ostream& os, const Value& v);
 struct OutputVisitor {
     void operator()(const double d) const { std::cout << d; }
     void operator()(const bool b) const { std::cout << (b ? "true" : "false"); }
-    void operator()(const std::monostate n) const { std::cout << "nil"; }
+    void operator()(const std::monostate n) const { std::cout << "null"; }
     void operator()(const std::string& s) const { std::cout << s; }
     void operator()(const Func& f) const
     {

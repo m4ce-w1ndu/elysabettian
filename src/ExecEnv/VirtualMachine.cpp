@@ -270,7 +270,7 @@ IResult VM::Run()
         }
         std::cout << std::endl;
         
-        frames.back().closure->function->getChunk().disassembleInstruction(frames.back().ip);
+        frames.back().closure->function->GetChunk().DisasIntruction(frames.back().ip);
 #endif
 
 #define BINARY_OP(op) \

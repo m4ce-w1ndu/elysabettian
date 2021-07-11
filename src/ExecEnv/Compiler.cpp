@@ -269,8 +269,8 @@ Func Parser::EndCompiler()
     
 #ifdef DEBUG_PRINT_CODE
     if (!hadError) {
-        auto name = function->getName().empty() ? "<main>" : function->getName();
-        currentChunk().disassemble(name);
+        auto name = function->GetName().empty() ? "<main>" : function->GetName();
+        CurrentChunk().Disassemble(name);
     }
 #endif
 

@@ -86,7 +86,7 @@ int Chunk::DisasIntruction(int offset)
         case OpCode::CONSTANT:
             return ConstantInstruction("OP_CONSTANT", *this, offset);
         case OpCode::NULLOP:
-            return SimpleInstruction("OP_NIL", offset);
+            return SimpleInstruction("OP_NULL", offset);
         case OpCode::TRUE:
             return SimpleInstruction("OP_TRUE", offset);
         case OpCode::FALSE:
