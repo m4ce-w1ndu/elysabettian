@@ -20,9 +20,13 @@ struct CallVisitor {
     bool operator()(const NativeFunction& native) const
     {
         auto result = native->function(argCount, vm.stack.end() - argCount);
-        vm.stack.resize(vm.stack.size() - argCount - 1);
-        vm.stack.reserve(STACK_MAX);
-        vm.Push(std::move(result));
+        try {
+            vm.stack.resize(vm.stack.size() - argCount - 1);
+            vm.stack.reserve(STACK_MAX);
+            vm.Push(std::move(result));
+        } catch (std::length_error) {
+            return false;
+        }
         return true;
     }
     
