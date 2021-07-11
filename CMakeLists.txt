@@ -1,14 +1,23 @@
 cmake_minimum_required(VERSION 3.10)
-project(CElysabettian C)
+project(CElysabettian CXX)
+
+set(EXEC cely)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED 17)
 
 if (MSVC)
-    set(CMAKE_C_FLAGS_DEBUG "/Od /MTd /Z7 /TC")
-    set(CMAKE_C_FLAGS_RELEASE "/Os /TC")
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /MTd /Z7")
+    set(CMAKE_CXX_FLAGS_RELEASE "/Os")
 else()
-    set(CMAKE_C_FLAGS_DEBUG "-Wall -O0 -g -fPIC -fsanitize=address")
-    set(CMAKE_C_FLAGS_RELEASE "-Os -fPIC")
+    set(CMAKE_CXX_FLAGS_DEBUG "-Wall -O0 -g -fPIC")
+    set(CMAKE_CXX_FLAGS_RELEASE "-Os -fPIC")
 endif()
 
-file(GLOB SOURCES "src/*.c" "src/*.h")
+file(GLOB appsrc "src/Application/*.cpp" "src/Application/*.hpp")
+file(GLOB lexsrc "src/Lexer/*.cpp" "src/Lexer/*.hpp")
+file(GLOB execenvsrc "src/ExecEnv/*.cpp" "src/ExecEnv/*.hpp")
 
-add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
+include_directories(src/Application src/Lexer src/ExecEnv)
+
+add_executable(${EXEC} ${appsrc} ${lexsrc} ${execenvsrc})
