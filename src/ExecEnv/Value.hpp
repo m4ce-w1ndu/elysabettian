@@ -8,12 +8,13 @@
 #ifndef VALUE_HPP
 #define VALUE_HPP
 
-#include "Common.hpp"
+#include "../Application/Common.hpp"
 #include "Opcodes.hpp"
 
 #include <variant>
 #include <memory>
 #include <unordered_map>
+#include <map>
 
 struct NativeFunctionObject;
 struct UpvalueObject;

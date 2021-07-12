@@ -10,6 +10,9 @@
 
 #include "Value.hpp"
 #include "Compiler.hpp"
+
+#include "Math.hpp"
+
 #include <unordered_map>
 #include <ctime>
 
@@ -78,10 +81,32 @@ class VM {
     void CloseUpvalues(Value* last);
     void DefineMethod(const std::string& name);
     bool Call(const Closure& closure, int argCount);
+
+    // Libraries
+    Library::Math math;
     
 public:
-    explicit VM()
+    explicit VM() : math(this)
     {
+        auto loadLibrary = [this](int argc, std::vector<Value>::iterator args) -> Value {
+            if (argc < 1 || argc > 1) {
+                RuntimeError("Error: loadLibrary(name) expects 1 string argument. Got %d.", argc);
+                return std::monostate();
+            }
+            try {
+                auto name = std::get<std::string>(*args);
+                if (name == "math") {
+                    for (auto& fn : math.GetFunctions()) {
+                        DefineNative(fn.first, fn.second);
+                    }
+                }
+                return std::monostate();
+            } catch (std::bad_variant_access) {
+                RuntimeError("Error: argument must be of string type.");
+                return std::monostate();
+            }
+        };
+
         auto clockNative = [](int argc, std::vector<Value>::iterator args) -> Value {
             return static_cast<double>(clock() / CLOCKS_PER_SEC);
         };
@@ -124,101 +149,21 @@ public:
             }
         };
 
-        auto sqrtNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc != 1) {
-                RuntimeError("Error: expected 1 argument. Got %d.", argc);
-                return std::monostate();
-            }
-            try {
-                auto value = std::get<double>(*args);
-                return sqrt(value);
-            } catch (std::bad_variant_access) {
-                std::cerr << "Operand must be a number.";
-                return "";
-            } catch (std::length_error) {
-                return "";
-            }
-        };
-
-        auto powNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc != 2) {
-                RuntimeError("Error: expected 2 arguments. Got %d.", argc);
-                return std::monostate();
-            }
-            try {
-                auto base = std::get<double>(*args);
-                auto ex = std::get<double>(*(args + 1));
-                return std::pow(base, ex);
-            } catch (std::bad_variant_access) {
-                std::cerr << "Operands must be numbers.";
-                return std::monostate();
-            } catch (std::length_error) {
-                return std::monostate();
-            }
-        };
-
-        auto sumNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc < 1) {
-                RuntimeError("Error: expected at least 1 argument. Got %d", argc);
-                return std::monostate();
-            }
-            double sumVal = 0;
-            try {
-                for (int i = 0; i < argc; ++i)
-                    sumVal += std::get<double>(*(args + i));
-                return sumVal;
-            } catch (std::bad_variant_access) {
-                RuntimeError("Invalid operand detected in sum(). Only numbers are allowed.");
-                return "";
-            }
-        };
-
-        auto mathAbs = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc != 1) {
-                RuntimeError("abs(x) expects 1 argument. Got %d.", argc);
-                return std::monostate();
-            }
-
-            try {
-                auto val = std::get<double>(*args);
-                if (val < 0) return -val;
-                return val;
-            } catch (std::bad_variant_access) {
-                RuntimeError("Operand must be of numeric type.");
-                return std::monostate();
-            }
-        };
-
-        auto mathAcos = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc < 1) {
-                RuntimeError("acos(x) expects 1 argument. Got %d.", argc);
-                return std::monostate();
-            }
-            try {
-                auto val = std::get<double>(*args);
-                return std::acos(val);
-            } catch (std::bad_variant_access) {
-                RuntimeError("Operand must be of numeric type.");
-                return std::monostate();
-            }
-        };
+        
 
         stack.reserve(STACK_MAX);
         openUpvalues = nullptr;
         DefineNative("clock", clockNative);
         DefineNative("date", dateNative);
         DefineNative("version", versionNative);
-        DefineNative("sqrt", sqrtNative);
-        DefineNative("pow", powNative);
-        DefineNative("abs", mathAbs);
-        DefineNative("acos", mathAcos);
-        DefineNative("sum", sumNative);
         DefineNative("read", readPromptNative);
+        DefineNative("loadLibrary", loadLibrary);
     }
     IResult Interpret(const std::string& source);
     IResult Run();
     
     friend CallVisitor;
+    friend Library::Math;
 };
 
 #endif /* vm_hpp */

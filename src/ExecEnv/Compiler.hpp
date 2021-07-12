@@ -8,7 +8,7 @@
 #ifndef COMPILER_HPP
 #define COMPILER_HPP
 
-#include "Tokenizer.hpp"
+#include "../Lexer/Tokenizer.hpp"
 #include "Value.hpp"
 
 #include <iostream>

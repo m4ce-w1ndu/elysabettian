@@ -18,6 +18,6 @@ file(GLOB appsrc "src/Application/*.cpp" "src/Application/*.hpp")
 file(GLOB lexsrc "src/Lexer/*.cpp" "src/Lexer/*.hpp")
 file(GLOB execenvsrc "src/ExecEnv/*.cpp" "src/ExecEnv/*.hpp")
 
-include_directories(src/Application src/Lexer src/ExecEnv)
+file(GLOB_RECURSE src "*.cpp" "*.hpp")
 
 add_executable(${EXEC} ${appsrc} ${lexsrc} ${execenvsrc})

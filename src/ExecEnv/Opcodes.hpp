@@ -8,7 +8,7 @@
 #ifndef OPCODE_HPP
 #define OPCODE_HPP
 
-#include "Common.hpp"
+#include "../Application/Common.hpp"
 
 enum class OpCode: uint8_t {
     CONSTANT,

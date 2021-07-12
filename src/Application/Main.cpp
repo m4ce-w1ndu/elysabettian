@@ -8,8 +8,8 @@
 #include <fstream>
 
 #include "Common.hpp"
-#include "Value.hpp"
-#include "VirtualMachine.hpp"
+#include "../ExecEnv/Value.hpp"
+#include "../ExecEnv/VirtualMachine.hpp"
 
 static void Repl(VM& vm)
 {
