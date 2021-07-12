@@ -87,7 +87,7 @@ class VM {
 public:
     explicit VM()
     {
-        auto loadLibrary = [this](int argc, std::vector<Value>::iterator args) -> Value {
+        auto importLibrary = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 1 || argc > 1) {
                 RuntimeError("Error: loadLibrary(name) expects 1 string argument. Got %d.", argc);
                 return std::monostate();
@@ -162,7 +162,7 @@ public:
         DefineNative("date", dateNative);
         DefineNative("version", versionNative);
         DefineNative("read", readPromptNative);
-        DefineNative("loadLibrary", loadLibrary);
+        DefineNative("import", importLibrary);
     }
     IResult Interpret(const std::string& source);
     IResult Run();
