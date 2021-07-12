@@ -8,3 +8,4 @@ cmake-build-release/
 *.vcxproj
 *.vcproj.filters
 *.vxproj.user
+.DS_Store
