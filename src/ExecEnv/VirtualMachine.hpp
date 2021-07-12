@@ -14,6 +14,7 @@
 #include "Math.hpp"
 
 #include <unordered_map>
+#include <map>
 #include <ctime>
 
 #define FRAMES_MAX 64
@@ -40,6 +41,7 @@ class VM {
     std::unordered_map<std::string, Value> globals;
     UpvalueValue openUpvalues;
     std::string initString = "init";
+
     
     inline void ResetStack()
     {
@@ -81,12 +83,9 @@ class VM {
     void CloseUpvalues(Value* last);
     void DefineMethod(const std::string& name);
     bool Call(const Closure& closure, int argCount);
-
-    // Libraries
-    Library::Math math;
     
 public:
-    explicit VM() : math(this)
+    explicit VM()
     {
         auto loadLibrary = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 1 || argc > 1) {
@@ -95,10 +94,8 @@ public:
             }
             try {
                 auto name = std::get<std::string>(*args);
-                if (name == "math") {
-                    for (auto& fn : math.GetFunctions()) {
-                        DefineNative(fn.first, fn.second);
-                    }
+                for (const auto& fn : Library::GetFunctions(name)) {
+                    DefineNative(fn.first, fn.second);
                 }
                 return std::monostate();
             } catch (std::bad_variant_access) {
@@ -114,7 +111,11 @@ public:
         auto dateNative = [](int argc, std::vector<Value>::iterator args) -> Value {
             time_t now = time(nullptr);
             tm newTime;
+#ifdef __linux__
             localtime_r(&now, &newTime);
+#elif defined(_WIN32)
+            localtime_s(&newTime, &now);
+#endif
             char dateTime[30];
             strftime(dateTime, sizeof(dateTime) / sizeof(char), "%d/%m/%y, %H:%M:%S", &newTime);
             return std::string(dateTime);
@@ -149,10 +150,14 @@ public:
             }
         };
 
-        
+        auto exitFromEnv = [](int argc, std::vector<Value>::iterator args) -> Value {
+            std::cout << "Bye..." << std::endl;
+            exit(EXIT_SUCCESS);
+        };
 
         stack.reserve(STACK_MAX);
         openUpvalues = nullptr;
+        DefineNative("exit", exitFromEnv);
         DefineNative("clock", clockNative);
         DefineNative("date", dateNative);
         DefineNative("version", versionNative);
@@ -163,7 +168,6 @@ public:
     IResult Run();
     
     friend CallVisitor;
-    friend Library::Math;
 };
 
 #endif /* vm_hpp */
