@@ -15,13 +15,18 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <random>
 
 namespace Library {
-    class Math : public Library {
+
+    class Math : public GenericLibrary {
     private:
+        const std::string name;
+        LibraryType functions;
     public:
-        Math(const LibraryType& libFunctions)
-        : Library("math", libFunctions) {}
+        Math();
+        const std::string& GetName() override;
+        const LibraryType& GetFunctions() override;
     };
 }
 

@@ -11,7 +11,7 @@
 #include "Value.hpp"
 #include "Compiler.hpp"
 
-#include "Math.hpp"
+#include "CommonLibrary.hpp"
 
 #include <unordered_map>
 #include <map>
@@ -94,9 +94,9 @@ public:
             }
             try {
                 auto name = std::get<std::string>(*args);
-                for (const auto& fn : Library::GetFunctions(name)) {
-                    DefineNative(fn.first, fn.second);
-                }
+                const auto library = Library::GetLibrary(name);
+                for (size_t i = 0; i < library.size(); ++i)
+                    DefineNative(library[i].first, library[i].second);
                 return std::monostate();
             } catch (std::bad_variant_access) {
                 RuntimeError("Error: argument must be of string type.");

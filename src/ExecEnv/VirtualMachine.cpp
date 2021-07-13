@@ -178,7 +178,7 @@ bool VM::Call(const Closure& closure, int argCount)
     auto& frame = frames.back();
     frame.ip = 0;
     frame.closure = closure;
-    frame.stackOffset = stack.size() - argCount - 1;
+    frame.stackOffset = static_cast<unsigned long>(stack.size() - argCount - 1);
     
     return true;
 }
