@@ -16,12 +16,14 @@
 #include <unordered_map>
 #include <map>
 #include <functional>
+#include <cstdio>
 
 struct NativeFunctionObject;
 struct UpvalueObject;
 struct ClassObject;
 struct InstanceObject;
 struct MemberFuncObject;
+struct FileObject;
 class FunctionObject;
 class ClosureObject;
 class Compiler;
@@ -34,8 +36,9 @@ using UpvalueValue = std::shared_ptr<UpvalueObject>;
 using ClassValue = std::shared_ptr<ClassObject>;
 using InstanceValue = std::shared_ptr<InstanceObject>;
 using BoundMethodValue = std::shared_ptr<MemberFuncObject>;
+using File = std::shared_ptr<FileObject>;
 
-using Value = std::variant<double, bool, std::monostate, std::string, Func, NativeFunction, Closure, UpvalueValue, ClassValue, InstanceValue, BoundMethodValue>;
+using Value = std::variant<double, bool, std::monostate, std::string, Func, NativeFunction, Closure, UpvalueValue, ClassValue, InstanceValue, BoundMethodValue, File>;
 
 class Chunk {
     std::vector<uint8_t> code;
@@ -140,6 +143,27 @@ public:
     };
 };
 
+struct FileObject {
+    FILE* file;
+    const std::string name;
+    bool isOpen;
+
+    FileObject(const std::string& name, const std::string& mode)
+        : name(name), file(fopen(name.c_str(), mode.c_str())), isOpen(true)
+    {
+        if (file == nullptr) {
+            fprintf(stderr, "Error: unable to open file.");
+            isOpen = false;
+        }
+    }
+
+    ~FileObject()
+    {
+        if (isOpen)
+            fclose(file);
+    }
+};
+
 std::ostream& operator<<(std::ostream& os, const Value& v);
 
 struct OutputVisitor {
@@ -161,6 +185,7 @@ struct OutputVisitor {
     void operator()(const ClassValue& c) const { std::cout << c->name; }
     void operator()(const InstanceValue& i) const { std::cout << i->classValue->name << " instance"; }
     void operator()(const BoundMethodValue& m) const { std::cout << Value(m->memberFunc->function); }
+    void operator()(const File& f) const { std::cout << f->name << ", open: " << std::boolalpha << f->isOpen; }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Value& v)

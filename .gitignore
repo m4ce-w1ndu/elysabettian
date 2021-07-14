@@ -9,3 +9,4 @@ cmake-build-release/
 *.vcproj.filters
 *.vxproj.user
 .DS_Store
+out/

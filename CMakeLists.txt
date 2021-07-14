@@ -14,10 +14,10 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "-Os")
 endif()
 
-file(GLOB appsrc "src/Application/*.cpp" "src/Application/*.hpp")
-file(GLOB lexsrc "src/Lexer/*.cpp" "src/Lexer/*.hpp")
-file(GLOB execenvsrc "src/ExecEnv/*.cpp" "src/ExecEnv/*.hpp")
-
-file(GLOB_RECURSE src "*.cpp" "*.hpp")
-
-add_executable(${EXEC} ${appsrc} ${lexsrc} ${execenvsrc} "src/ExecEnv/String.hpp" "src/ExecEnv/String.cpp")
+add_executable(${EXEC}
+    "src/Application/Main.cpp" "src/Application/Common.hpp" "src/ExecEnv/CommonLibrary.hpp"
+    "src/ExecEnv/Compiler.hpp" "src/ExecEnv/Compiler.cpp" "src/ExecEnv/Library.cpp"
+    "src/ExecEnv/Math.hpp" "src/ExecEnv/Math.cpp" "src/ExecEnv/String.hpp"
+    "src/ExecEnv/String.cpp" "src/ExecEnv/Opcodes.hpp" "src/ExecEnv/Value.hpp"
+    "src/ExecEnv/Value.cpp" "src/ExecEnv/VirtualMachine.hpp" "src/ExecEnv/VirtualMachine.cpp"
+    "src/Lexer/Tokenizer.hpp" "src/Lexer/Tokenizer.cpp" "src/ExecEnv/IoFile.hpp" "src/ExecEnv/IoFile.cpp")

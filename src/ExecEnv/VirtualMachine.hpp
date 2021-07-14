@@ -78,8 +78,8 @@ class VM {
     }
     bool CallValue(const Value& callee, int argCount);
     bool Invoke(const std::string& name, int argCount);
-    bool InvokeFromClass(ClassValue klass, const std::string& name, int argCount);
-    bool BindMethod(ClassValue klass, const std::string& name);
+    bool InvokeFromClass(ClassValue classValue, const std::string& name, int argCount);
+    bool BindMethod(ClassValue classValue, const std::string& name);
     UpvalueValue CaptureUpvalue(Value* local);
     void CloseUpvalues(Value* last);
     void DefineMethod(const std::string& name);
@@ -90,7 +90,7 @@ public:
     {
         auto importLibrary = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 1 || argc > 1) {
-                RuntimeError("Error: loadLibrary(name) expects 1 string argument. Got %d.", argc);
+                RuntimeError("Error: import(name) expects 1 string argument. Got %d.", argc);
                 return std::monostate();
             }
             try {
@@ -99,7 +99,7 @@ public:
                 for (size_t i = 0; i < library.size(); ++i)
                     DefineNative(library[i].first, library[i].second);
                 return std::monostate();
-            } catch (std::bad_variant_access) {
+            } catch (std::bad_variant_access&) {
                 RuntimeError("Error: argument must be of string type.");
                 return std::monostate();
             }
@@ -123,7 +123,7 @@ public:
 
         // array set value
         auto arraySetNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc < 3 | argc > 3) {
+            if (argc < 3 || argc > 3) {
                 RuntimeError("arraySet(name, index, value) expects 3 parameter. Got %d.", argc);
                 return std::monostate();
             }
@@ -133,13 +133,13 @@ public:
                 auto value = *(args + 3);
                 this->arrays[name].at(index) = value;
                 return value;
-            } catch (std::bad_variant_access) {
+            } catch (std::bad_variant_access&) {
                 RuntimeError("Array name must be of string type.");
                 return std::monostate();
-            } catch (std::length_error) {
+            } catch (std::length_error&) {
                 RuntimeError("Index out of bounds.");
                 return std::monostate();
-            } catch (std::out_of_range) {
+            } catch (std::out_of_range&) {
                 RuntimeError("There is no array declared with the specified name.");
                 return std::monostate();
             }
@@ -155,10 +155,10 @@ public:
                 auto name = std::get<std::string>(*args);
                 auto index = static_cast<size_t>(std::get<double>(*(args + 1)));
                 return this->arrays[name].at(index);
-            } catch (std::bad_variant_access) {
+            } catch (std::bad_variant_access&) {
                 RuntimeError("Array name must be of string type.");
                 return std::monostate();
-            } catch (std::out_of_range) {
+            } catch (std::out_of_range&) {
                 RuntimeError("There is no array declared with the specified name.");
                 return std::monostate();
             }
@@ -175,10 +175,10 @@ public:
                 auto value = *(args + 1);
                 this->arrays[name].push_back(value);
                 return value;
-            } catch (std::bad_variant_access) {
+            } catch (std::bad_variant_access&) {
                 RuntimeError("Array name must be of string type.");
                 return std::monostate();
-            } catch (std::out_of_range) {
+            } catch (std::out_of_range&) {
                 RuntimeError("There is no array declared with the specified name.");
                 return std::monostate();
             }
@@ -194,11 +194,11 @@ public:
                 auto name = std::get<std::string>(*args);
                 return static_cast<double>(this->arrays[name].size());
             }
-            catch (std::bad_variant_access) {
+            catch (std::bad_variant_access&) {
                 RuntimeError("Array name must be of string type.");
                 return std::monostate();
             }
-            catch (std::out_of_range) {
+            catch (std::out_of_range&) {
                 RuntimeError("There is no array declared with the specified name.");
                 return std::monostate();
             }
@@ -222,7 +222,8 @@ public:
         };
 
         auto versionNative = [](int argc, std::vector<Value>::iterator args) -> Value {
-            return std::string("CElysabettian 1.0 Maurizio");
+            std::cout << "Elysabettian 1.0 Maurizio" << std::endl;
+            return "Elysabettian 1.0 Maurizio";
         };
 
         auto readPromptNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
@@ -240,12 +241,12 @@ public:
                 // trying conversion to double
                 auto doubleval = std::stod(input);
                 return doubleval;
-            } catch (std::invalid_argument) {
+            } catch (std::invalid_argument&) {
                 return input;
-            } catch (std::bad_variant_access) {
+            } catch (std::bad_variant_access&) {
                 RuntimeError("Invalid type in read buffer. Aborting.");
                 return "";
-            } catch (std::length_error) {
+            } catch (std::length_error&) {
                 return "";
             }
         };

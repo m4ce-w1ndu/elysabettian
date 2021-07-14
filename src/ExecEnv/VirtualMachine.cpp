@@ -89,10 +89,10 @@ bool VM::Invoke(const std::string& name, int argCount)
     }
 }
 
-bool VM::InvokeFromClass(ClassValue klass, const std::string& name, int argCount)
+bool VM::InvokeFromClass(ClassValue classValue, const std::string& name, int argCount)
 {
-    auto found = klass->memberFuncs.find(name);
-    if (found == klass->memberFuncs.end()) {
+    auto found = classValue->memberFuncs.find(name);
+    if (found == classValue->memberFuncs.end()) {
         RuntimeError("Undefined property '%s'.", name.c_str());
         return false;
     }
@@ -100,10 +100,10 @@ bool VM::InvokeFromClass(ClassValue klass, const std::string& name, int argCount
     return Call(method, argCount);
 }
 
-bool VM::BindMethod(ClassValue klass, const std::string& name)
+bool VM::BindMethod(ClassValue classValue, const std::string& name)
 {
-    auto found = klass->memberFuncs.find(name);
-    if (found == klass->memberFuncs.end()) {
+    auto found = classValue->memberFuncs.find(name);
+    if (found == classValue->memberFuncs.end()) {
         RuntimeError("Undefined property '%s'.", name.c_str());
         return false;
     }
