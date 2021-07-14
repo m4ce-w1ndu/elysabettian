@@ -20,4 +20,4 @@ file(GLOB execenvsrc "src/ExecEnv/*.cpp" "src/ExecEnv/*.hpp")
 
 file(GLOB_RECURSE src "*.cpp" "*.hpp")
 
-add_executable(${EXEC} ${appsrc} ${lexsrc} ${execenvsrc})
+add_executable(${EXEC} ${appsrc} ${lexsrc} ${execenvsrc} "src/ExecEnv/String.hpp" "src/ExecEnv/String.cpp")

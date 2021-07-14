@@ -184,6 +184,26 @@ public:
             }
         };
 
+        // array length
+        auto arrayLengthNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
+            if (argc < 1 || argc > 1) {
+                RuntimeError("arrayLength(name) expects 1 parameter. Got %d.", argc);
+                return std::monostate();
+            }
+            try {
+                auto name = std::get<std::string>(*args);
+                return static_cast<double>(this->arrays[name].size());
+            }
+            catch (std::bad_variant_access) {
+                RuntimeError("Array name must be of string type.");
+                return std::monostate();
+            }
+            catch (std::out_of_range) {
+                RuntimeError("There is no array declared with the specified name.");
+                return std::monostate();
+            }
+        };
+
         auto clockNative = [](int argc, std::vector<Value>::iterator args) -> Value {
             return static_cast<double>(clock() / CLOCKS_PER_SEC);
         };
@@ -247,6 +267,7 @@ public:
         DefineNative("arraySet", arraySetNative);
         DefineNative("arrayGet", arrayGetValue);
         DefineNative("arrayPush", arrayPushNative);
+        DefineNative("arrayLength", arrayLengthNative);
     }
     IResult Interpret(const std::string& source);
     IResult Run();

@@ -5,9 +5,8 @@
 namespace Library {
 
     Math::Math()
-        : name("math")
-    {
-        functions = {
+        : name("math"), functions({
+
             { "acos", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 1 || argc > 1) {
                     fprintf(stderr, "Error: acos(x) expectes 1 argument. Got %d.", argc);
@@ -433,9 +432,10 @@ namespace Library {
                     fprintf(stderr, "Invalid operand detected in sum(). Only numbers are allowed.");
                     return "";
                 }
-            }}
-        };
-    }
+            }} 
+        })
+    {}
+
     const std::string& Math::GetName()
     {
         return name;

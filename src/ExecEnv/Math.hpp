@@ -22,7 +22,7 @@ namespace Library {
     class Math : public GenericLibrary {
     private:
         const std::string name;
-        LibraryType functions;
+        const LibraryType functions;
     public:
         Math();
         const std::string& GetName() override;
