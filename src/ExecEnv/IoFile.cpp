@@ -57,6 +57,87 @@ namespace Library {
 				std::cerr << "Error: file is not a file object." << std::endl;
 				return std::monostate();
 			}
+		}},
+
+		{ "readLine", [](int argc, std::vector<Value>::iterator args) -> Value {
+			if (argc < 1 || argc > 1) {
+				fprintf(stderr, "Error: readLine(file) expects 1 parameter. Got %d.", argc);
+				return std::monostate();
+			}
+
+			try {
+				auto fileObj = std::get<File>(*args);
+				// read buffer
+				char buf[8192];
+				// reading file
+				if (!fileObj->isOpen) {
+					std::cerr << "Error: cannot read file content." << std::endl;
+					return std::monostate();
+				}
+				fgets(buf, 8192, fileObj->file);
+				// new string line
+				return std::string(buf);
+			}
+			catch (std::bad_variant_access&) {
+				std::cerr << "Error: file is not a file object." << std::endl;
+				return std::monostate();
+			}
+		}},
+
+		{ "isEof", [](int argc, std::vector<Value>::iterator args) -> Value {
+			if (argc < 1 || argc > 1) {
+				fprintf(stderr, "Error: readLine(file) expects 1 parameter. Got %d.", argc);
+				return std::monostate();
+			}
+
+			try {
+				auto fileObj = std::get<File>(*args);
+				return static_cast<bool>(feof(fileObj->file));
+			}
+			catch (std::bad_variant_access&) {
+				std::cerr << "Error: file is not a file object." << std::endl;
+				return std::monostate();
+			}
+		}},
+
+		{ "reset", [](int argc, std::vector<Value>::iterator args) -> Value {
+			if (argc < 1 || argc > 1) {
+				fprintf(stderr, "Error: readLine(file) expects 1 parameter. Got %d.", argc);
+				return std::monostate();
+			}
+
+			try {
+				auto fileObj = std::get<File>(*args);
+				if (!fileObj->isOpen) {
+					std::cerr << "Error: file is not open." << std::endl;
+					return std::monostate();
+				}
+				fseek(fileObj->file, 0, SEEK_SET);
+				return fileObj;
+			}
+			catch (std::bad_variant_access&) {
+				std::cerr << "Error: file is not a file object." << std::endl;
+				return std::monostate();
+			}
+		}},
+		
+		{ "close", [](int argc, std::vector<Value>::iterator args) -> Value {
+			if (argc < 1 || argc > 1) {
+				fprintf(stderr, "Error: readLine(file) expects 1 parameter. Got %d.", argc);
+				return std::monostate();
+			}
+			try {
+				auto fileObj = std::get<File>(*args);
+				if (!fileObj->isOpen)
+					return fileObj;
+				fclose(fileObj->file);
+				fileObj->isOpen = false;
+				return fileObj;
+			}
+			catch (std::bad_variant_access&) {
+				std::cerr << "Error: file is not a file object." << std::endl;
+				return std::monostate();
+			}
 		}}
 	})
 	{

@@ -24,6 +24,7 @@ struct ClassObject;
 struct InstanceObject;
 struct MemberFuncObject;
 struct FileObject;
+struct ArrayObject;
 class FunctionObject;
 class ClosureObject;
 class Compiler;
@@ -37,8 +38,9 @@ using ClassValue = std::shared_ptr<ClassObject>;
 using InstanceValue = std::shared_ptr<InstanceObject>;
 using BoundMethodValue = std::shared_ptr<MemberFuncObject>;
 using File = std::shared_ptr<FileObject>;
+using Array = std::shared_ptr<ArrayObject>;
 
-using Value = std::variant<double, bool, std::monostate, std::string, Func, NativeFunction, Closure, UpvalueValue, ClassValue, InstanceValue, BoundMethodValue, File>;
+using Value = std::variant<double, bool, std::monostate, std::string, Func, NativeFunction, Closure, UpvalueValue, ClassValue, InstanceValue, BoundMethodValue, File, Array>;
 
 class Chunk {
     std::vector<uint8_t> code;
@@ -161,7 +163,12 @@ struct FileObject {
     {
         if (isOpen)
             fclose(file);
+        isOpen = false;
     }
+};
+
+struct ArrayObject {
+    std::vector<Value> values;
 };
 
 std::ostream& operator<<(std::ostream& os, const Value& v);
@@ -185,7 +192,22 @@ struct OutputVisitor {
     void operator()(const ClassValue& c) const { std::cout << c->name; }
     void operator()(const InstanceValue& i) const { std::cout << i->classValue->name << " instance"; }
     void operator()(const BoundMethodValue& m) const { std::cout << Value(m->memberFunc->function); }
-    void operator()(const File& f) const { std::cout << f->name << ", open: " << std::boolalpha << f->isOpen; }
+    void operator()(const File& f) const
+    {
+        std::cout << "path: " << f->name << ", open: "
+            << std::boolalpha << f->isOpen;
+    }
+    void operator()(const Array& a) const
+    {
+        std::cout << "array { ";
+        for (size_t i = 0; i < a->values.size(); ++i) {
+            if (i < (a->values.size() - 1))
+                std::cout << a->values[i] << ", ";
+            else
+                std::cout << a->values[i];
+        }
+        std::cout << " }";
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Value& v)

@@ -41,7 +41,6 @@ class VM {
     std::unordered_map<std::string, Value> globals;
     UpvalueValue openUpvalues;
     std::string initString = "init";
-    std::map<std::string, std::vector<Value>> arrays;
 
     
     inline void ResetStack()
@@ -107,14 +106,12 @@ public:
 
         // array creation
         auto arrayCreateNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc < 1 || argc > 1) {
-                RuntimeError("arrayCreate(name) expects 1 parameter. Got %d.", argc);
+            if (argc > 0) {
+                RuntimeError("array() expects 0 parameter. Got %d.", argc);
                 return std::monostate();
             }
             try {
-                auto name = std::get<std::string>(*args);
-                this->arrays[name] = std::vector<Value>();
-                return std::monostate();
+                return std::make_shared<ArrayObject>();
             } catch (std::bad_variant_access) {
                 RuntimeError("Array name must be of string type.");
                 return std::monostate();
@@ -124,23 +121,20 @@ public:
         // array set value
         auto arraySetNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 3 || argc > 3) {
-                RuntimeError("arraySet(name, index, value) expects 3 parameter. Got %d.", argc);
+                RuntimeError("arraySet(array, index, value) expects 3 parameter. Got %d.", argc);
                 return std::monostate();
             }
             try {
-                auto name = std::get<std::string>(*args);
+                auto array = std::get<Array>(*args);
                 auto index = static_cast<size_t>(std::get<double>(*(args + 1)));
                 auto value = *(args + 3);
-                this->arrays[name].at(index) = value;
+                array->values[index] = value;
                 return value;
             } catch (std::bad_variant_access&) {
-                RuntimeError("Array name must be of string type.");
+                RuntimeError("Error: parameter is not an array object.");
                 return std::monostate();
             } catch (std::length_error&) {
                 RuntimeError("Index out of bounds.");
-                return std::monostate();
-            } catch (std::out_of_range&) {
-                RuntimeError("There is no array declared with the specified name.");
                 return std::monostate();
             }
         };
@@ -148,18 +142,15 @@ public:
         // array get value
         auto arrayGetValue = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 2 || argc > 2) {
-                RuntimeError("arrayGet(name, index) expects 2 parameters. Got %d.", argc);
+                RuntimeError("arrayGet(array, index) expects 2 parameters. Got %d.", argc);
                 return std::monostate();
             }
             try {
-                auto name = std::get<std::string>(*args);
+                auto array = std::get<Array>(*args);
                 auto index = static_cast<size_t>(std::get<double>(*(args + 1)));
-                return this->arrays[name].at(index);
+                return array->values[index];
             } catch (std::bad_variant_access&) {
-                RuntimeError("Array name must be of string type.");
-                return std::monostate();
-            } catch (std::out_of_range&) {
-                RuntimeError("There is no array declared with the specified name.");
+                RuntimeError("Error: parameter is not an array object.");
                 return std::monostate();
             }
         };
@@ -167,19 +158,16 @@ public:
         // array push
         auto arrayPushNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 2 || argc > 2) {
-                RuntimeError("arrayPush(name, value) expects 2 paramters. Got %d.", argc);
+                RuntimeError("arrayPush(array, value) expects 2 paramters. Got %d.", argc);
                 return std::monostate();
             }
             try {
-                auto name = std::get<std::string>(*args);
+                auto array = std::get<Array>(*args);
                 auto value = *(args + 1);
-                this->arrays[name].push_back(value);
+                array->values.push_back(value);
                 return value;
             } catch (std::bad_variant_access&) {
-                RuntimeError("Array name must be of string type.");
-                return std::monostate();
-            } catch (std::out_of_range&) {
-                RuntimeError("There is no array declared with the specified name.");
+                RuntimeError("Error: parameter is not an array object.");
                 return std::monostate();
             }
         };
@@ -187,12 +175,12 @@ public:
         // array length
         auto arrayLengthNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 1 || argc > 1) {
-                RuntimeError("arrayLength(name) expects 1 parameter. Got %d.", argc);
+                RuntimeError("arrayLength(array) expects 1 parameter. Got %d.", argc);
                 return std::monostate();
             }
             try {
-                auto name = std::get<std::string>(*args);
-                return static_cast<double>(this->arrays[name].size());
+                auto array = std::get<Array>(*args);
+                return static_cast<double>(array->values.size());
             }
             catch (std::bad_variant_access&) {
                 RuntimeError("Array name must be of string type.");
@@ -264,7 +252,7 @@ public:
         DefineNative("version", versionNative);
         DefineNative("read", readPromptNative);
         DefineNative("import", importLibrary);
-        DefineNative("arrayCreate", arrayCreateNative);
+        DefineNative("array", arrayCreateNative);
         DefineNative("arraySet", arraySetNative);
         DefineNative("arrayGet", arrayGetValue);
         DefineNative("arrayPush", arrayPushNative);
