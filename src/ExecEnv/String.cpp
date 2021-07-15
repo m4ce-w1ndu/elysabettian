@@ -53,13 +53,17 @@ namespace Library {
 		})
 	{}
 
-	const std::string& String::GetName()
+	const std::string& String::GetName() const
 	{
 		return name;
 	}
 
-	const LibraryType& String::GetFunctions()
+	const LibFuncType& String::GetFunctions() const
 	{
 		return functions;
+	}
+	const LibConstType& String::GetConstants() const
+	{
+		return Consts::EmptyConstArray;
 	}
 }

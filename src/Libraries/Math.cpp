@@ -1,13 +1,13 @@
-#include "Math.hpp"
+#include "Library.hpp"
 
+#include <random>
 #include <cmath>
 
 namespace Library {
-
-    Math::Math()
-        : name("math"), functions({
-
-            { "acos", [](int argc, std::vector<Value>::iterator args) -> Value {
+	Math::Math() : Library(
+		// Functions
+		{ 
+            {"acos", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 1 || argc > 1) {
                     fprintf(stderr, "Error: acos(x) expectes 1 argument. Got %d.", argc);
                     return std::monostate();
@@ -21,7 +21,7 @@ namespace Library {
                     return std::monostate();
                 }
             }},
-            { "abs", [](int argc, std::vector<Value>::iterator args) -> Value {
+            {"abs", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fprintf(stderr, "abs(x) expects 1 argument. Got %d.", argc);
                     return std::monostate();
@@ -432,16 +432,12 @@ namespace Library {
                     fprintf(stderr, "Invalid operand detected in sum(). Only numbers are allowed.");
                     return "";
                 }
-            }} 
-        })
-    {}
+            }}
+		},
 
-    const std::string& Math::GetName()
-    {
-        return name;
-    }
-    const LibraryType& Math::GetFunctions()
-    {
-        return functions;
-    }
+		// Constants
+		{
+            { "PI", std::atan(1.0) * 4 }
+        }
+	) {}
 }

@@ -14,10 +14,11 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "-Os")
 endif()
 
+include_directories(src)
+
 add_executable(${EXEC}
-    "src/Application/Main.cpp" "src/Application/Common.hpp" "src/ExecEnv/CommonLibrary.hpp"
-    "src/ExecEnv/Compiler.hpp" "src/ExecEnv/Compiler.cpp" "src/ExecEnv/Library.cpp"
-    "src/ExecEnv/Math.hpp" "src/ExecEnv/Math.cpp" "src/ExecEnv/String.hpp"
-    "src/ExecEnv/String.cpp" "src/ExecEnv/Opcodes.hpp" "src/ExecEnv/Value.hpp"
+    "src/Application/Main.cpp" "src/Application/Common.hpp"
+    "src/ExecEnv/Compiler.hpp" "src/ExecEnv/Compiler.cpp"
+    "src/ExecEnv/Opcodes.hpp" "src/ExecEnv/Value.hpp"
     "src/ExecEnv/Value.cpp" "src/ExecEnv/VirtualMachine.hpp" "src/ExecEnv/VirtualMachine.cpp"
-    "src/Lexer/Tokenizer.hpp" "src/Lexer/Tokenizer.cpp" "src/ExecEnv/IoFile.hpp" "src/ExecEnv/IoFile.cpp")
+    "src/Lexer/Tokenizer.hpp" "src/Lexer/Tokenizer.cpp" "src/Libraries/Library.hpp" "src/Libraries/Library.cpp" "src/Libraries/Math.cpp" "src/Libraries/File.cpp")

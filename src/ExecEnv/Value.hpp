@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <map>
 #include <functional>
-#include <cstdio>
+#include <fstream>
 
 struct NativeFunctionObject;
 struct UpvalueObject;
@@ -146,24 +146,18 @@ public:
 };
 
 struct FileObject {
-    FILE* file;
-    const std::string name;
-    bool isOpen;
+    const std::string path;
+    std::fstream file;
 
-    FileObject(const std::string& name, const std::string& mode)
-        : name(name), file(fopen(name.c_str(), mode.c_str())), isOpen(true)
-    {
-        if (file == nullptr) {
-            fprintf(stderr, "Error: unable to open file.");
-            isOpen = false;
-        }
-    }
+    inline bool IsOpen() { return file.is_open(); }
+
+    FileObject(const std::string& path, const std::ios::openmode mode)
+        : path(path), file(std::fstream(path, mode))
+    {}
 
     ~FileObject()
     {
-        if (isOpen)
-            fclose(file);
-        isOpen = false;
+        file.close();
     }
 };
 
@@ -194,8 +188,8 @@ struct OutputVisitor {
     void operator()(const BoundMethodValue& m) const { std::cout << Value(m->memberFunc->function); }
     void operator()(const File& f) const
     {
-        std::cout << "path: " << f->name << ", open: "
-            << std::boolalpha << f->isOpen;
+        std::cout << "path: " << f->path << ", open: "
+            << std::boolalpha << f->IsOpen();
     }
     void operator()(const Array& a) const
     {

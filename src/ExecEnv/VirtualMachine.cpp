@@ -227,6 +227,11 @@ void VM::DefineNative(const std::string& name, NativeFn function)
     globals[name] = obj;
 }
 
+void VM::DefineNativeConst(const std::string& name, Value value)
+{
+    globals[name] = value;
+}
+
 template <typename F>
 bool VM::BinaryOp(F op)
 {

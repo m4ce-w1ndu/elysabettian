@@ -11,11 +11,12 @@
 #include "Value.hpp"
 #include "Compiler.hpp"
 
-#include "CommonLibrary.hpp"
+#include <Libraries/Library.hpp>
 
 #include <unordered_map>
 #include <map>
 #include <ctime>
+#include <cmath>
 
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
@@ -53,6 +54,7 @@ class VM {
     
     void RuntimeError(const char* format, ...);
     void DefineNative(const std::string& name, NativeFn function);
+    void DefineNativeConst(const std::string& name, Value value);
     template <typename F>
     bool BinaryOp(F op);
     void DoublePopAndPush(const Value& v);
@@ -83,23 +85,34 @@ class VM {
     void CloseUpvalues(Value* last);
     void DefineMethod(const std::string& name);
     bool Call(const Closure& closure, int argCount);
-    
 public:
     explicit VM()
     {
+        // Library loader
         auto importLibrary = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 1 || argc > 1) {
-                RuntimeError("Error: import(name) expects 1 string argument. Got %d.", argc);
+                RuntimeError("import(libnamestr) expects 1 parameter. Got %d.", argc);
                 return std::monostate();
             }
+
+            std::string libName;
             try {
-                auto name = std::get<std::string>(*args);
-                const auto library = Library::GetLibrary(name);
-                for (size_t i = 0; i < library.size(); ++i)
-                    DefineNative(library[i].first, library[i].second);
+                libName = std::get<std::string>(*args);
+                const auto& lib = Library::Libraries.at(libName);
+
+                // Loading functions
+                for (const auto& f : lib->functions)
+                    DefineNative(f.first, f.second);
+                // Loading constants
+                for (const auto& c : lib->constants)
+                    DefineNativeConst(c.first, c.second);
+            }
+            catch (std::bad_variant_access) {
+                RuntimeError("Array name must be of string type.");
                 return std::monostate();
-            } catch (std::bad_variant_access&) {
-                RuntimeError("Error: argument must be of string type.");
+            }
+            catch (std::out_of_range&) {
+                RuntimeError("Library %s does not exist.", libName.c_str());
                 return std::monostate();
             }
         };
@@ -110,12 +123,7 @@ public:
                 RuntimeError("array() expects 0 parameter. Got %d.", argc);
                 return std::monostate();
             }
-            try {
-                return std::make_shared<ArrayObject>();
-            } catch (std::bad_variant_access) {
-                RuntimeError("Array name must be of string type.");
-                return std::monostate();
-            }
+            return std::make_shared<ArrayObject>();
         };
 
         // array set value
@@ -244,14 +252,15 @@ public:
             exit(EXIT_SUCCESS);
         };
 
+
         stack.reserve(STACK_MAX);
         openUpvalues = nullptr;
         DefineNative("exit", exitFromEnv);
         DefineNative("clock", clockNative);
         DefineNative("date", dateNative);
         DefineNative("version", versionNative);
-        DefineNative("read", readPromptNative);
         DefineNative("import", importLibrary);
+        DefineNative("read", readPromptNative);
         DefineNative("array", arrayCreateNative);
         DefineNative("arraySet", arraySetNative);
         DefineNative("arrayGet", arrayGetValue);
