@@ -39,8 +39,16 @@ using InstanceValue = std::shared_ptr<InstanceObject>;
 using BoundMethodValue = std::shared_ptr<MemberFuncObject>;
 using File = std::shared_ptr<FileObject>;
 using Array = std::shared_ptr<ArrayObject>;
+using NativeInputStream = std::shared_ptr<std::ifstream>;
+using NativeOutputStream = std::shared_ptr<std::ofstream>;
 
-using Value = std::variant<double, bool, std::monostate, std::string, Func, NativeFunction, Closure, UpvalueValue, ClassValue, InstanceValue, BoundMethodValue, File, Array>;
+using Value = std::variant<
+    double, bool, std::monostate,
+    std::string, Func, NativeFunction,
+    Closure, UpvalueValue, ClassValue,
+    InstanceValue, BoundMethodValue,
+    File, Array, NativeInputStream,
+    NativeOutputStream>;
 
 class Chunk {
     std::vector<uint8_t> code;
@@ -154,7 +162,6 @@ struct FileObject {
     FileObject(const std::string& path, const std::ios::openmode mode)
         : path(path), file(std::fstream(path, mode))
     {}
-
     ~FileObject()
     {
         file.close();
@@ -202,6 +209,8 @@ struct OutputVisitor {
         }
         std::cout << " }";
     }
+    void operator()(const NativeInputStream& i) const { std::cout << "<native input stream>"; }
+    void operator()(const NativeOutputStream& o) const { std::cout << "<native output stream>"; }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Value& v)
@@ -223,4 +232,4 @@ inline bool IsFalse(const Value& v)
     return std::visit(FalseVisitor(), v);
 }
 
-#endif /* value_hpp */
+#endif

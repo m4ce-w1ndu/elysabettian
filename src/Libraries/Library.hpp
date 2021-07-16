@@ -21,14 +21,14 @@ namespace Library {
 	struct Math : public Library {
 		Math();
 	};
-	// Input/Output file library, defined in File.cpp
-	struct FileIO : public Library {
-		FileIO();
+	// Console and File Input/Output library, defined in StdIO.cpp
+	struct StdIO : public Library {
+		StdIO();
 	};
 
 	const std::unordered_map<std::string, std::shared_ptr<Library>> Libraries({
 		{ "math", std::make_shared<Library>(Math()) },
-		{ "io", std::make_shared<Library>(FileIO()) }
+		{ "stdio", std::make_shared<Library>(StdIO()) }
 	});
 }
 

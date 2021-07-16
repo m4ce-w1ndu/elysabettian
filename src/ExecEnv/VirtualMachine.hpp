@@ -222,31 +222,6 @@ public:
             return "Elysabettian 1.0 Maurizio";
         };
 
-        auto readPromptNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-
-            std::string input;
-            try {
-                // Printing prompt message (if present)
-                if (argc > 0) {
-                    auto message = std::get<std::string>(*args);
-                    std::cout << message;
-                }
-                
-                // Reading input
-                std::getline(std::cin, input);
-                // trying conversion to double
-                auto doubleval = std::stod(input);
-                return doubleval;
-            } catch (std::invalid_argument&) {
-                return input;
-            } catch (std::bad_variant_access&) {
-                RuntimeError("Invalid type in read buffer. Aborting.");
-                return "";
-            } catch (std::length_error&) {
-                return "";
-            }
-        };
-
         auto exitFromEnv = [](int argc, std::vector<Value>::iterator args) -> Value {
             std::cout << "Bye..." << std::endl;
             exit(EXIT_SUCCESS);
@@ -260,7 +235,6 @@ public:
         DefineNative("date", dateNative);
         DefineNative("version", versionNative);
         DefineNative("import", importLibrary);
-        DefineNative("read", readPromptNative);
         DefineNative("array", arrayCreateNative);
         DefineNative("arraySet", arraySetNative);
         DefineNative("arrayGet", arrayGetValue);
