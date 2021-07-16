@@ -1,6 +1,7 @@
 #include "Library.hpp"
 
 #include <optional>
+#include <cstdio>
 
 namespace Library {
 
@@ -11,21 +12,7 @@ namespace Library {
 		return std::nullopt;
 	}
 
-	// File modes
-	static const std::unordered_map<std::string, std::ios::openmode> OpenModes({
-		{"r", std::ios::in},
-		{"r+", std::ios::in | std::ios::out},
-		{"w", std::ios::out},
-		{"w+", std::ios::in | std::ios::out | std::ios::trunc},
-		{"a", std::ios::app},
-		{"a+", std::ios::out | std::ios::in | std::ios::app},
-		{"rb", std::ios::binary | std::ios::in},
-		{"wb", std::ios::binary | std::ios::out},
-		{"ab", std::ios::binary | std::ios::app},
-		{"r+b", std::ios::binary | std::ios::out | std::ios::in},
-		{"w+b", std::ios::binary | std::ios::out | std::ios::in | std::ios::trunc},
-		{"a+b", std::ios::binary | std::ios::out | std::ios::in | std::ios::app}
-	});
+	const auto MAX_LINE = 8192;
 
 	StdIO::StdIO()
 	: Library(
@@ -40,10 +27,13 @@ namespace Library {
 					auto name = std::get<std::string>(*args);
 					auto mode = std::get<std::string>(*(args + 1));
 
-
 					try {
-						auto fileMode = OpenModes.at(mode);
-						return std::make_shared<FileObject>(name, fileMode);
+						auto file = std::make_shared<FileObject>(name, mode);
+						if (!file->IsOpen()) {
+							fprintf(stderr, "Error: file %s is not open.\n", file->path.c_str());
+							return std::monostate();
+						}
+						return file;
 					}
 					catch (std::out_of_range&) {
 						std::cerr << "Error: invalid file mode." << std::endl;
@@ -70,8 +60,18 @@ namespace Library {
 						return std::monostate();
 					}
 
-					return std::string((std::istreambuf_iterator<char>(file->file)),
-						std::istreambuf_iterator<char>());
+					// going to end of file
+					fseek(file->file, 0, SEEK_END);
+					// getting file size in bytes
+					auto fileSize = ftell(file->file);
+					// resetting file pointer
+					fseek(file->file, 0, SEEK_SET);
+					// creating new buffer for file contents
+					auto buff = std::make_unique<char>(fileSize);
+					// reading contents
+					fread(buff.get(), sizeof(char), fileSize, file->file);
+					// creating string
+					return std::string(buff.get());
 				}
 				catch (std::bad_variant_access&) {
 					std::cerr << "Error: file is not a file object." << std::endl;
@@ -93,9 +93,12 @@ namespace Library {
 						return std::monostate();
 					}
 
-					std::string line;
-					std::getline(file->file, line);
-					return line;
+					// line buffer
+					char line[MAX_LINE];
+					// reading single line
+					fgets(line, MAX_LINE, file->file);
+					// returning line
+					return std::string(line);
 				}
 				catch (std::bad_variant_access&) {
 					std::cerr << "Error: file is not a file object." << std::endl;
@@ -117,7 +120,7 @@ namespace Library {
 						return std::monostate();
 					}
 
-					return file->file.eof();
+					return static_cast<bool>(feof(file->file));
 				}
 				catch (std::bad_variant_access&) {
 					std::cerr << "Error: file is not a file object." << std::endl;
@@ -139,7 +142,7 @@ namespace Library {
 						return std::monostate();
 					}
 
-					file->file.seekg(0);
+					fseek(file->file, 0, SEEK_SET);
 					return file;
 				}
 				catch (std::bad_variant_access&) {
@@ -158,7 +161,7 @@ namespace Library {
 					if (!file->IsOpen())
 						return file;
 
-					file->file.close();
+					fclose(file->file);
 					return file;
 				}
 				catch (std::bad_variant_access&) {
@@ -203,25 +206,13 @@ namespace Library {
 					return std::monostate();
 				}
 				try {
-					auto stream = std::get<NativeOutputStream>(*args);
-					auto message = *(args + 1);
+					auto stream = std::get<File>(*args);
+					auto message = std::get<std::string>(*(args + 1));
 
-					(*stream) << message;
-					return stream;
+					fprintf(stream->file, "%s", message.c_str());
+					return stream->file;
 				}
 				catch (std::bad_variant_access&) {
-					try {
-						auto file = std::get<File>(*args);
-						auto message = *(args + 1);
-
-						auto& stream = file->file;
-						stream << message;
-						return file;
-					}
-					catch (std::bad_variant_access&) {
-						std::cerr << "Error: fprint(stream, message) parameters must be of stream and printable type." << std::endl;
-						return std::monostate();
-					}
 					std::cerr << "Error: fprint(stream, message) parameters must be of stream and printable type." << std::endl;
 					return std::monostate();
 				}
@@ -230,9 +221,9 @@ namespace Library {
 
 		// Constants
 		{
-			{ "stdin", std::make_shared<std::ifstream>(stdin) },
-			{ "stdout", std::make_shared<std::ofstream>(stdout) },
-			{ "stderr", std::make_shared<std::ofstream>(stderr) }
+			{ "stdin", stdin },
+			{"stdout", stdout },
+			{"stderr", stderr }
 		}
 	) {}
 }

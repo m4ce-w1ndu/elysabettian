@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <map>
 #include <functional>
-#include <fstream>
+#include <cstdio>
 
 struct NativeFunctionObject;
 struct UpvalueObject;
@@ -39,16 +39,13 @@ using InstanceValue = std::shared_ptr<InstanceObject>;
 using BoundMethodValue = std::shared_ptr<MemberFuncObject>;
 using File = std::shared_ptr<FileObject>;
 using Array = std::shared_ptr<ArrayObject>;
-using NativeInputStream = std::shared_ptr<std::ifstream>;
-using NativeOutputStream = std::shared_ptr<std::ofstream>;
 
 using Value = std::variant<
     double, bool, std::monostate,
     std::string, Func, NativeFunction,
     Closure, UpvalueValue, ClassValue,
     InstanceValue, BoundMethodValue,
-    File, Array, NativeInputStream,
-    NativeOutputStream>;
+    File, Array, FILE*>;
 
 class Chunk {
     std::vector<uint8_t> code;
@@ -155,16 +152,16 @@ public:
 
 struct FileObject {
     const std::string path;
-    std::fstream file;
+    std::FILE* file;
 
-    inline bool IsOpen() { return file.is_open(); }
+    inline bool IsOpen() { return file != nullptr; }
 
-    FileObject(const std::string& path, const std::ios::openmode mode)
-        : path(path), file(std::fstream(path, mode))
+    FileObject(const std::string& path, const std::string& mode)
+        : path(path), file(fopen(path.c_str(), mode.c_str()))
     {}
     ~FileObject()
     {
-        file.close();
+        fclose(file);
     }
 };
 
@@ -195,6 +192,17 @@ struct OutputVisitor {
     void operator()(const BoundMethodValue& m) const { std::cout << Value(m->memberFunc->function); }
     void operator()(const File& f) const
     {
+        if (f->file == stdin) {
+            std::cout << "stdin" << std::endl;
+            return;
+        } else if (f->file == stdout) {
+            std::cout << "stdout" << std::endl;
+            return;
+        } else if (f->file == stderr) {
+            std::cout << "stderr" << std::endl;
+            return;
+        }
+
         std::cout << "path: " << f->path << ", open: "
             << std::boolalpha << f->IsOpen();
     }
@@ -209,8 +217,6 @@ struct OutputVisitor {
         }
         std::cout << " }";
     }
-    void operator()(const NativeInputStream& i) const { std::cout << "<native input stream>"; }
-    void operator()(const NativeOutputStream& o) const { std::cout << "<native output stream>"; }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Value& v)

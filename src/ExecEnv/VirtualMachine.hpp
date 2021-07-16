@@ -106,6 +106,8 @@ public:
                 // Loading constants
                 for (const auto& c : lib->constants)
                     DefineNativeConst(c.first, c.second);
+
+                return true;
             }
             catch (std::bad_variant_access) {
                 RuntimeError("Array name must be of string type.");
