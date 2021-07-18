@@ -21,4 +21,6 @@ add_executable(${EXEC}
     "src/ExecEnv/Compiler.hpp" "src/ExecEnv/Compiler.cpp"
     "src/ExecEnv/Opcodes.hpp" "src/ExecEnv/Value.hpp"
     "src/ExecEnv/Value.cpp" "src/ExecEnv/VirtualMachine.hpp" "src/ExecEnv/VirtualMachine.cpp"
-    "src/Lexer/Tokenizer.hpp" "src/Lexer/Tokenizer.cpp" "src/Libraries/Library.hpp" "src/Libraries/Library.cpp" "src/Libraries/Math.cpp" "src/Libraries/StdIO.cpp")
+    "src/Lexer/Tokenizer.hpp" "src/Lexer/Tokenizer.cpp" "src/Libraries/Library.hpp"
+    "src/Libraries/Library.cpp" "src/Libraries/Math.cpp" "src/Libraries/StdIO.cpp"
+    "src/Libraries/Array.cpp")

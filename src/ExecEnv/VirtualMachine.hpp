@@ -17,6 +17,8 @@
 #include <map>
 #include <ctime>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
@@ -43,6 +45,8 @@ class VM {
     UpvalueValue openUpvalues;
     std::string initString = "init";
 
+    // Load arrays by default
+    Library::NativeArray arrayLibrary;
     
     inline void ResetStack()
     {
@@ -119,87 +123,40 @@ public:
             }
         };
 
-        // array creation
-        auto arrayCreateNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc > 0) {
-                RuntimeError("array() expects 0 parameter. Got %d.", argc);
-                return std::monostate();
-            }
-            return std::make_shared<ArrayObject>();
-        };
-
-        // array set value
-        auto arraySetNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc < 3 || argc > 3) {
-                RuntimeError("arraySet(array, index, value) expects 3 parameter. Got %d.", argc);
-                return std::monostate();
-            }
-            try {
-                auto array = std::get<Array>(*args);
-                auto index = static_cast<size_t>(std::get<double>(*(args + 1)));
-                auto value = *(args + 3);
-                array->values[index] = value;
-                return value;
-            } catch (std::bad_variant_access&) {
-                RuntimeError("Error: parameter is not an array object.");
-                return std::monostate();
-            } catch (std::length_error&) {
-                RuntimeError("Index out of bounds.");
-                return std::monostate();
-            }
-        };
-
-        // array get value
-        auto arrayGetValue = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc < 2 || argc > 2) {
-                RuntimeError("arrayGet(array, index) expects 2 parameters. Got %d.", argc);
-                return std::monostate();
-            }
-            try {
-                auto array = std::get<Array>(*args);
-                auto index = static_cast<size_t>(std::get<double>(*(args + 1)));
-                return array->values[index];
-            } catch (std::bad_variant_access&) {
-                RuntimeError("Error: parameter is not an array object.");
-                return std::monostate();
-            }
-        };
-
-        // array push
-        auto arrayPushNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
-            if (argc < 2 || argc > 2) {
-                RuntimeError("arrayPush(array, value) expects 2 paramters. Got %d.", argc);
-                return std::monostate();
-            }
-            try {
-                auto array = std::get<Array>(*args);
-                auto value = *(args + 1);
-                array->values.push_back(value);
-                return value;
-            } catch (std::bad_variant_access&) {
-                RuntimeError("Error: parameter is not an array object.");
-                return std::monostate();
-            }
-        };
-
-        // array length
-        auto arrayLengthNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
+        // to string
+        auto toStringNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 1 || argc > 1) {
-                RuntimeError("arrayLength(array) expects 1 parameter. Got %d.", argc);
+                RuntimeError("toString expects 1 parameter. Got %d.", argc);
                 return std::monostate();
             }
-            try {
-                auto array = std::get<Array>(*args);
-                return static_cast<double>(array->values.size());
-            }
-            catch (std::bad_variant_access&) {
-                RuntimeError("Array name must be of string type.");
-                return std::monostate();
-            }
-            catch (std::out_of_range&) {
-                RuntimeError("There is no array declared with the specified name.");
-                return std::monostate();
-            }
+
+            struct TypeVisitor {
+                std::string operator()(const double d) const
+                {
+                    std::ostringstream ss;
+                    ss << std::setprecision(32) << std::noshowpoint << d;
+                    return ss.str();
+                }
+                std::string operator()(const std::string& s) const { return s; }
+                std::string operator()(const std::monostate&) const { return "null"; }
+                std::string operator()(const Func& f) const
+                {
+                    if (f->GetName().empty())
+                        return "<script>";
+                    return "<func " + f->GetName() + ">";
+                }
+                std::string operator()(const NativeFunction& nf) const { return "<native func>"; }
+                std::string operator()(const Closure& c) const { return "<closure>"; }
+                std::string operator()(const UpvalueValue& uv) const { return "<upvalue>"; }
+                std::string operator()(const ClassValue& cv) const { return cv->name; }
+                std::string operator()(const InstanceValue& iv) const { return iv->classValue->name + " instance"; }
+                std::string operator()(const BoundMethodValue& bm) const { return bm->memberFunc->function->GetName(); }
+                std::string operator()(const File& f) const { return f->path; }
+                std::string operator()(const Array& a) const { return "<array[" + std::to_string(a->values.size()) + "]"; }
+                std::string operator()(const FILE* f) const { return "<native stream>"; }
+            };
+
+            return std::visit(TypeVisitor(), *args);
         };
 
         auto clockNative = [](int argc, std::vector<Value>::iterator args) -> Value {
@@ -229,6 +186,10 @@ public:
             exit(EXIT_SUCCESS);
         };
 
+        // Load arrays
+        for (const auto& func : arrayLibrary.functions)
+            DefineNative(func.first, func.second);
+
 
         stack.reserve(STACK_MAX);
         openUpvalues = nullptr;
@@ -237,11 +198,7 @@ public:
         DefineNative("date", dateNative);
         DefineNative("version", versionNative);
         DefineNative("import", importLibrary);
-        DefineNative("array", arrayCreateNative);
-        DefineNative("arraySet", arraySetNative);
-        DefineNative("arrayGet", arrayGetValue);
-        DefineNative("arrayPush", arrayPushNative);
-        DefineNative("arrayLength", arrayLengthNative);
+        DefineNative("toString", toStringNative);
     }
     IResult Interpret(const std::string& source);
     IResult Run();

@@ -25,6 +25,10 @@ namespace Library {
 	struct StdIO : public Library {
 		StdIO();
 	};
+	// Array management library
+	struct NativeArray : public Library {
+		NativeArray();
+	};
 
 	const std::unordered_map<std::string, std::shared_ptr<Library>> Libraries({
 		{ "math", std::make_shared<Library>(Math()) },
