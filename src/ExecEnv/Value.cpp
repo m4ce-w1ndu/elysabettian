@@ -21,7 +21,7 @@ void Chunk::Write(OpCode opcode, int line)
 unsigned long Chunk::AddConstant(Value value)
 {
     constants.push_back(value);
-    return constants.size() - 1;
+    return static_cast<unsigned long>(constants.size() - 1);
 }
 
 void Chunk::Disassemble(const std::string& name)

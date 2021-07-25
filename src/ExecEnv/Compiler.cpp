@@ -29,7 +29,7 @@ void Compiler::DeclareVariable(const std::string& name)
 {
     if (scopeDepth == 0) return;
     
-    for (long i = locals.size() - 1; i >= 0; i--) {
+    for (size_t i = locals.size() - 1; i >= 0; i--) {
         if (locals[i].depth != -1 && locals[i].depth < scopeDepth) break;
         if (locals[i].name == name) {
             parser->Error("Already a variable with this name in this scope.");
@@ -79,7 +79,7 @@ int Compiler::ResolveUpvalue(const std::string& name)
 
 int Compiler::AddUpvalue(uint8_t index, bool isLocal)
 {
-    for (size_t i = 0; i < upvalues.size(); i++) {
+    for (long i = 0; i < upvalues.size(); i++) {
         if (upvalues[i].index == index && upvalues[i].isLocal == isLocal) {
             return static_cast<int>(i);
         }

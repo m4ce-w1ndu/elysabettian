@@ -8,6 +8,7 @@
 #include "VirtualMachine.hpp"
 
 #include <cstdarg>
+#include <exception>
 
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
@@ -37,14 +38,17 @@ struct CallVisitor {
         return vm.Call(closure, argCount);
     }
     
-    bool operator()(const ClassValue& klass) const
+    bool operator()(const ClassValue& classValue) const
     {
-        vm.stack[vm.stack.size() - argCount - 1] = std::make_shared<InstanceObject>(klass);
-        auto found = klass->memberFuncs.find(vm.initString);
-        if (found != klass->memberFuncs.end()) {
-            auto initializer = found->second;
-            return vm.Call(initializer, argCount);
-        } else if (argCount != 0) {
+        // increment reference count to avoid premature deletion
+        auto classVal = classValue;
+        vm.stack[vm.stack.size() - argCount - 1] = std::make_shared<InstanceObject>(classValue);
+        try {
+            auto& funcs = classVal->memberFuncs;
+            auto found = funcs.at(vm.initString);
+            return vm.Call(found, argCount);
+        }
+        catch (std::out_of_range&) {
             vm.RuntimeError("Expected 0 arguments but got %d.", argCount);
             return false;
         }
