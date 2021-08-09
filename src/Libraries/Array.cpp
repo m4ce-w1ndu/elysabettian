@@ -38,23 +38,21 @@ namespace Library {
                     return std::monostate();
                 }
 
-                Array array;
                 try {
                     Array array = std::get<Array>(*args);
+                    // getting index
+                    try {
+                        auto index = static_cast<size_t>(std::get<double>(*(args + 1)));
+
+                        return array->values[index];
+                    }
+                    catch (std::bad_variant_access&) {
+                        std::cerr << "Error: expected type is number." << std::endl;
+                        return std::monostate();
+                    }
                 }
                 catch (std::bad_variant_access&) {
 					std::cerr << "Error: expected type is array." << std::endl;
-					return std::monostate();
-				}
-
-                // getting index
-                try {
-                    auto index = static_cast<size_t>(std::get<double>(*(args + 1)));
-
-                    return array->values[index];
-                }
-                catch (std::bad_variant_access&) {
-					std::cerr << "Error: expected type is number." << std::endl;
 					return std::monostate();
 				}
             }},
@@ -64,28 +62,26 @@ namespace Library {
                     return std::monostate();
                 }
 
-                Array array;
                 size_t index;
                 try {
                     Array array = std::get<Array>(*args);
+                    // getting index
+                    try {
+                        index = static_cast<size_t>(std::get<double>(*(args + 1)));
+                    }
+                    catch (std::bad_variant_access&) {
+                        std::cerr << "Error: expected type is number." << std::endl;
+                        return std::monostate();
+                    }
+
+                    // setting value
+                    array->values[index] = *(args + 2);
+                    return *(args + 2);
                 }
                 catch (std::bad_variant_access&) {
 					std::cerr << "Error: expected type is array." << std::endl;
 					return std::monostate();
-				}
-
-                // getting index
-                try {
-                    index = static_cast<size_t>(std::get<double>(*(args + 1)));
                 }
-                catch (std::bad_variant_access&) {
-					std::cerr << "Error: expected type is number." << std::endl;
-					return std::monostate();
-				}
-
-                // setting value
-                array->values[index] = *(args + 2);
-                return *(args + 2);
             }},
             { "arrayLen", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc > 1 || argc < 1) {
@@ -93,16 +89,14 @@ namespace Library {
                     return std::monostate();
                 }
 
-                Array array;
                 try {
                     Array array = std::get<Array>(*args);
+                    return static_cast<double>(array->values.size());
                 }
                 catch (std::bad_variant_access&) {
 					std::cerr << "Error: expected type is array." << std::endl;
 					return std::monostate();
 				}
-
-                return static_cast<double>(array->values.size());
             }},
         },
 
