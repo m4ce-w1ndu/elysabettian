@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(CElysabettian CXX)
 
-set(EXEC cely)
+set(exec cely)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED 17)
@@ -18,11 +18,18 @@ endif()
 
 include_directories(src)
 
-add_executable(${EXEC}
-    "src/Application/Main.cpp" "src/Application/Common.hpp"
-    "src/ExecEnv/Compiler.hpp" "src/ExecEnv/Compiler.cpp"
-    "src/ExecEnv/Opcodes.hpp" "src/ExecEnv/Value.hpp"
-    "src/ExecEnv/Value.cpp" "src/ExecEnv/VirtualMachine.hpp" "src/ExecEnv/VirtualMachine.cpp"
-    "src/Lexer/Tokenizer.hpp" "src/Lexer/Tokenizer.cpp" "src/Libraries/Library.hpp"
-    "src/Libraries/Library.cpp" "src/Libraries/Math.cpp" "src/Libraries/StdIO.cpp"
-    "src/Libraries/Array.cpp")
+file(
+    GLOB_RECURSE
+    source_files 
+    LIST_DIRECTORIES TRUE
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*/*.cpp"
+)
+
+add_executable(${exec} ${header_files} ${source_files})
+
+foreach(source IN LISTS source_list)
+    get_filename_component(source_path "${source}" PATH)
+    string(REPLACE "/" "\\" source_path_msvc "${source_path}")
+    source_group("${source_path_msvc}" FILES "${source}")
+endforeach()
