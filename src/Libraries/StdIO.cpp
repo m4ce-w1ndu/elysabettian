@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <cstdio>
+#include <cstring>
 
 namespace Library {
 

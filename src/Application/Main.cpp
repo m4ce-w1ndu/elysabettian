@@ -6,6 +6,7 @@
 //
 
 #include <fstream>
+#include <cstring>
 
 #include "Common.hpp"
 #include "../ExecEnv/Value.hpp"

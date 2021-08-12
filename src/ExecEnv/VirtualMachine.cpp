@@ -431,6 +431,16 @@ IResult VM::Run()
                         this->DoublePopAndPush(a + b);
                         return true;
                     },
+					[this](std::string a, double b) -> bool {
+						std::string bStr = std::to_string(b);
+						this->DoublePopAndPush(a + bStr);
+						return true;
+					},
+					[this](double a, std::string b) -> bool {
+						std::string aStr = std::to_string(a);
+						this->DoublePopAndPush(aStr + b);
+						return true;
+					},
                     [this](auto a, auto b) -> bool {
                         this->RuntimeError("Operands must be two numbers or two strings.");
                         return false;
