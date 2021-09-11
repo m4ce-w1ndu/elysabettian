@@ -11,7 +11,7 @@
 #include "Value.hpp"
 #include "Compiler.hpp"
 
-#include <Libraries/Library.hpp>
+#include "Library.hpp"
 
 #include <unordered_map>
 #include <map>

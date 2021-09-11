@@ -9,8 +9,8 @@
 #include <cstring>
 
 #include "Common.hpp"
-#include "../ExecEnv/Value.hpp"
-#include "../ExecEnv/VirtualMachine.hpp"
+#include "Value.hpp"
+#include "VirtualMachine.hpp"
 
 static void Repl(VM& vm)
 {

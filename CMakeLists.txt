@@ -22,8 +22,8 @@ file(
     GLOB_RECURSE
     source_files 
     LIST_DIRECTORIES TRUE
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
 add_executable(${exec} ${header_files} ${source_files})

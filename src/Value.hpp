@@ -8,7 +8,7 @@
 #ifndef VALUE_HPP
 #define VALUE_HPP
 
-#include "../Application/Common.hpp"
+#include "Common.hpp"
 #include "Opcodes.hpp"
 
 #include <variant>
