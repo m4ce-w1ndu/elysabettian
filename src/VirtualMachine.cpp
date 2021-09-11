@@ -13,6 +13,18 @@
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
+const std::string operator+(const std::string& str, double num)
+{
+    auto strNum = std::to_string(num);
+    return str + strNum;
+}
+
+const std::string operator+(double num, const std::string& str)
+{
+    auto strNum = std::to_string(num);
+    return strNum + str;
+}
+
 struct CallVisitor {
     const int argCount;
     VM& vm;
@@ -433,12 +445,16 @@ IResult VM::Run()
                     },
 					[this](std::string a, double b) -> bool {
 						std::string bStr = std::to_string(b);
-						this->DoublePopAndPush(a + bStr);
+                        bStr.erase(bStr.find_last_not_of('0') + 1, std::string::npos);
+                        bStr.erase(bStr.find_last_not_of('.') + 1, std::string::npos);
+						this->DoublePopAndPush(bStr + a);
 						return true;
 					},
 					[this](double a, std::string b) -> bool {
 						std::string aStr = std::to_string(a);
-						this->DoublePopAndPush(aStr + b);
+                        aStr.erase(aStr.find_last_not_of('0') + 1, std::string::npos);
+                        aStr.erase(aStr.find_last_not_of('.') + 1, std::string::npos);
+						this->DoublePopAndPush(b + aStr);
 						return true;
 					},
                     [this](auto a, auto b) -> bool {
