@@ -42,91 +42,93 @@ class VM {
     std::vector<Value> stack;
     std::vector<CallFrame> frames;
     std::unordered_map<std::string, Value> globals;
-    UpvalueValue openUpvalues;
-    std::string initString = "init";
+    UpvalueValue open_upvalues;
+    std::string init_string = "init";
 
     // Load arrays by default
-    Library::NativeArray arrayLibrary;
+    const Library::NativeArray array_lib;
     
     inline void ResetStack()
     {
         stack.clear();
         frames.clear();
         stack.reserve(STACK_MAX);
-        openUpvalues = nullptr;
+        open_upvalues = nullptr;
     }
     
-    void RuntimeError(const char* format, ...);
-    void DefineNative(const std::string& name, NativeFn function);
-    void DefineNativeConst(const std::string& name, Value value);
+    void runtime_error(const char* format, ...);
+    void define_native(const std::string& name, NativeFn function);
+    void define_native_const(const std::string& name, Value value);
     template <typename F>
-    bool BinaryOp(F op);
-    void DoublePopAndPush(const Value& v);
+    bool binary_op(F op);
+    void double_pop_and_push(const Value& v);
     
-    inline void Push(const Value& v)
+    inline void push(const Value& v)
     {
         stack.push_back(v);
         
     }
     
-    inline Value Pop()
+    inline Value pop()
     {
         auto v = std::move(stack.back());
         stack.pop_back();
         return v;
     }
     
-    inline const Value& Peek(int distance)
+    inline const Value& peek(int distance)
     {
         return stack[stack.size() - 1 - distance];
         
     }
-    bool CallValue(const Value& callee, int argCount);
-    bool Invoke(const std::string& name, int argCount);
-    bool InvokeFromClass(ClassValue classValue, const std::string& name, int argCount);
-    bool BindMethod(ClassValue classValue, const std::string& name);
-    UpvalueValue CaptureUpvalue(Value* local);
-    void CloseUpvalues(Value* last);
-    void DefineMethod(const std::string& name);
-    bool Call(const Closure& closure, int argCount);
+
+    bool call_value(const Value& callee, int arg_count);
+    bool invoke(const std::string& name, int arg_count);
+    bool invoke_from_class(ClassValue class_value, const std::string& name, int arg_count);
+    bool bind_method(ClassValue class_value, const std::string& name);
+    UpvalueValue capture_upvalue(Value* local);
+    void close_upvalues(Value* last);
+    void define_method(const std::string& name);
+    bool call(const Closure& closure, int arg_count);
+
 public:
     explicit VM()
     {
         // Library loader
-        auto importLibrary = [this](int argc, std::vector<Value>::iterator args) -> Value {
+        auto import_lib = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 1 || argc > 1) {
-                RuntimeError("import(libnamestr) expects 1 parameter. Got %d.", argc);
+                runtime_error("import(libnamestr) expects 1 parameter. Got %d.", argc);
                 return std::monostate();
             }
 
-            std::string libName;
+            std::string libname;
             try {
-                libName = std::get<std::string>(*args);
-                const auto& lib = Library::Libraries.at(libName);
+                libname = std::get<std::string>(*args);
+                const auto& lib = Library::Libraries.at(libname);
 
                 // Loading functions
                 for (const auto& f : lib->functions)
-                    DefineNative(f.first, f.second);
+                    define_native(f.first, f.second);
                 // Loading constants
                 for (const auto& c : lib->constants)
-                    DefineNativeConst(c.first, c.second);
+                    define_native_const(c.first, c.second);
 
                 return true;
             }
             catch (std::bad_variant_access) {
-                RuntimeError("Array name must be of string type.");
+                runtime_error("Array name must be of string type.");
                 return std::monostate();
             }
             catch (std::out_of_range&) {
-                RuntimeError("Library %s does not exist.", libName.c_str());
+                runtime_error("Library %s does not exist.", libname.c_str());
                 return std::monostate();
             }
         };
 
         // to string
-        auto toStringNative = [this](int argc, std::vector<Value>::iterator args) -> Value {
+        auto to_native_string = [this](int argc, std::vector<Value>::iterator args) -> Value {
             if (argc < 1 || argc > 1) {
-                RuntimeError("toString expects 1 parameter. Got %d.", argc);
+                runtime_error("toString expects 1 parameter. Got %d.", argc);
                 return std::monostate();
             }
 
@@ -141,16 +143,16 @@ public:
                 std::string operator()(const std::monostate&) const { return "null"; }
                 std::string operator()(const Func& f) const
                 {
-                    if (f->GetName().empty())
+                    if (f->get_name().empty())
                         return "<script>";
-                    return "<func " + f->GetName() + ">";
+                    return "<func " + f->get_name() + ">";
                 }
                 std::string operator()(const NativeFunction& nf) const { return "<native func>"; }
                 std::string operator()(const Closure& c) const { return "<closure>"; }
                 std::string operator()(const UpvalueValue& uv) const { return "<upvalue>"; }
                 std::string operator()(const ClassValue& cv) const { return cv->name; }
-                std::string operator()(const InstanceValue& iv) const { return iv->classValue->name + " instance"; }
-                std::string operator()(const BoundMethodValue& bm) const { return bm->memberFunc->function->GetName(); }
+                std::string operator()(const InstanceValue& iv) const { return iv->class_value->name + " instance"; }
+                std::string operator()(const BoundMethodValue& bm) const { return bm->method->function->get_name(); }
                 std::string operator()(const File& f) const { return f->path; }
                 std::string operator()(const Array& a) const { return "<array[" + std::to_string(a->values.size()) + "]"; }
                 std::string operator()(const FILE* f) const { return "<native stream>"; }
@@ -159,46 +161,46 @@ public:
             return std::visit(TypeVisitor(), *args);
         };
 
-        auto clockNative = [](int argc, std::vector<Value>::iterator args) -> Value {
+        auto native_clock = [](int argc, std::vector<Value>::iterator args) -> Value {
             return static_cast<double>(clock() / CLOCKS_PER_SEC);
         };
 
-        auto dateNative = [](int argc, std::vector<Value>::iterator args) -> Value {
-            time_t now = time(nullptr);
-            tm newTime;
+        auto native_date = [](int argc, std::vector<Value>::iterator args) -> Value {
+            time_t now_time = time(nullptr);
+            tm new_time;
 #if defined(__linux__) || defined(__APPLE__)
-            localtime_r(&now, &newTime);
+            localtime_r(&now_time, &new_time);
 #elif defined(_WIN32)
-            localtime_s(&newTime, &now);
+            localtime_s(&new_time, &now_time);
 #endif
-            char dateTime[30];
-            strftime(dateTime, sizeof(dateTime) / sizeof(char), "%d/%m/%y, %H:%M:%S", &newTime);
-            return std::string(dateTime);
+            char datetime[30];
+            strftime(datetime, sizeof(datetime) / sizeof(char), "%d/%m/%y, %H:%M:%S", &new_time);
+            return std::string(datetime);
         };
 
-        auto versionNative = [](int argc, std::vector<Value>::iterator args) -> Value {
+        auto native_version = [](int argc, std::vector<Value>::iterator args) -> Value {
             std::cout << "Elysabettian 1.0 Maurizio" << std::endl;
             return "Elysabettian 1.0 Maurizio";
         };
 
-        auto exitFromEnv = [](int argc, std::vector<Value>::iterator args) -> Value {
+        auto exit_env = [](int argc, std::vector<Value>::iterator args) -> Value {
             std::cout << "Bye..." << std::endl;
             exit(EXIT_SUCCESS);
         };
 
         // Load arrays
-        for (const auto& func : arrayLibrary.functions)
-            DefineNative(func.first, func.second);
+        for (const auto& func : array_lib.functions)
+            define_native(func.first, func.second);
 
 
         stack.reserve(STACK_MAX);
-        openUpvalues = nullptr;
-        DefineNative("exit", exitFromEnv);
-        DefineNative("clock", clockNative);
-        DefineNative("date", dateNative);
-        DefineNative("version", versionNative);
-        DefineNative("import", importLibrary);
-        DefineNative("toString", toStringNative);
+        open_upvalues = nullptr;
+        define_native("exit", exit_env);
+        define_native("clock", native_clock);
+        define_native("date", native_date);
+        define_native("version", native_version);
+        define_native("import", import_lib);
+        define_native("toString", to_native_string);
     }
     IResult Interpret(const std::string& source);
     IResult Run();

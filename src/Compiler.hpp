@@ -31,7 +31,7 @@ enum class Precedence {
 
 class Parser;
 
-typedef void (Parser::*ParseFn)(bool canAssign);
+typedef void (Parser::*ParseFn)(bool can_assign);
 
 struct ParseRule {
     std::function<void(bool)> prefix;
@@ -42,16 +42,16 @@ struct ParseRule {
 struct Local {
     std::string name;
     int depth;
-    bool isCaptured;
-    Local(std::string name, int depth): name(name), depth(depth), isCaptured(false) {};
+    bool is_captured;
+    Local(std::string name, int depth): name(name), depth(depth), is_captured(false) {};
 };
 
 class Upvalue {
 public:
     uint8_t index;
-    bool isLocal;
-    explicit Upvalue(uint8_t index, bool isLocal)
-        : index(index), isLocal(isLocal) {}
+    bool is_local;
+    explicit Upvalue(uint8_t index, bool is_local)
+        : index(index), is_local(is_local) {}
 };
 
 class Parser;
@@ -74,22 +74,22 @@ class Compiler {
 
 public:
     explicit Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing);
-    void AddLocal(const std::string& name);
-    void DeclareVariable(const std::string& name);
-    void MarkInitialized();
-    int ResolveLocal(const std::string& name);
-    int ResolveUpvalue(const std::string& name);
-    int AddUpvalue(uint8_t index, bool isLocal);
-    void BeginScope();
-    void EndScope();
-    bool IsLocal();
+    void add_local(const std::string& name);
+    void declare_variable(const std::string& name);
+    void mark_initialized();
+    int resolve_local(const std::string& name);
+    int resolve_upvalue(const std::string& name);
+    int add_upvalue(uint8_t index, bool is_local);
+    void begin_scope();
+    void end_scope();
+    bool is_local();
 
     friend Parser;
 };
 
 class ClassCompiler {
     std::unique_ptr<ClassCompiler> enclosing;
-    bool hasSuperclass;
+    bool has_superclass;
 public:
     explicit ClassCompiler(std::unique_ptr<ClassCompiler> enclosing);
     friend Parser;
@@ -100,76 +100,76 @@ class Parser {
     Token current;
     Tokenizer scanner;
     std::unique_ptr<Compiler> compiler;
-    std::unique_ptr<ClassCompiler> classCompiler;
+    std::unique_ptr<ClassCompiler> class_compiler;
     
-    bool hadError;
-    bool panicMode;
+    bool had_error;
+    bool panic_mode;
     
-    void Advance();
-    void Consume(TokenType type, const std::string& message);
-    bool Check(TokenType type);
-    bool Match(TokenType type);
+    void advance();
+    void consume(TokenType type, const std::string& message);
+    bool check(TokenType type);
+    bool match(TokenType type);
     
-    void Emit(uint8_t byte);
-    void Emit(OpCode op);
-    void Emit(OpCode op, uint8_t byte);
-    void Emit(OpCode op1, OpCode op2);
-    void EmitLoop(int loopStart);
-    int EmitJump(OpCode op);
-    void EmitReturn();
-    uint8_t MakeConstant(Value value);
-    void EmitConstant(Value value);
-    void PatchJump(int offset);
+    void emit(uint8_t byte);
+    void emit(OpCode op);
+    void emit(OpCode op, uint8_t byte);
+    void emit(OpCode op1, OpCode op2);
+    void emit_loop(int loopStart);
+    int emit_jump(OpCode op);
+    void emit_return();
+    uint8_t make_constant(Value value);
+    void emit_constant(Value value);
+    void patch_jump(int offset);
     
-    Func EndCompiler();
+    Func end_compiler();
     
-    void Binary(bool canAssign);
-    void Call(bool canAssign);
-    void Dot(bool canAssign);
-    void Literal(bool canAssign);
-    void Grouping(bool canAssign);
-    void Number(bool canAssign);
-    void Or(bool canAssign);
-    void String(bool canAssign);
-    void NamedVariable(const std::string& name, bool canAssign);
-    void Variable(bool canAssign);
-    void Super(bool canAssign);
-    void This(bool canAssign);
-    void And(bool canAssign);
-    void Unary(bool canAssign);
-    ParseRule& GetRule(TokenType type);
-    void ParsePrecedence(Precedence precedence);
-    int IdentifierConstant(const std::string& name);
-    uint8_t ParseVariable(const std::string& errorMessage);
-    void DefineVariable(uint8_t global);
-    uint8_t ArgumentList();
-    void Expression();
-    void Block();
-    void Function(FunctionType type);
-    void Method();
-    void ClassDeclaration();
-    void FuncDeclaration();
-    void VarDeclaration();
-    void ExpressionStatement();
-    void ForStatement();
-    void IfStatement();
-    void Declaration();
-    void Statement();
-    void PrintStatement();
-    void ReturnStatement();
-    void WhileStatement();
-    void Sync();
+    void binary(bool can_assign);
+    void call(bool can_assign);
+    void dot(bool can_assign);
+    void literal(bool can_assign);
+    void grouping(bool can_assign);
+    void number(bool can_assign);
+    void or_(bool can_assign);
+    void string_(bool can_assign);
+    void named_variable(const std::string& name, bool can_assign);
+    void variable(bool can_assign);
+    void super(bool can_assign);
+    void this_(bool can_assign);
+    void and_(bool can_assign);
+    void unary(bool can_assign);
+    ParseRule& get_rule(TokenType type);
+    void parse_precedence(Precedence precedence);
+    int identifier_constant(const std::string& name);
+    uint8_t parse_variable(const std::string& errorMessage);
+    void define_variable(uint8_t global);
+    uint8_t args_list();
+    void expression();
+    void block();
+    void function(FunctionType type);
+    void method();
+    void class_declaration();
+    void func_declaration();
+    void var_declaration();
+    void expression_statement();
+    void for_statement();
+    void if_statement();
+    void declaration();
+    void statement();
+    void print_statement();
+    void return_statement();
+    void while_statement();
+    void sync();
 
-    void ErrorAt(const Token& token, const std::string& message);
+    void error_at(const Token& token, const std::string& message);
     
-    void Error(const std::string& message)
+    void error(const std::string& message)
     {
-        ErrorAt(previous, message);
+        error_at(previous, message);
     };
     
-    void ErrorAtCurrent(const std::string& message)
+    void error_at_current(const std::string& message)
     {
-        ErrorAt(current, message);
+        error_at(current, message);
     };
     
     friend Compiler;
@@ -178,7 +178,7 @@ public:
     Parser(const std::string& source);
     Chunk& CurrentChunk()
     {
-        return compiler->function->GetChunk();
+        return compiler->function->get_chunk();
     }
     std::optional<Func> Compile();
 };

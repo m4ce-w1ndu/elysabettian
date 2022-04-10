@@ -7,29 +7,29 @@
 
 #include "Value.hpp"
 
-void Chunk::Write(uint8_t byte, int line)
+void Chunk::write(uint8_t byte, int line)
 {
     code.push_back(byte);
     lines.push_back(line);
 }
 
-void Chunk::Write(OpCode opcode, int line)
+void Chunk::write(OpCode opcode, int line)
 {
-    Write(static_cast<uint8_t>(opcode), line);
+    write(static_cast<uint8_t>(opcode), line);
 }
 
-unsigned long Chunk::AddConstant(Value value)
+unsigned long Chunk::add_constant(Value value)
 {
     constants.push_back(value);
     return static_cast<unsigned long>(constants.size() - 1);
 }
 
-void Chunk::Disassemble(const std::string& name)
+void Chunk::disassemble(const std::string& name)
 {
     std::cout << "== " << name << " ==" << std::endl;
     
     for (auto i = 0; i < static_cast<int>(code.size());)
-        i = DisasIntruction(i);
+        i = disas_instruction(i);
 }
 
 static int SimpleInstruction(const std::string& name, int offset)
@@ -40,38 +40,38 @@ static int SimpleInstruction(const std::string& name, int offset)
 
 static int ConstantInstruction(const std::string& name, const Chunk& chunk, int offset)
 {
-    auto constant = chunk.GetCode(offset + 1);
+    auto constant = chunk.get_code(offset + 1);
     printf("%-16s %4d '", name.c_str(), constant);
-    std::cout << chunk.GetConstant(constant);
+    std::cout << chunk.get_constant(constant);
     printf("'\n");
     return offset + 2;
 }
 
 static int InvokeInstruction(const std::string& name, const Chunk& chunk, int offset)
 {
-    auto constant = chunk.GetCode(offset + 1);
-    auto argCount = chunk.GetCode(offset + 2);
-    printf("%-16s (%d args) %4d '", name.c_str(), argCount, constant);
-    std::cout << chunk.GetConstant(constant) << "'" << std::endl;
+    auto constant = chunk.get_code(offset + 1);
+    auto arg_count = chunk.get_code(offset + 2);
+    printf("%-16s (%d args) %4d '", name.c_str(), arg_count, constant);
+    std::cout << chunk.get_constant(constant) << "'" << std::endl;
     return offset + 3;
 }
 
 static int ByteInstruction(const std::string& name, const Chunk& chunk, int offset)
 {
-    auto slot = chunk.GetCode(offset + 1);
+    auto slot = chunk.get_code(offset + 1);
     printf("%-16s %4d\n", name.c_str(), slot);
     return offset + 2;
 }
 
 static int JmpInstruction(const std::string& name, int sign, const Chunk& chunk, int offset)
 {
-    uint16_t jump = static_cast<uint16_t>(chunk.GetCode(offset + 1) << 8);
-    jump |= static_cast<uint16_t>(chunk.GetCode(offset + 2));
+    uint16_t jump = static_cast<uint16_t>(chunk.get_code(offset + 1) << 8);
+    jump |= static_cast<uint16_t>(chunk.get_code(offset + 2));
     printf("%-16s %4d -> %d\n", name.c_str(), offset, offset + 3 + sign * jump);
     return offset + 3;
 }
 
-int Chunk::DisasIntruction(int offset)
+int Chunk::disas_instruction(int offset)
 {
     printf("%04d ", offset);
     
@@ -161,11 +161,11 @@ int Chunk::DisasIntruction(int offset)
             std::cout << std::endl;
             
             auto function = std::get<Func>(constants[constant]);
-            for (int j = 0; j < function->upvalueCount; j++) {
-                int isLocal = code[offset++];
+            for (int j = 0; j < function->upvalue_count; j++) {
+                int is_local = code[offset++];
                 int index = code[offset++];
                 printf("%04d      |                     %s %d\n",
-                       offset - 2, isLocal ? "local" : "upvalue", index);
+                       offset - 2, is_local ? "local" : "upvalue", index);
             }
             
             return offset;

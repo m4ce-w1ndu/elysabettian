@@ -53,16 +53,16 @@ class Chunk {
     std::vector<int> lines;
 
 public:
-    uint8_t GetCode(int offset) const { return code[offset]; };
-    void SetCode(int offset, uint8_t value) { code[offset] = value; }
-    const Value& GetConstant(int constant) const { return constants[constant]; };
-    void Write(uint8_t byte, int line);
-    void Write(OpCode opcode, int line);
-    unsigned long AddConstant(Value value);
-    int DisasIntruction(int offset);
-    void Disassemble(const std::string& name);
-    int GetLine(int instruction) { return lines[instruction]; }
-    int Count() { return static_cast<int>(code.size()); }
+    uint8_t get_code(int offset) const { return code[offset]; };
+    void set_code(int offset, uint8_t value) { code[offset] = value; }
+    const Value& get_constant(int constant) const { return constants[constant]; };
+    void write(uint8_t byte, int line);
+    void write(OpCode opcode, int line);
+    unsigned long add_constant(Value value);
+    int disas_instruction(int offset);
+    void disassemble(const std::string& name);
+    int get_line(int instruction) { return lines[instruction]; }
+    int count() { return static_cast<int>(code.size()); }
 };
 
 using NativeFn = std::function<Value(int, std::vector<Value>::iterator)>;
@@ -80,27 +80,27 @@ struct UpvalueObject {
 
 struct ClassObject {
     std::string name;
-    std::unordered_map<std::string, Closure> memberFuncs;
+    std::unordered_map<std::string, Closure> methods;
     explicit ClassObject(std::string name): name(name) {}
 };
 
 struct InstanceObject {
-    ClassValue classValue;
+    ClassValue class_value;
     std::unordered_map<std::string, Value> fields;
-    explicit InstanceObject(ClassValue klass): classValue(klass) {}
+    explicit InstanceObject(ClassValue klass): class_value(klass) {}
 };
 
 struct MemberFuncObject {
     InstanceValue receiver;
-    Closure memberFunc;
+    Closure method;
     explicit MemberFuncObject(InstanceValue receiver, Closure method)
-        : receiver(receiver), memberFunc(method) {}
+        : receiver(receiver), method(method) {}
 };
 
 class FunctionObject {
 private:
     int arity;
-    int upvalueCount = 0;
+    int upvalue_count = 0;
     std::string name;
     Chunk chunk;
 
@@ -108,7 +108,7 @@ public:
     FunctionObject(int arity, const std::string& name)
         : arity(arity), name(name), chunk(Chunk()) {}
     
-    const std::string& GetName() const
+    const std::string& get_name() const
     {
         return name;
     }
@@ -118,19 +118,19 @@ public:
         return false;
     }
     
-    Chunk& GetChunk()
+    Chunk& get_chunk()
     {
         return chunk;
     }
     
-    uint8_t GetCode(int offset)
+    uint8_t get_code(int offset)
     {
-        return chunk.GetCode(offset);
+        return chunk.get_code(offset);
     }
     
-    const Value& GetConst(int constant) const
+    const Value& get_const(int constant) const
     {
-        return chunk.GetConstant(constant);
+        return chunk.get_constant(constant);
     }
 
     friend Compiler;
@@ -146,7 +146,7 @@ public:
     std::vector<UpvalueValue> upvalues;
     explicit ClosureObject(Func function): function(function)
     {
-        upvalues.resize(function->upvalueCount, nullptr);
+        upvalues.resize(function->upvalue_count, nullptr);
     };
 };
 
@@ -154,14 +154,57 @@ struct FileObject {
     const std::string path;
     std::FILE* file;
 
-    inline bool IsOpen() { return file != nullptr; }
-
     FileObject(const std::string& path, const std::string& mode)
         : path(path), file(fopen(path.c_str(), mode.c_str()))
     {}
+
+    inline bool is_open() { return file != nullptr; }
+
+    inline void close()
+    { 
+        if (file != nullptr) {
+            fclose(file);
+            file = nullptr;
+        }
+    }
+
+    inline void flush()
+    {
+        if (this->is_open()) {
+            fflush(file);
+        }
+    }
+
+    inline std::string read_all()
+    {
+        if (!this->is_open()) {
+            return "";
+        }
+
+        // Get the size of the file
+        fseek(file, 0, SEEK_END);
+        size_t size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        // Allocate a string buffer the size of the file
+        std::string buffer(size, '\0');
+        // Read the file into the buffer
+        fread(buffer.data(), 1, size, file);
+        // Return the buffer
+        return buffer;
+    }
+
+    inline void write_all(const std::string& data)
+    {
+        if (!this->is_open()) {
+            return;
+        }
+
+        fwrite(data.data(), 1, data.size(), file);
+    }
+
     ~FileObject()
     {
-        fclose(file);
+        close();
     }
 };
 
@@ -178,18 +221,18 @@ struct OutputVisitor {
     void operator()(const std::string& s) const { std::cout << s; }
     void operator()(const Func& f) const
     {
-        if (f->GetName().empty()) {
+        if (f->get_name().empty()) {
             std::cout << "<script>";
         } else {
-            std::cout << "<fn " << f->GetName() << ">";
+            std::cout << "<fn " << f->get_name() << ">";
         }
     }
     void operator()(const NativeFunction& f) const { std::cout << "<native fn>"; }
     void operator()(const Closure& c) const { std::cout << Value(c->function); }
     void operator()(const UpvalueValue& u) const { std::cout << "upvalue"; }
     void operator()(const ClassValue& c) const { std::cout << c->name; }
-    void operator()(const InstanceValue& i) const { std::cout << i->classValue->name << " instance"; }
-    void operator()(const BoundMethodValue& m) const { std::cout << Value(m->memberFunc->function); }
+    void operator()(const InstanceValue& i) const { std::cout << i->class_value->name << " instance"; }
+    void operator()(const BoundMethodValue& m) const { std::cout << Value(m->method->function); }
     void operator()(const File& f) const
     {
         if (f->file == stdin) {
@@ -204,7 +247,7 @@ struct OutputVisitor {
         }
 
         std::cout << "path: " << f->path << ", open: "
-            << std::boolalpha << f->IsOpen();
+            << std::boolalpha << f->is_open();
     }
     void operator()(const Array& a) const
     {
@@ -233,7 +276,7 @@ struct FalseVisitor {
     bool operator()(const T& value) const { return false; }
 };
 
-inline bool IsFalse(const Value& v)
+inline bool is_false(const Value& v)
 {
     return std::visit(FalseVisitor(), v);
 }

@@ -48,9 +48,9 @@ public:
     Token(TokenType type, std::string_view text, int line):
         type(type), text(text), line(line) {};
     
-    TokenType GetType() const { return type; };
-    std::string_view GetText() const { return text; };
-    int GetLine() const { return line; };
+    TokenType get_type() const { return type; };
+    std::string_view get_text() const { return text; };
+    int get_line() const { return line; };
 };
 
 class Tokenizer {
@@ -60,21 +60,21 @@ class Tokenizer {
     std::string::size_type current;
     int line;
     
-    bool IsAtEnd();
-    char Advance();
-    char Peek();
-    char PeekNext();
-    bool Match(char expected);
+    bool is_at_end();
+    char advance();
+    char peek();
+    char peek_next();
+    bool match(char expected);
     
-    Token MakeToken(TokenType type);
-    Token ErrorToken(const std::string& message);
+    Token make_token(TokenType type);
+    Token error_token(const std::string& message);
     
-    void SkipWhitespace();
-    TokenType CheckKeyword(size_t pos, size_t len, std::string rest, TokenType type);
-    TokenType IdentifierType();
-    Token Identifier();
-    Token Number();
-    Token String();
+    void skip_whitespace();
+    TokenType check_keyword(size_t pos, size_t len, std::string rest, TokenType type);
+    TokenType identifier_type();
+    Token identifier();
+    Token number();
+    Token string_(const char open_char = '"');
     
 public:
     Tokenizer(std::string source):
@@ -83,7 +83,7 @@ public:
         current(0),
         line(1) {};
     
-    Token ScanToken();
+    Token scan_token();
 };
 
 #endif /* scanner_hpp */
