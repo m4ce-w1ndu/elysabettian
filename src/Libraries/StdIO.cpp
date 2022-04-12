@@ -6,7 +6,7 @@
 
 namespace Library {
 
-	constexpr bool is_number(const std::string& str)
+	static const inline bool is_number(const std::string& str)
 	{
 		// check if the string is empty
 		if (str.empty())
@@ -22,7 +22,7 @@ namespace Library {
 	}
 
 	// constexpr function to check if string is a valid boolean
-	constexpr bool is_boolean(const std::string& str)
+	static const inline bool is_boolean(const std::string& str)
 	{
 		return str == "true" || str == "false";
 	}

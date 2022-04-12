@@ -11,6 +11,9 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <fmt/core.h>
+#include <fmt/printf.h>
+#include <fmt/format.h>
 
 #define DEBUG_PRINT_CODE
 #define DEBUG_TRACE_EXECUTION

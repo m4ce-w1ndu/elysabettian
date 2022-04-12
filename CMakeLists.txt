@@ -17,6 +17,8 @@ else()
 endif()
 
 include_directories(src)
+include_directories(lib/fmt/include)
+add_subdirectory(lib/fmt)
 
 file(
     GLOB_RECURSE
@@ -29,6 +31,7 @@ file(
 )
 
 add_executable(${exec} ${header_files} ${source_files})
+target_link_libraries(${exec} fmt)
 
 foreach(source IN LISTS source_list)
     get_filename_component(source_path "${source}" PATH)

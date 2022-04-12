@@ -20,8 +20,8 @@
 #include <sstream>
 #include <iomanip>
 
-#define FRAMES_MAX 64
-#define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
+constexpr auto FRAMES_MAX = 64;
+constexpr auto STACK_MAX = (FRAMES_MAX* UINT8_COUNT);
 
 enum class IResult {
     OK,
@@ -32,7 +32,7 @@ enum class IResult {
 struct CallFrame {
     Closure closure;
     unsigned ip;
-    unsigned long stackOffset;
+    unsigned long stack_offset;
 };
 
 struct CallVisitor;
@@ -179,12 +179,12 @@ public:
         };
 
         auto native_version = [](int argc, std::vector<Value>::iterator args) -> Value {
-            std::cout << "Elysabettian 1.0 Maurizio" << std::endl;
+            fmt::print("Elysabettian 1.0 Maurizio\n");
             return "Elysabettian 1.0 Maurizio";
         };
 
         auto exit_env = [](int argc, std::vector<Value>::iterator args) -> Value {
-            std::cout << "Bye..." << std::endl;
+            fmt::print("Bye...\n");
             exit(EXIT_SUCCESS);
         };
 

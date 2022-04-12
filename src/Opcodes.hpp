@@ -10,7 +10,7 @@
 
 #include "Common.hpp"
 
-enum class OpCode: uint8_t {
+enum class OpCode : uint8_t {
     CONSTANT,
     NULLOP,
     TRUE,

@@ -194,7 +194,7 @@ bool VM::call(const Closure& closure, int arg_count)
     auto& frame = frames.back();
     frame.ip = 0;
     frame.closure = closure;
-    frame.stackOffset = static_cast<unsigned long>(stack.size() - arg_count - 1);
+    frame.stack_offset = static_cast<unsigned long>(stack.size() - arg_count - 1);
     
     return true;
 }
@@ -272,21 +272,21 @@ void VM::double_pop_and_push(const Value& v)
 
 IResult VM::Run()
 {
-    auto readByte = [this]() -> uint8_t {
+    auto read_byte = [this]() -> uint8_t {
         return this->frames.back().closure->function->get_code(this->frames.back().ip++);
     };
     
-    auto readConstant = [this, readByte]() -> const Value& {
-        return this->frames.back().closure->function->get_const(readByte());
+    auto read_constant = [this, read_byte]() -> const Value& {
+        return this->frames.back().closure->function->get_const(read_byte());
     };
     
-    auto readShort = [this]() -> uint16_t {
+    auto read_short = [this]() -> uint16_t {
         this->frames.back().ip += 2;
         return ((this->frames.back().closure->function->get_code(this->frames.back().ip - 2) << 8) | (this->frames.back().closure->function->get_code(this->frames.back().ip - 1)));
     };
     
-    auto readString = [readConstant]() -> const std::string& {
-        return std::get<std::string>(readConstant());
+    auto read_string = [read_constant]() -> const std::string& {
+        return std::get<std::string>(read_constant());
     };
     
     while (true) {
@@ -314,10 +314,10 @@ IResult VM::Run()
         } \
     } while (false)
         
-        auto instruction = OpCode(readByte());
+        auto instruction = OpCode(read_byte());
         switch (instruction) {
             case OpCode::CONSTANT: {
-                auto constant = readConstant();
+                auto constant = read_constant();
                 push(constant);
                 break;
             }
@@ -327,13 +327,13 @@ IResult VM::Run()
             case OpCode::POP: pop(); break;
                 
             case OpCode::GET_LOCAL: {
-                uint8_t slot = readByte();
-                push(stack[frames.back().stackOffset + slot]);
+                uint8_t slot = read_byte();
+                push(stack[frames.back().stack_offset + slot]);
                 break;
             }
                 
             case OpCode::GET_GLOBAL: {
-                auto name = readString();
+                auto name = read_string();
                 auto found = globals.find(name);
                 if (found == globals.end()) {
                     runtime_error("Undefined variable '%s'.", name.c_str());
@@ -345,20 +345,20 @@ IResult VM::Run()
             }
                 
             case OpCode::DEFINE_GLOBAL: {
-                auto name = readString();
+                auto name = read_string();
                 globals[name] = peek(0);
                 pop();
                 break;
             }
                 
             case OpCode::SET_LOCAL: {
-                uint8_t slot = readByte();
-                stack[frames.back().stackOffset + slot] = peek(0);
+                uint8_t slot = read_byte();
+                stack[frames.back().stack_offset + slot] = peek(0);
                 break;
             }
                 
             case OpCode::SET_GLOBAL: {
-                auto name = readString();
+                auto name = read_string();
                 auto found = globals.find(name);
                 if (found == globals.end()) {
                     runtime_error("Undefined variable '%s'.", name.c_str());
@@ -368,12 +368,12 @@ IResult VM::Run()
                 break;
             }
             case OpCode::GET_UPVALUE: {
-                auto slot = readByte();
+                auto slot = read_byte();
                 push(*frames.back().closure->upvalues[slot]->location);
                 break;
             }
             case OpCode::SET_UPVALUE: {
-                auto slot = readByte();
+                auto slot = read_byte();
                 *frames.back().closure->upvalues[slot]->location = peek(0);
                 break;
             }
@@ -387,7 +387,7 @@ IResult VM::Run()
                     return IResult::RUNTIME_ERROR;
                 }
 
-                auto name = readString();
+                auto name = read_string();
                 auto found = instance->fields.find(name);
                 if (found != instance->fields.end()) {
                     auto value = found->second;
@@ -404,7 +404,7 @@ IResult VM::Run()
             case OpCode::SET_PROPERTY: {
                 try {
                     auto instance = std::get<InstanceValue>(peek(1));
-                    auto name = readString();
+                    auto name = read_string();
                     instance->fields[name] = peek(0);
                     
                     auto value = pop();
@@ -417,7 +417,7 @@ IResult VM::Run()
                 break;
             }
             case OpCode::GET_SUPER: {
-                auto name = readString();
+                auto name = read_string();
                 auto superclass = std::get<ClassValue>(pop());
                 
                 if (!bind_method(superclass, name)) {
@@ -505,19 +505,19 @@ IResult VM::Run()
             }
             
             case OpCode::JUMP: {
-                auto offset = readShort();
+                auto offset = read_short();
                 frames.back().ip += offset;
                 break;
             }
                 
             case OpCode::LOOP: {
-                auto offset = readShort();
+                auto offset = read_short();
                 frames.back().ip -= offset;
                 break;
             }
                 
             case OpCode::JUMP_IF_FALSE: {
-                auto offset = readShort();
+                auto offset = read_short();
                 if (is_false(peek(0))) {
                     frames.back().ip += offset;
                 }
@@ -525,7 +525,7 @@ IResult VM::Run()
             }
                 
             case OpCode::CALL: {
-                int argCount = readByte();
+                int argCount = read_byte();
                 if (!call_value(peek(argCount), argCount)) {
                     return IResult::RUNTIME_ERROR;
                 }
@@ -533,8 +533,8 @@ IResult VM::Run()
             }
                 
             case OpCode::INVOKE: {
-                auto method = readString();
-                int argCount = readByte();
+                auto method = read_string();
+                int argCount = read_byte();
                 if (!invoke(method, argCount)) {
                     return IResult::RUNTIME_ERROR;
                 }
@@ -542,8 +542,8 @@ IResult VM::Run()
             }
                 
             case OpCode::SUPER_INVOKE: {
-                auto method = readString();
-                int argCount = readByte();
+                auto method = read_string();
+                int argCount = read_byte();
                 auto superclass = std::get<ClassValue>(pop());
                 if (!invoke_from_class(superclass, method, argCount)) {
                     return IResult::RUNTIME_ERROR;
@@ -552,14 +552,14 @@ IResult VM::Run()
             }
                 
             case OpCode::CLOSURE: {
-                auto function = std::get<Func>(readConstant());
+                auto function = std::get<Func>(read_constant());
                 auto closure = std::make_shared<ClosureObject>(function);
                 push(closure);
                 for (int i = 0; i < static_cast<int>(closure->upvalues.size()); i++) {
-                    auto isLocal = readByte();
-                    auto index = readByte();
+                    auto isLocal = read_byte();
+                    auto index = read_byte();
                     if (isLocal) {
-                        closure->upvalues[i] = capture_upvalue(&stack[frames.back().stackOffset + index]);
+                        closure->upvalues[i] = capture_upvalue(&stack[frames.back().stack_offset + index]);
                     } else {
                         closure->upvalues[i] = frames.back().closure->upvalues[index];
                     }
@@ -574,9 +574,9 @@ IResult VM::Run()
                 
             case OpCode::RETURN: {
                 auto result = pop();
-                close_upvalues(&stack[frames.back().stackOffset]);
+                close_upvalues(&stack[frames.back().stack_offset]);
                 
-                auto lastOffset = frames.back().stackOffset;
+                auto lastOffset = frames.back().stack_offset;
                 frames.pop_back();
                 if (frames.empty()) {
                     pop();
@@ -590,7 +590,7 @@ IResult VM::Run()
             }
                 
             case OpCode::CLASS:
-                push(std::make_shared<ClassObject>(readString()));
+                push(std::make_shared<ClassObject>(read_string()));
                 break;
                 
             case OpCode::INHERIT: {
@@ -607,7 +607,7 @@ IResult VM::Run()
             }
                 
             case OpCode::METHOD:
-                define_method(readString());
+                define_method(read_string());
                 break;
         }
     }

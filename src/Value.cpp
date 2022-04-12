@@ -26,7 +26,7 @@ unsigned long Chunk::add_constant(Value value)
 
 void Chunk::disassemble(const std::string& name)
 {
-    std::cout << "== " << name << " ==" << std::endl;
+    fmt::print("== {} ==\n", name);
     
     for (auto i = 0; i < static_cast<int>(code.size());)
         i = disas_instruction(i);
@@ -34,16 +34,16 @@ void Chunk::disassemble(const std::string& name)
 
 static int SimpleInstruction(const std::string& name, int offset)
 {
-    std::cout << name << std::endl;
+    fmt::print("{}\n", name);
     return offset + 1;
 }
 
 static int ConstantInstruction(const std::string& name, const Chunk& chunk, int offset)
 {
     auto constant = chunk.get_code(offset + 1);
-    printf("%-16s %4d '", name.c_str(), constant);
+	fmt::print("{:<16s} {:4d} '", name, constant);
     std::cout << chunk.get_constant(constant);
-    printf("'\n");
+    fmt::print("'\n");
     return offset + 2;
 }
 
@@ -51,15 +51,15 @@ static int InvokeInstruction(const std::string& name, const Chunk& chunk, int of
 {
     auto constant = chunk.get_code(offset + 1);
     auto arg_count = chunk.get_code(offset + 2);
-    printf("%-16s (%d args) %4d '", name.c_str(), arg_count, constant);
-    std::cout << chunk.get_constant(constant) << "'" << std::endl;
+	fmt::print("{:<16s} ({} args) {:4d} '", name, arg_count, constant);
+    std::cout << chunk.get_constant(constant) << "'\n";
     return offset + 3;
 }
 
 static int ByteInstruction(const std::string& name, const Chunk& chunk, int offset)
 {
     auto slot = chunk.get_code(offset + 1);
-    printf("%-16s %4d\n", name.c_str(), slot);
+    fmt::print("{:<16s} {:4d}\n", name, slot);
     return offset + 2;
 }
 
@@ -67,18 +67,17 @@ static int JmpInstruction(const std::string& name, int sign, const Chunk& chunk,
 {
     uint16_t jump = static_cast<uint16_t>(chunk.get_code(offset + 1) << 8);
     jump |= static_cast<uint16_t>(chunk.get_code(offset + 2));
-    printf("%-16s %4d -> %d\n", name.c_str(), offset, offset + 3 + sign * jump);
+    fmt::print("{:<16s} {:4d} -> {}\n", name, offset, offset + 3 + sign * jump);
     return offset + 3;
 }
 
 int Chunk::disas_instruction(int offset)
 {
-    printf("%04d ", offset);
-    
+    fmt::print("{:04d} ", offset);   
     if (offset > 0 && lines[offset] == lines[offset - 1]) {
-        std::cout << "   | ";
+        fmt::print("   | ");
     } else {
-        printf("%4d ", lines[offset]);
+        fmt::print("{:4d} ", lines[offset]);
     }
     
     auto instruction = OpCode(code[offset]);
@@ -156,7 +155,7 @@ int Chunk::disas_instruction(int offset)
         case OpCode::CLOSURE: {
             offset++;
             auto constant = code[offset++];
-            printf("%-16s %4d ", "OP_CLOSURE", constant);
+            fmt::print("{:<16s} {:4d}", "OP_CLOSURE", constant);
             std::cout << constants[constant];
             std::cout << std::endl;
             
@@ -164,8 +163,8 @@ int Chunk::disas_instruction(int offset)
             for (int j = 0; j < function->upvalue_count; j++) {
                 int is_local = code[offset++];
                 int index = code[offset++];
-                printf("%04d      |                     %s %d\n",
-                       offset - 2, is_local ? "local" : "upvalue", index);
+                fmt::print("{:04d}      |                     {} {}\n",
+                    offset - 2, is_local ? "local" : "upvalue", index);
             }
             
             return offset;
@@ -182,6 +181,6 @@ int Chunk::disas_instruction(int offset)
             return ConstantInstruction("OP_METHOD", *this, offset);
     }
     
-    std::cout << "Unknown opcode: " << code[offset] << std::endl;
+	fmt::print("Uknown opcode: {}\n", code[offset]);
     return offset + 1;
 }

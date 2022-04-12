@@ -70,7 +70,7 @@ class Compiler {
     
     std::vector<Local> locals;
     std::vector<Upvalue> upvalues;
-    int scopeDepth = 0;
+    int scope_depth = 0;
 
 public:
     explicit Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing);

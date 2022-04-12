@@ -27,10 +27,10 @@ void Compiler::add_local(const std::string& name)
 
 void Compiler::declare_variable(const std::string& name)
 {
-    if (scopeDepth == 0) return;
+    if (scope_depth == 0) return;
     
     for (size_t i = locals.size() - 1; i >= 0; i--) {
-        if (locals[i].depth != -1 && locals[i].depth < scopeDepth) break;
+        if (locals[i].depth != -1 && locals[i].depth < scope_depth) break;
         if (locals[i].name == name) {
             parser->error("Already a variable with this name in this scope.");
         }
@@ -41,8 +41,8 @@ void Compiler::declare_variable(const std::string& name)
 
 void Compiler::mark_initialized()
 {
-    if (scopeDepth == 0) return;
-    locals.back().depth = scopeDepth;
+    if (scope_depth == 0) return;
+    locals.back().depth = scope_depth;
 }
 
 int Compiler::resolve_local(const std::string& name)
@@ -98,13 +98,13 @@ int Compiler::add_upvalue(uint8_t index, bool isLocal)
 
 void Compiler::begin_scope()
 {
-    scopeDepth++;
+    scope_depth++;
 }
 
 void Compiler::end_scope()
 {
-    scopeDepth--;
-    while (!locals.empty() && locals.back().depth > scopeDepth) {
+    scope_depth--;
+    while (!locals.empty() && locals.back().depth > scope_depth) {
         if (locals.back().is_captured) {
             parser->emit(OpCode::CLOSE_UPVALUE);
         } else {
@@ -116,7 +116,7 @@ void Compiler::end_scope()
 
 bool Compiler::is_local()
 {
-    return scopeDepth > 0;
+    return scope_depth > 0;
 }
 
 ClassCompiler::ClassCompiler(std::unique_ptr<ClassCompiler> enclosing)
@@ -277,7 +277,7 @@ Func Parser::end_compiler()
     return function;
 }
 
-void Parser::binary(bool canAssign)
+void Parser::binary(bool can_assign)
 {
     // Remember the operator.
     auto operatorType = previous.get_type();
@@ -306,65 +306,64 @@ void Parser::binary(bool canAssign)
     }
 }
 
-void Parser::call(bool canAssign)
+void Parser::call(bool can_assign)
 {
-    auto argCount = args_list();
-    emit(OpCode::CALL, argCount);
+    auto arg_count = args_list();
+    emit(OpCode::CALL, arg_count);
 }
 
-void Parser::dot(bool canAssign)
+void Parser::dot(bool can_assign)
 {
     consume(TokenType::IDENTIFIER, "Expected property name after '.'.");
     auto name = identifier_constant(std::string(previous.get_text()));
     
-    if (canAssign && match(TokenType::EQUAL)) {
+    if (can_assign && match(TokenType::EQUAL)) {
         expression();
         emit(OpCode::SET_PROPERTY, name);
     } else if (match(TokenType::OPEN_PAREN)) {
-        auto argCount = args_list();
+        auto arg_count = args_list();
         emit(OpCode::INVOKE, name);
-        emit(argCount);
+        emit(arg_count);
     } else {
         emit(OpCode::GET_PROPERTY, name);
     }
 }
 
-void Parser::literal(bool canAssign)
+void Parser::literal(bool can_assign)
 {
     switch (previous.get_type()) {
-        case TokenType::FALSE: emit(OpCode::FALSE); break;
-        case TokenType::NULLVAL:   emit(OpCode::NULLOP); break;
-        case TokenType::TRUE:  emit(OpCode::TRUE); break;
-        default:
-            return; // Unreachable.
+        case TokenType::FALSE:      emit(OpCode::FALSE); break;
+        case TokenType::NULLVAL:    emit(OpCode::NULLOP); break;
+        case TokenType::TRUE:       emit(OpCode::TRUE); break;
+        default:                    return; // Unreachable.
     }
 }
 
-void Parser::grouping(bool canAssign)
+void Parser::grouping(bool can_assign)
 {
     expression();
     consume(TokenType::CLOSE_PAREN, "Expected ')' after expression.");
 }
 
-void Parser::number(bool canAssign)
+void Parser::number(bool can_assign)
 {
     Value value = std::stod(std::string(previous.get_text()));
     emit_constant(value);
 }
 
-void Parser::or_(bool canAssign)
+void Parser::or_(bool can_assign)
 {
-    int elseJump = emit_jump(OpCode::JUMP_IF_FALSE);
-    int endJump = emit_jump(OpCode::JUMP);
+    int else_jump = emit_jump(OpCode::JUMP_IF_FALSE);
+    int end_jump = emit_jump(OpCode::JUMP);
     
-    patch_jump(elseJump);
+    patch_jump(else_jump);
     emit(OpCode::POP);
     
     parse_precedence(Precedence::OR);
-    patch_jump(endJump);
+    patch_jump(end_jump);
 }
 
-void Parser::string_(bool canAssign)
+void Parser::string_(bool can_assign)
 {
     auto str = previous.get_text();
     str.remove_prefix(1);
@@ -372,36 +371,36 @@ void Parser::string_(bool canAssign)
     emit_constant(std::string(str));
 }
 
-void Parser::named_variable(const std::string& name, bool canAssign)
+void Parser::named_variable(const std::string& name, bool can_assign)
 {
-    OpCode getOp, setOp;
+    OpCode get_op, set_op;
     auto arg = compiler->resolve_local(name);
     if (arg != -1) {
-        getOp = OpCode::GET_LOCAL;
-        setOp = OpCode::SET_LOCAL;
+        get_op = OpCode::GET_LOCAL;
+        set_op = OpCode::SET_LOCAL;
     } else if ((arg = compiler->resolve_upvalue(name)) != -1) {
-        getOp = OpCode::GET_UPVALUE;
-        setOp = OpCode::SET_UPVALUE;
+        get_op = OpCode::GET_UPVALUE;
+        set_op = OpCode::SET_UPVALUE;
     } else {
         arg = identifier_constant(name);
-        getOp = OpCode::GET_GLOBAL;
-        setOp = OpCode::SET_GLOBAL;
+        get_op = OpCode::GET_GLOBAL;
+        set_op = OpCode::SET_GLOBAL;
     }
     
-    if (canAssign && match(TokenType::EQUAL)) {
+    if (can_assign && match(TokenType::EQUAL)) {
         expression();
-        emit(setOp, (uint8_t)arg);
+        emit(set_op, (uint8_t)arg);
     } else {
-        emit(getOp, (uint8_t)arg);
+        emit(get_op, (uint8_t)arg);
     }
 }
 
-void Parser::variable(bool canAssign)
+void Parser::variable(bool can_assign)
 {
-    named_variable(std::string(previous.get_text()), canAssign);
+    named_variable(std::string(previous.get_text()), can_assign);
 }
 
-void Parser::super(bool canAssign)
+void Parser::super(bool can_assign)
 {
     if (class_compiler == nullptr) {
         error("'super' cannot be used outside of a class.");
@@ -418,7 +417,7 @@ void Parser::super(bool canAssign)
     emit(OpCode::GET_SUPER, name);
 }
 
-void Parser::this_(bool canAssign)
+void Parser::this_(bool can_assign)
 {
     if (class_compiler == nullptr) {
         error("'this' cannot be outside of a class.");
@@ -427,25 +426,25 @@ void Parser::this_(bool canAssign)
     variable(false);
 }
 
-void Parser::and_(bool canAssign)
+void Parser::and_(bool can_assign)
 {
-    int endJump = emit_jump(OpCode::JUMP_IF_FALSE);
+    int end_jump = emit_jump(OpCode::JUMP_IF_FALSE);
     
     emit(OpCode::POP);
     parse_precedence(Precedence::AND);
     
-    patch_jump(endJump);
+    patch_jump(end_jump);
 }
 
-void Parser::unary(bool canAssign)
+void Parser::unary(bool can_assign)
 {
-    auto operatorType = previous.get_type();
+    auto operator_type = previous.get_type();
     
     // Compile the operand.
     parse_precedence(Precedence::UNARY);
     
     // Emit the operator instruciton.
-    switch (operatorType) {
+    switch (operator_type) {
         case TokenType::EXCL: emit(OpCode::NOT); break;
         case TokenType::MINUS: emit(OpCode::NEGATE); break;
         case TokenType::BW_NOT: emit(OpCode::BW_NOT); break;
@@ -457,19 +456,19 @@ void Parser::unary(bool canAssign)
 
 ParseRule& Parser::get_rule(TokenType type)
 {
-    auto grouping = [this](bool canAssign) { this->grouping(canAssign); };
-    auto unary = [this](bool canAssign) { this->unary(canAssign); };
-    auto binary = [this](bool canAssign) { this->binary(canAssign); };
-    auto call = [this](bool canAssign) { this->call(canAssign); };
-    auto dot = [this](bool canAssign) { this->dot(canAssign); };
-    auto number = [this](bool canAssign) { this->number(canAssign); };
-    auto string = [this](bool canAssign) { this->string_(canAssign); };
-    auto literal = [this](bool canAssign) { this->literal(canAssign); };
-    auto variable = [this](bool canAssign) { this->variable(canAssign); };
-    auto super_ = [this](bool canAssign) { this->super(canAssign); };
-    auto this_ = [this](bool canAssign) { this->this_(canAssign); };
-    auto and_ = [this](bool canAssign) { this->and_(canAssign); };
-    auto or_ = [this](bool canAssign) { this->or_(canAssign); };
+    auto grouping = [this](bool can_assign) { this->grouping(can_assign); };
+    auto unary = [this](bool can_assign) { this->unary(can_assign); };
+    auto binary = [this](bool can_assign) { this->binary(can_assign); };
+    auto call = [this](bool can_assign) { this->call(can_assign); };
+    auto dot = [this](bool can_assign) { this->dot(can_assign); };
+    auto number = [this](bool can_assign) { this->number(can_assign); };
+    auto string = [this](bool can_assign) { this->string_(can_assign); };
+    auto literal = [this](bool can_assign) { this->literal(can_assign); };
+    auto variable = [this](bool can_assign) { this->variable(can_assign); };
+    auto super_ = [this](bool can_assign) { this->super(can_assign); };
+    auto this_ = [this](bool can_assign) { this->this_(can_assign); };
+    auto and_ = [this](bool can_assign) { this->and_(can_assign); };
+    auto or_ = [this](bool can_assign) { this->or_(can_assign); };
     
     static ParseRule rules[] = {
         { grouping,    call,       Precedence::CALL },       // TOKEN_LEFT_PAREN
@@ -520,22 +519,22 @@ ParseRule& Parser::get_rule(TokenType type)
 void Parser::parse_precedence(Precedence precedence)
 {
     advance();
-    auto prefixRule = get_rule(previous.get_type()).prefix;
-    if (prefixRule == nullptr) {
+    auto prefix_rule = get_rule(previous.get_type()).prefix;
+    if (prefix_rule == nullptr) {
         error("Expected expression.");
         return;
     }
     
-    auto canAssign = precedence <= Precedence::ASSIGNMENT;
-    prefixRule(canAssign);
+    auto can_assign = precedence <= Precedence::ASSIGNMENT;
+    prefix_rule(can_assign);
     
     while (precedence <= get_rule(current.get_type()).precedence) {
         advance();
-        auto infixRule = get_rule(previous.get_type()).infix;
-        infixRule(canAssign);
+        auto infix_rule = get_rule(previous.get_type()).infix;
+        infix_rule(can_assign);
     }
     
-    if (canAssign && match(TokenType::EQUAL)) {
+    if (can_assign && match(TokenType::EQUAL)) {
         error("Invalid assignment target.");
         expression();
     }
@@ -568,18 +567,18 @@ void Parser::define_variable(uint8_t global)
 
 uint8_t Parser::args_list()
 {
-    uint8_t argCount = 0;
+    uint8_t arg_count = 0;
     if (!check(TokenType::CLOSE_PAREN)) {
         do {
             expression();
-            if (argCount == 255) {
+            if (arg_count == 255) {
                 error("A function cannot have more than 255 arguments.");
             }
-            argCount++;
+            arg_count++;
         } while (match(TokenType::COMMA));
     }
     consume(TokenType::CLOSE_PAREN, "Expected ')' after arguments.");
-    return argCount;
+    return arg_count;
 }
 
 void Parser::expression()
@@ -616,12 +615,12 @@ void Parser::function(FunctionType type)
     block();
     
     auto function = end_compiler();
-    auto newCompiler = std::move(compiler);
-    compiler = std::move(newCompiler->enclosing);
+    auto new_compiler = std::move(compiler);
+    compiler = std::move(new_compiler->enclosing);
 
     emit(OpCode::CLOSURE, make_constant(function));
     
-    for (const auto& upvalue : newCompiler->upvalues) {
+    for (const auto& upvalue : new_compiler->upvalues) {
         emit(upvalue.is_local ? 1 : 0);
         emit(upvalue.index);
     }
@@ -630,8 +629,8 @@ void Parser::function(FunctionType type)
 void Parser::method()
 {
     consume(TokenType::IDENTIFIER, "Expected method name.");
-    auto constant = identifier_constant(std::string(previous.get_text()));
-    auto type = previous.get_text() == "init" ? TYPE_INITIALIZER : TYPE_METHOD;
+    const auto constant = identifier_constant(std::string(previous.get_text()));
+    const auto type = previous.get_text() == "init" ? TYPE_INITIALIZER : TYPE_METHOD;
     function(type);
     emit(OpCode::METHOD, constant);
 }
@@ -639,12 +638,12 @@ void Parser::method()
 void Parser::class_declaration()
 {
     consume(TokenType::IDENTIFIER, "Expected class name.");
-    auto className = std::string(previous.get_text());
-    auto nameConstant = identifier_constant(className);
+    const auto class_name = std::string(previous.get_text());
+    const auto name_constant = identifier_constant(class_name);
     compiler->declare_variable(std::string(previous.get_text()));
     
-    emit(OpCode::CLASS, nameConstant);
-    define_variable(nameConstant);
+    emit(OpCode::CLASS, name_constant);
+    define_variable(name_constant);
     
     class_compiler = std::make_unique<ClassCompiler>(std::move(class_compiler));
     
@@ -652,7 +651,7 @@ void Parser::class_declaration()
         consume(TokenType::IDENTIFIER, "Expected superclass name.");
         variable(false);
         
-        if (className == previous.get_text()) {
+        if (class_name == previous.get_text()) {
             error("A class cannot inherit from itself.");
         }
         
@@ -660,12 +659,12 @@ void Parser::class_declaration()
         compiler->add_local("super");
         define_variable(0);
         
-        named_variable(className, false);
+        named_variable(class_name, false);
         emit(OpCode::INHERIT);
         class_compiler->has_superclass = true;
     }
     
-    named_variable(className, false);
+    named_variable(class_name, false);
     consume(TokenType::OPEN_CURLY, "Expected '{' before class body.");
     while (!check(TokenType::CLOSE_CURLY) && !check(TokenType::_EOF)) {
         method();
@@ -690,7 +689,7 @@ void Parser::func_declaration()
 
 void Parser::var_declaration()
 {
-    auto global = parse_variable("Expected variable name.");
+    const auto global = parse_variable("Expected variable name.");
 
     if (match(TokenType::EQUAL)) {
         expression();
@@ -722,37 +721,37 @@ void Parser::for_statement()
         expression_statement();
     }
     
-    int loopStart = CurrentChunk().count();
+    int loop_start = CurrentChunk().count();
     
-    int exitJump = -1;
+    int exit_jump = -1;
     if (!match(TokenType::SEMICOLON)) {
         expression();
         consume(TokenType::SEMICOLON, "Expected ';' after loop condition.");
         
         // Jump out of the loop if the condition is false.
-        exitJump = emit_jump(OpCode::JUMP_IF_FALSE);
+        exit_jump = emit_jump(OpCode::JUMP_IF_FALSE);
         emit(OpCode::POP);
     }
 
     if (!match(TokenType::CLOSE_PAREN)) {
-        int bodyJump = emit_jump(OpCode::JUMP);
+        const int body_jump = emit_jump(OpCode::JUMP);
         
-        int incrementStart = CurrentChunk().count();
+        int increment_start = CurrentChunk().count();
         expression();
         emit(OpCode::POP);
         consume(TokenType::CLOSE_PAREN, "Expected ')' after for clauses.");
         
-        emit_loop(loopStart);
-        loopStart = incrementStart;
-        patch_jump(bodyJump);
+        emit_loop(loop_start);
+        loop_start = increment_start;
+        patch_jump(body_jump);
     }
     
     statement();
     
-    emit_loop(loopStart);
+    emit_loop(loop_start);
     
-    if (exitJump != -1) {
-        patch_jump(exitJump);
+    if (exit_jump != -1) {
+        patch_jump(exit_jump);
         emit(OpCode::POP); // Condition.
     }
 
@@ -765,15 +764,15 @@ void Parser::if_statement()
     expression();
     consume(TokenType::CLOSE_PAREN, "Expected ')' after condition.");
     
-    int thenJump = emit_jump(OpCode::JUMP_IF_FALSE);
+    const int then_jump = emit_jump(OpCode::JUMP_IF_FALSE);
     emit(OpCode::POP);
     statement();
-    int elseJump = emit_jump(OpCode::JUMP);
+    const int else_jump = emit_jump(OpCode::JUMP);
     
-    patch_jump(thenJump);
+    patch_jump(then_jump);
     emit(OpCode::POP);
     if (match(TokenType::ELSE)) { statement(); }
-    patch_jump(elseJump);
+    patch_jump(else_jump);
 }
 
 void Parser::declaration()
@@ -840,20 +839,20 @@ void Parser::return_statement()
 
 void Parser::while_statement()
 {
-    int loopStart = CurrentChunk().count();
+    const int loop_start = CurrentChunk().count();
     
     consume(TokenType::OPEN_PAREN, "Expected '(' after 'while'.");
     expression();
     consume(TokenType::CLOSE_PAREN, "Expected ')' after condition.");
     
-    int exitJump = emit_jump(OpCode::JUMP_IF_FALSE);
+    const int exit_jump = emit_jump(OpCode::JUMP_IF_FALSE);
     
     emit(OpCode::POP);
     statement();
     
-    emit_loop(loopStart);
+    emit_loop(loop_start);
     
-    patch_jump(exitJump);
+    patch_jump(exit_jump);
     emit(OpCode::POP);
 }
 
@@ -888,15 +887,15 @@ void Parser::error_at(const Token& token, const std::string& message)
     
     panic_mode = true;
     
-    std::cerr << "[line " << token.get_line() << "] Error";
+    fmt::print(stderr, "[line {} ] Error", token.get_line());
     if (token.get_type() == TokenType::_EOF) {
-        std::cerr << " at end";
+        fmt::print(stderr, " at end");
     } else if (token.get_type() == TokenType::ERROR) {
         // Nothing.
     } else {
-        std::cerr << " at '" << token.get_text() << "'";
+        fmt::print(stderr, " at '{}'", token.get_text());
     }
     
-    std::cerr << ": " << message << std::endl;
+    fmt::print(stderr, ": {}\n", message);
     had_error = true;
 }
