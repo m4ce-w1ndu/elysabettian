@@ -1,10 +1,3 @@
-//
-//  Compiler.hpp
-//  CElysabettian
-//
-//  Created by Simone Rolando on 11/07/21.
-//
-
 #ifndef COMPILER_HPP
 #define COMPILER_HPP
 

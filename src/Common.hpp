@@ -1,10 +1,3 @@
-//
-//  Common.hpp
-//  CElysabettian
-//
-//  Created by Simone Rolando on 11/07/21.
-//
-
 #ifndef COMMON_HPP
 #define COMMON_HPP
 

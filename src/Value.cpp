@@ -1,10 +1,3 @@
-//
-//  Value.cpp
-//  CElysabettian
-//
-//  Created by Simone Rolando on 11/07/21.
-//
-
 #include "Value.hpp"
 
 void Chunk::write(uint8_t byte, int line)

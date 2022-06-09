@@ -1,10 +1,3 @@
-//
-//  VirtualMachine.hpp
-//  CElysabettian
-//
-//  Created by Simone Rolando on 11/07/21.
-//
-
 #ifndef VIRTUALMACHINE_HPP
 #define VIRTUALMACHINE_HPP
 

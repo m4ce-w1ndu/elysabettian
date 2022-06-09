@@ -1,10 +1,3 @@
-//
-//  Compiler.cpp
-//  CElysabettian
-//
-//  Created by Simone Rolando on 11/07/21.
-//
-
 #include "Compiler.hpp"
 
 Compiler::Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing)
@@ -47,7 +40,7 @@ void Compiler::mark_initialized()
 
 int Compiler::resolve_local(const std::string& name)
 {
-    for (long i = locals.size() - 1; i >=0; i--) {
+    for (long i = static_cast<long>(locals.size() - 1); i >=0; i--) {
         if (locals[i].name == name) {
             if (locals[i].depth == -1) {
                 parser->error("Can't read local variable in its own initializer.");

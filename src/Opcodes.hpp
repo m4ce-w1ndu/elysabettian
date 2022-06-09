@@ -1,10 +1,3 @@
-//
-//  Opcodes.hpp
-//  CElysabettian
-//
-//  Created by Simone Rolando on 11/07/21.
-//
-
 #ifndef OPCODE_HPP
 #define OPCODE_HPP
 

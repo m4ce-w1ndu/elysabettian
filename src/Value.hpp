@@ -1,10 +1,3 @@
-//
-//  Value.hpp
-//  CElysabettian
-//
-//  Created by Simone Rolando on 11/07/21.
-//
-
 #ifndef VALUE_HPP
 #define VALUE_HPP
 
