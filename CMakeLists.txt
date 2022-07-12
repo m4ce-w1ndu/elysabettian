@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(CElysabettian CXX)
 
-set(exec cely)
+set(exec ely)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED 17)

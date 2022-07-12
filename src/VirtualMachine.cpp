@@ -3,6 +3,9 @@
 #include <cstdarg>
 #include <exception>
 
+/**
+ * @brief Creates a recursive list of overloads for the given visitor function.
+ */
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
@@ -437,17 +440,17 @@ IResult VM::Run()
                         return true;
                     },
 					[this](std::string a, double b) -> bool {
-						std::string bStr = std::to_string(b);
-                        bStr.erase(bStr.find_last_not_of('0') + 1, std::string::npos);
-                        bStr.erase(bStr.find_last_not_of('.') + 1, std::string::npos);
-						this->double_pop_and_push(bStr + a);
+						std::string bstr = std::to_string(b);
+                        bstr.erase(bstr.find_last_not_of('0') + 1, std::string::npos);
+                        bstr.erase(bstr.find_last_not_of('.') + 1, std::string::npos);
+						this->double_pop_and_push(bstr + a);
 						return true;
 					},
 					[this](double a, std::string b) -> bool {
-						std::string aStr = std::to_string(a);
-                        aStr.erase(aStr.find_last_not_of('0') + 1, std::string::npos);
-                        aStr.erase(aStr.find_last_not_of('.') + 1, std::string::npos);
-						this->double_pop_and_push(b + aStr);
+						std::string astr = std::to_string(a);
+                        astr.erase(astr.find_last_not_of('0') + 1, std::string::npos);
+                        astr.erase(astr.find_last_not_of('.') + 1, std::string::npos);
+						this->double_pop_and_push(b + astr);
 						return true;
 					},
                     [this](auto a, auto b) -> bool {
@@ -472,9 +475,9 @@ IResult VM::Run()
             
             case OpCode::BW_NOT: {
                 try {
-                    auto bwNotted = ~static_cast<int>(std::get<double>(peek(0)));
+                    auto bw_notted = ~static_cast<int>(std::get<double>(peek(0)));
                     pop();
-                    push(static_cast<double>(bwNotted));
+                    push(static_cast<double>(bw_notted));
                 } catch (std::bad_variant_access) {
                     runtime_error("Operand must be a number.");
                     return IResult::RUNTIME_ERROR;
@@ -549,9 +552,9 @@ IResult VM::Run()
                 auto closure = std::make_shared<ClosureObject>(function);
                 push(closure);
                 for (int i = 0; i < static_cast<int>(closure->upvalues.size()); i++) {
-                    auto isLocal = read_byte();
+                    auto is_local = read_byte();
                     auto index = read_byte();
-                    if (isLocal) {
+                    if (is_local) {
                         closure->upvalues[i] = capture_upvalue(&stack[frames.back().stack_offset + index]);
                     } else {
                         closure->upvalues[i] = frames.back().closure->upvalues[index];

@@ -59,7 +59,6 @@ class VM {
     inline void push(const Value& v)
     {
         stack.push_back(v);
-        
     }
     
     inline Value pop()
@@ -172,7 +171,7 @@ public:
         };
 
         auto native_version = [](int argc, std::vector<Value>::iterator args) -> Value {
-            fmt::print("Elysabettian 1.0 Maurizio\n");
+            fmt::print("{}\n", VERSION_FULLNAME);
             return "Elysabettian 1.0 Maurizio";
         };
 
@@ -184,7 +183,6 @@ public:
         // Load arrays
         for (const auto& func : array_lib.functions)
             define_native(func.first, func.second);
-
 
         stack.reserve(STACK_MAX);
         open_upvalues = nullptr;

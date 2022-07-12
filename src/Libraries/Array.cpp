@@ -6,14 +6,14 @@ namespace Library {
 
         // Functions
         {
-            { "Array", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__Array", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc > 0) {
                     fprintf(stderr, "Error: Array() constructor expects 0 paramters. Got %d.\n", argc);
                     return std::monostate();
                 }
                 return std::make_shared<ArrayObject>();
             }},
-            { "arrayPush", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__arrayPush", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 2) {
                     fprintf(stderr, "Error: arrayPush(array, [items...]) expects at least 2 paramters. Got %d.\n", argc);
                     return std::monostate();
@@ -32,7 +32,7 @@ namespace Library {
 					return std::monostate();
 				}
             }},
-            { "arrayGet", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__arrayGet", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc > 2 || argc < 2) {
                     fprintf(stderr, "Error: arrayGet(array, index) expects 2 paramters. Got %d.\n", argc);
                     return std::monostate();
@@ -56,7 +56,7 @@ namespace Library {
 					return std::monostate();
 				}
             }},
-            { "arraySet", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__arraySet", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc > 3 || argc < 3) {
                     fprintf(stderr, "Error: arraySet(array, index, item) expects 3 paramters. Got %d.\n", argc);
                     return std::monostate();
@@ -83,7 +83,7 @@ namespace Library {
 					return std::monostate();
                 }
             }},
-            { "arrayLen", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__arrayLen", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc > 1 || argc < 1) {
                     fprintf(stderr, "Error: arrayLen(array) expects 1 paramters. Got %d.\n", argc);
                     return std::monostate();

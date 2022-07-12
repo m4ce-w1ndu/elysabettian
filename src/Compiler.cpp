@@ -70,10 +70,10 @@ int Compiler::resolve_upvalue(const std::string& name)
     return -1;
 }
 
-int Compiler::add_upvalue(uint8_t index, bool isLocal)
+int Compiler::add_upvalue(uint8_t index, bool is_local)
 {
     for (long i = 0; i < upvalues.size(); i++) {
-        if (upvalues[i].index == index && upvalues[i].is_local == isLocal) {
+        if (upvalues[i].index == index && upvalues[i].is_local == is_local) {
             return static_cast<int>(i);
         }
     }
@@ -83,7 +83,7 @@ int Compiler::add_upvalue(uint8_t index, bool isLocal)
         return 0;
     }
 
-    upvalues.emplace_back(Upvalue(index, isLocal));
+    upvalues.emplace_back(Upvalue(index, is_local));
     auto upvalue_count = static_cast<int>(upvalues.size());
     function->upvalue_count = upvalue_count;
     return upvalue_count - 1;
