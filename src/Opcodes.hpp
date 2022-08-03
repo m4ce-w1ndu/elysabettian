@@ -41,8 +41,8 @@ enum class OpCode : uint8_t {
     CLASS,
     INHERIT,
     METHOD,
-    BW_OR,
     BW_AND,
+    BW_OR,
     BW_NOT,
     BW_XOR
 };
