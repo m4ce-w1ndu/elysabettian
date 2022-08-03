@@ -27,6 +27,7 @@ Token Tokenizer::scan_token()
         case '+': return make_token(TokenType::PLUS);
         case '/': return make_token(TokenType::SLASH);
         case '*': return make_token(TokenType::STAR);
+        case '^': return make_token(TokenType::BW_XOR);
         case '&': return make_token(match('&') ? TokenType::AND : TokenType::BW_AND);
         case '|': return make_token(match('|') ? TokenType::OR : TokenType::BW_OR);
         case '!':
