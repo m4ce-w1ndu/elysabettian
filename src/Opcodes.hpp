@@ -43,8 +43,8 @@ enum class OpCode : uint8_t {
     METHOD,
     BW_AND,
     BW_OR,
+    BW_XOR,
     BW_NOT,
-    BW_XOR
 };
 
 

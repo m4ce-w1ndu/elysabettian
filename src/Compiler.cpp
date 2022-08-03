@@ -504,6 +504,10 @@ ParseRule& Parser::get_rule(TokenType type)
         { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_WHILE
         { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_ERROR
         { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_EOF
+        { nullptr,     binary,     Precedence::TERM },       // TOKEN_BW_AND
+        { nullptr,     binary,     Precedence::TERM },       // TOKEN_BW_OR
+        { nullptr,     binary,     Precedence::TERM },       // TOKEN_BW_XOR
+        { unary,       nullptr,    Precedence::UNARY},       // TOKEN_BW_NOT
     };
     
     return rules[static_cast<int>(type)];

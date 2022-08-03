@@ -29,7 +29,7 @@ enum class TokenType {
     _EOF,
     
     // Bitwise operations
-    BW_AND, BW_OR, BW_NOT, BW_XOR
+    BW_AND, BW_OR, BW_XOR, BW_NOT,
 };
 
 class Token {
