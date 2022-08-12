@@ -42,12 +42,11 @@ Token Tokenizer::scan_token()
             
         case '"': return string_();
         case '\'': return string_('\'');
+        default: return error_token("Unexpected character.");
     }
-    
-    return error_token("Unexpected character.");
 }
 
-bool Tokenizer::is_at_end()
+bool Tokenizer::is_at_end() const
 {
     return current == source.length();
 }
@@ -85,7 +84,7 @@ Token Tokenizer::make_token(TokenType type)
     return Token(type, text, line);
 }
 
-Token Tokenizer::error_token(const std::string& message)
+Token Tokenizer::error_token(const std::string& message) const
 {
     return Token(TokenType::ERROR, message, line);
 }
@@ -120,7 +119,7 @@ void Tokenizer::skip_whitespace()
     }
 }
 
-TokenType Tokenizer::check_keyword(size_t pos, size_t len, std::string rest, TokenType type)
+TokenType Tokenizer::check_keyword(size_t pos, size_t len, const std::string_view& rest, TokenType type) const
 {
     if (current - start == pos + len && source.compare(start + pos, len, rest) == 0) {
         return type;
@@ -140,6 +139,7 @@ TokenType Tokenizer::identifier_type()
                     case 'a': return check_keyword(2, 3, "lse", TokenType::FALSE);
                     case 'o': return check_keyword(2, 1, "r", TokenType::FOR);
                     case 'u': return check_keyword(2, 2, "nc", TokenType::FUN);
+                    default: return TokenType::IDENTIFIER;
                 }
             }
             break;
@@ -153,13 +153,15 @@ TokenType Tokenizer::identifier_type()
                 switch (source[start + 1]) {
                     case 'h': return check_keyword(2, 2, "is", TokenType::THIS);
                     case 'r': return check_keyword(2, 2, "ue", TokenType::TRUE);
+                    default: return TokenType::IDENTIFIER;
                 }
             }
             break;
         case 'v': return check_keyword(1, 2, "ar", TokenType::VAR);
         case 'w': return check_keyword(1, 4, "hile", TokenType::WHILE);
+        default: return TokenType::IDENTIFIER;
     }
-    
+
     return TokenType::IDENTIFIER;
 }
 
