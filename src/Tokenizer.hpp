@@ -30,6 +30,9 @@ enum class TokenType {
     
     // Bitwise operations
     BW_AND, BW_OR, BW_XOR, BW_NOT,
+
+    // Array index notation
+    OPEN_SQUARE, CLOSE_SQUARE,
 };
 
 class Token {
