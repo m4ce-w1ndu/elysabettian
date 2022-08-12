@@ -106,11 +106,8 @@ void Tokenizer::skip_whitespace()
                 break;
                 
             case '/':
-                if (peek_next() == '/') {
-                    while (peek() != '\n' && !is_at_end()) advance();
-                } else {
-                    return;
-                }
+                if (peek_next() != '/') return;
+                while (peek() != '\n' && !is_at_end()) advance();
                 break;
                 
             default:
