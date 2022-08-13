@@ -1,10 +1,10 @@
 #include "Compiler.hpp"
 
 Compiler::Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing)
-    : parser(parser), type(type), function(std::make_shared<FunctionObject>(0, "")), enclosing(std::move(enclosing))
+    : parser(parser), type(type), function{default_function}, enclosing(std::move(enclosing))
 {
-        locals.emplace_back(Local(type == TYPE_FUNCTION ? "" : "this", 0));
-        if (type != TYPE_SCRIPT) {
+        locals.emplace_back(type == FunctionType::TYPE_FUNCTION ? "" : "this", 0);
+        if (type != FunctionType::TYPE_SCRIPT) {
             function->name = parser->previous.get_text();
         }
 };
@@ -15,14 +15,14 @@ void Compiler::add_local(const std::string& name)
         parser->error("Too many local variables in function.");
         return;
     }
-    locals.emplace_back(Local(name, -1));
+    locals.emplace_back(name, -1);
 }
 
 void Compiler::declare_variable(const std::string& name)
 {
     if (scope_depth == 0) return;
     
-    for (size_t i = locals.size() - 1; i >= 0; i--) {
+    for (auto i = static_cast<long long>(locals.size() - 1); i >= 0; i--) {
         if (locals[i].depth != -1 && locals[i].depth < scope_depth) break;
         if (locals[i].name == name) {
             parser->error("Already a variable with this name in this scope.");
@@ -38,9 +38,9 @@ void Compiler::mark_initialized()
     locals.back().depth = scope_depth;
 }
 
-int Compiler::resolve_local(const std::string& name)
+int Compiler::resolve_local(const std::string_view& name)
 {
-    for (long i = static_cast<long>(locals.size() - 1); i >=0; i--) {
+    for (auto i = static_cast<long>(locals.size() - 1); i >=0; i--) {
         if (locals[i].name == name) {
             if (locals[i].depth == -1) {
                 parser->error("Can't read local variable in its own initializer.");
@@ -55,15 +55,13 @@ int Compiler::resolve_local(const std::string& name)
 int Compiler::resolve_upvalue(const std::string& name)
 {
     if (enclosing == nullptr) return -1;
-    
-    int local = enclosing->resolve_local(name);
-    if (local != -1) {
+
+    if (int local = enclosing->resolve_local(name); local != -1) {
         enclosing->locals[local].is_captured = true;
         return add_upvalue(static_cast<uint8_t>(local), true);
     }
-    
-    int upvalue = enclosing->resolve_upvalue(name);
-    if (upvalue != -1) {
+
+    if (int upvalue = enclosing->resolve_upvalue(name); upvalue != -1) {
         return add_upvalue(static_cast<uint8_t>(upvalue), false);
     }
     
@@ -107,22 +105,22 @@ void Compiler::end_scope()
     }
 }
 
-bool Compiler::is_local()
+bool Compiler::is_local() const
 {
     return scope_depth > 0;
 }
 
 ClassCompiler::ClassCompiler(std::unique_ptr<ClassCompiler> enclosing)
-    : enclosing(std::move(enclosing)), has_superclass(false) {};
+    : enclosing(std::move(enclosing)), has_superclass{superclass_default} {};
 
 Parser::Parser(const std::string& source) :
     previous(Token(TokenType::_EOF, source, 0)),
     current(Token(TokenType::_EOF, source, 0)),
     scanner(Tokenizer(source)),
-    class_compiler(nullptr),
-    had_error(false), panic_mode(false)
+    class_compiler{null_value},
+    had_error{false_value}, panic_mode{false_value}
 {
-    compiler = std::make_unique<Compiler>(this, TYPE_SCRIPT, nullptr);
+    compiler = std::make_unique<Compiler>(this, FunctionType::TYPE_SCRIPT, nullptr);
     advance();
 }
 
@@ -162,7 +160,7 @@ void Parser::consume(TokenType type, const std::string& message)
     error_at_current(message);
 }
 
-bool Parser::check(TokenType type)
+bool Parser::check(TokenType type) const
 {
     return current.get_type() == type;
 }
@@ -217,7 +215,7 @@ int Parser::emit_jump(OpCode op)
 
 void Parser::emit_return()
 {
-    if (compiler->type == TYPE_INITIALIZER) {
+    if (compiler->type == FunctionType::TYPE_INITIALIZER) {
         emit(OpCode::GET_LOCAL, 0);
     } else {
         emit(OpCode::NULLOP);
@@ -225,7 +223,7 @@ void Parser::emit_return()
     emit(OpCode::RETURN);
 }
 
-uint8_t Parser::make_constant(Value value)
+uint8_t Parser::make_constant(const Value& value)
 {
     auto constant = CurrentChunk().add_constant(value);
     if (constant > UINT8_MAX) {
@@ -236,7 +234,7 @@ uint8_t Parser::make_constant(Value value)
     return (uint8_t)constant;
 }
 
-void Parser::emit_constant(Value value)
+void Parser::emit_constant(const Value& value)
 {
     emit(OpCode::CONSTANT, make_constant(value));
 }
@@ -270,7 +268,7 @@ Func Parser::end_compiler()
     return function;
 }
 
-void Parser::binary(bool can_assign)
+void Parser::binary([[maybe_unused]] bool can_assign)
 {
     // Remember the operator.
     auto operatorType = previous.get_type();
@@ -299,30 +297,30 @@ void Parser::binary(bool can_assign)
     }
 }
 
-void Parser::call(bool can_assign)
+void Parser::call([[maybe_unused]] bool can_assign)
 {
     auto arg_count = args_list();
     emit(OpCode::CALL, arg_count);
 }
 
-void Parser::dot(bool can_assign)
+void Parser::dot([[maybe_unused]] bool can_assign)
 {
     consume(TokenType::IDENTIFIER, "Expected property name after '.'.");
     auto name = identifier_constant(std::string(previous.get_text()));
     
     if (can_assign && match(TokenType::EQUAL)) {
         expression();
-        emit(OpCode::SET_PROPERTY, name);
+        emit(OpCode::SET_PROPERTY, static_cast<uint8_t>(name));
     } else if (match(TokenType::OPEN_PAREN)) {
         auto arg_count = args_list();
-        emit(OpCode::INVOKE, name);
+        emit(OpCode::INVOKE, static_cast<uint8_t>(name));
         emit(arg_count);
     } else {
-        emit(OpCode::GET_PROPERTY, name);
+        emit(OpCode::GET_PROPERTY, static_cast<uint8_t>(name));
     }
 }
 
-void Parser::literal(bool can_assign)
+void Parser::literal([[maybe_unused]] bool can_assign)
 {
     switch (previous.get_type()) {
         case TokenType::FALSE:      emit(OpCode::FALSE); break;
@@ -332,19 +330,19 @@ void Parser::literal(bool can_assign)
     }
 }
 
-void Parser::grouping(bool can_assign)
+void Parser::grouping([[maybe_unused]] bool can_assign)
 {
     expression();
     consume(TokenType::CLOSE_PAREN, "Expected ')' after expression.");
 }
 
-void Parser::number(bool can_assign)
+void Parser::number([[maybe_unused]] bool can_assign)
 {
     Value value = std::stod(std::string(previous.get_text()));
     emit_constant(value);
 }
 
-void Parser::or_(bool can_assign)
+void Parser::or_([[maybe_unused]] bool can_assign)
 {
     int else_jump = emit_jump(OpCode::JUMP_IF_FALSE);
     int end_jump = emit_jump(OpCode::JUMP);
@@ -356,7 +354,7 @@ void Parser::or_(bool can_assign)
     patch_jump(end_jump);
 }
 
-void Parser::string_(bool can_assign)
+void Parser::string_([[maybe_unused]] bool can_assign)
 {
     auto str = previous.get_text();
     str.remove_prefix(1);
@@ -366,7 +364,8 @@ void Parser::string_(bool can_assign)
 
 void Parser::named_variable(const std::string& name, bool can_assign)
 {
-    OpCode get_op, set_op;
+    OpCode get_op;
+    OpCode set_op;
     auto arg = compiler->resolve_local(name);
     if (arg != -1) {
         get_op = OpCode::GET_LOCAL;
@@ -388,12 +387,12 @@ void Parser::named_variable(const std::string& name, bool can_assign)
     }
 }
 
-void Parser::variable(bool can_assign)
+void Parser::variable([[maybe_unused]] bool can_assign)
 {
     named_variable(std::string(previous.get_text()), can_assign);
 }
 
-void Parser::super(bool can_assign)
+void Parser::super([[maybe_unused]] bool can_assign)
 {
     if (class_compiler == nullptr) {
         error("'super' cannot be used outside of a class.");
@@ -407,10 +406,10 @@ void Parser::super(bool can_assign)
     
     named_variable("this", false);
     named_variable("super", false);
-    emit(OpCode::GET_SUPER, name);
+    emit(OpCode::GET_SUPER, static_cast<uint8_t>(name));
 }
 
-void Parser::this_(bool can_assign)
+void Parser::this_([[maybe_unused]] bool can_assign)
 {
     if (class_compiler == nullptr) {
         error("'this' cannot be outside of a class.");
@@ -419,7 +418,7 @@ void Parser::this_(bool can_assign)
     variable(false);
 }
 
-void Parser::and_(bool can_assign)
+void Parser::and_([[maybe_unused]] bool can_assign)
 {
     int end_jump = emit_jump(OpCode::JUMP_IF_FALSE);
     
@@ -429,7 +428,7 @@ void Parser::and_(bool can_assign)
     patch_jump(end_jump);
 }
 
-void Parser::unary(bool can_assign)
+void Parser::unary([[maybe_unused]] bool can_assign)
 {
     auto operator_type = previous.get_type();
     
@@ -463,7 +462,7 @@ ParseRule& Parser::get_rule(TokenType type)
     auto and_ = [this](bool can_assign) { this->and_(can_assign); };
     auto or_ = [this](bool can_assign) { this->or_(can_assign); };
     
-    static ParseRule rules[] = {
+    static std::array<ParseRule, 44> rules = {{
         { grouping,    call,       Precedence::CALL },       // TOKEN_LEFT_PAREN
         { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_RIGHT_PAREN
         { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_LEFT_BRACE
@@ -508,7 +507,7 @@ ParseRule& Parser::get_rule(TokenType type)
         { nullptr,     binary,     Precedence::TERM },       // TOKEN_BW_OR
         { nullptr,     binary,     Precedence::TERM },       // TOKEN_BW_XOR
         { unary,       nullptr,    Precedence::UNARY},       // TOKEN_BW_NOT
-    };
+    }};
     
     return rules[static_cast<int>(type)];
 }
@@ -549,7 +548,7 @@ uint8_t Parser::parse_variable(const std::string& errorMessage)
     compiler->declare_variable(std::string(previous.get_text()));
     if (compiler->is_local()) return 0;
     
-    return identifier_constant(std::string(previous.get_text()));
+    return static_cast<uint8_t>(identifier_constant(std::string(previous.get_text())));
 }
 
 void Parser::define_variable(uint8_t global)
@@ -627,9 +626,9 @@ void Parser::method()
 {
     consume(TokenType::IDENTIFIER, "Expected method name.");
     const auto constant = identifier_constant(std::string(previous.get_text()));
-    const auto type = previous.get_text() == "init" ? TYPE_INITIALIZER : TYPE_METHOD;
+    const auto type = previous.get_text() == "init" ? FunctionType::TYPE_INITIALIZER : FunctionType::TYPE_METHOD;
     function(type);
-    emit(OpCode::METHOD, constant);
+    emit(OpCode::METHOD, static_cast<uint8_t>(constant));
 }
 
 void Parser::class_declaration()
@@ -639,8 +638,8 @@ void Parser::class_declaration()
     const auto name_constant = identifier_constant(class_name);
     compiler->declare_variable(std::string(previous.get_text()));
     
-    emit(OpCode::CLASS, name_constant);
-    define_variable(name_constant);
+    emit(OpCode::CLASS, static_cast<uint8_t>(name_constant));
+    define_variable(static_cast<uint8_t>(name_constant));
     
     class_compiler = std::make_unique<ClassCompiler>(std::move(class_compiler));
     
@@ -680,7 +679,7 @@ void Parser::func_declaration()
 {
     auto global = parse_variable("Expected function name.");
     compiler->mark_initialized();
-    function(TYPE_FUNCTION);
+    function(FunctionType::TYPE_FUNCTION);
     define_variable(global);
 }
 
@@ -817,14 +816,14 @@ void Parser::print_statement()
 
 void Parser::return_statement()
 {
-    if (compiler->type == TYPE_SCRIPT) {
+    if (compiler->type == FunctionType::TYPE_SCRIPT) {
         error("Cannot return from top-level code.");
     }
     
     if (match(TokenType::SEMICOLON)) {
         emit_return();
     } else {
-        if (compiler->type == TYPE_INITIALIZER) {
+        if (compiler->type == FunctionType::TYPE_INITIALIZER) {
             error("Cannot return a value from an initializer.");
         }
         

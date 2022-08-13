@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <cstddef>
 
 enum class Precedence {
     NONE,
@@ -24,7 +25,7 @@ enum class Precedence {
 
 class Parser;
 
-typedef void (Parser::*ParseFn)(bool can_assign);
+using ParseFn = void (Parser::*)(bool);
 
 struct ParseRule {
     std::function<void(bool)> prefix;
@@ -33,10 +34,12 @@ struct ParseRule {
 };
 
 struct Local {
+    const bool false_value = false;
+    
     std::string name;
     int depth;
     bool is_captured;
-    Local(std::string name, int depth): name(name), depth(depth), is_captured(false) {};
+    Local(const std::string& name, int depth): name(name), depth(depth), is_captured{false_value} {};
 };
 
 class Upvalue {
@@ -47,13 +50,12 @@ public:
         : index(index), is_local(is_local) {}
 };
 
-class Parser;
-
-typedef enum {
+enum class FunctionType {
     TYPE_FUNCTION, TYPE_INITIALIZER, TYPE_METHOD, TYPE_SCRIPT
-} FunctionType;
+};
 
 class Compiler {
+    const Func default_function = std::make_shared<FunctionObject>(0, "");
     Parser* parser;
 
     FunctionType type;
@@ -70,17 +72,19 @@ public:
     void add_local(const std::string& name);
     void declare_variable(const std::string& name);
     void mark_initialized();
-    int resolve_local(const std::string& name);
+    int resolve_local(const std::string_view& name);
     int resolve_upvalue(const std::string& name);
     int add_upvalue(uint8_t index, bool is_local);
     void begin_scope();
     void end_scope();
-    bool is_local();
+    bool is_local() const;
 
     friend Parser;
 };
 
 class ClassCompiler {
+    const bool superclass_default = false;
+
     std::unique_ptr<ClassCompiler> enclosing;
     bool has_superclass;
 public:
@@ -89,6 +93,9 @@ public:
 };
 
 class Parser {
+    const std::nullptr_t null_value = nullptr;
+    const bool false_value = false;
+
     Token previous;
     Token current;
     Tokenizer scanner;
@@ -100,7 +107,7 @@ class Parser {
     
     void advance();
     void consume(TokenType type, const std::string& message);
-    bool check(TokenType type);
+    bool check(TokenType type) const;
     bool match(TokenType type);
     
     void emit(uint8_t byte);
@@ -110,8 +117,8 @@ class Parser {
     void emit_loop(int loopStart);
     int emit_jump(OpCode op);
     void emit_return();
-    uint8_t make_constant(Value value);
-    void emit_constant(Value value);
+    uint8_t make_constant(const Value& value);
+    void emit_constant(const Value& value);
     void patch_jump(int offset);
     
     Func end_compiler();
@@ -168,7 +175,7 @@ class Parser {
     friend Compiler;
     
 public:
-    Parser(const std::string& source);
+    explicit Parser(const std::string& source);
     Chunk& CurrentChunk()
     {
         return compiler->function->get_chunk();
