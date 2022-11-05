@@ -1,4 +1,4 @@
-#include "Library.hpp"
+#include "library.hpp"
 
 namespace Library {
 	Library::Library(const std::unordered_map<std::string, NativeFn> functions,

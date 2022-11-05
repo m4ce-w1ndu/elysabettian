@@ -1,4 +1,4 @@
-#include "Library.hpp"
+#include "library.hpp"
 
 #include <random>
 #include <cmath>

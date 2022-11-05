@@ -6,7 +6,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include "Value.hpp"
+#include "value.hpp"
 
 namespace Library {
 	struct Library {

@@ -1,9 +1,9 @@
 #include <fstream>
 #include <cstring>
 
-#include "Common.hpp"
-#include "Value.hpp"
-#include "VirtualMachine.hpp"
+#include "common.hpp"
+#include "value.hpp"
+#include "virtual_machine.hpp"
 
 static void Repl(VM& vm)
 {

@@ -1,10 +1,10 @@
 #ifndef VIRTUALMACHINE_HPP
 #define VIRTUALMACHINE_HPP
 
-#include "Value.hpp"
-#include "Compiler.hpp"
+#include "value.hpp"
+#include "compiler.hpp"
 
-#include "Library.hpp"
+#include "library.hpp"
 
 #include <unordered_map>
 #include <map>

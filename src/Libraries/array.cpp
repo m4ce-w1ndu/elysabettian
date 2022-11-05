@@ -1,4 +1,4 @@
-#include "Library.hpp"
+#include "library.hpp"
 
 namespace Library {
     NativeArray::NativeArray()

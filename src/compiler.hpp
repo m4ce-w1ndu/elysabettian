@@ -1,8 +1,8 @@
 #ifndef COMPILER_HPP
 #define COMPILER_HPP
 
-#include "Tokenizer.hpp"
-#include "Value.hpp"
+#include "tokenizer.hpp"
+#include "value.hpp"
 
 #include <iostream>
 #include <memory>

@@ -1,8 +1,8 @@
 #ifndef VALUE_HPP
 #define VALUE_HPP
 
-#include "Common.hpp"
-#include "Opcodes.hpp"
+#include "common.hpp"
+#include "opcodes.hpp"
 
 #include <variant>
 #include <memory>

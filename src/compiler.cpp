@@ -1,4 +1,4 @@
-#include "Compiler.hpp"
+#include "compiler.hpp"
 
 Compiler::Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing)
     : parser(parser), type(type), function{default_function}, enclosing(std::move(enclosing))
