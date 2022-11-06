@@ -3,7 +3,7 @@
 
 #include <string>
 
-enum class TokenType {
+enum class token_type_t {
     // Single-character tokens.
     OPEN_PAREN, CLOSE_PAREN,
     OPEN_CURLY, CLOSE_CURLY,
@@ -35,21 +35,21 @@ enum class TokenType {
     OPEN_SQUARE, CLOSE_SQUARE,
 };
 
-class Token {
-    TokenType type;
+class token_t {
+    token_type_t type;
     std::string_view text;
     int line;
     
 public:
-    Token(TokenType type, std::string_view text, int line):
+    token_t(token_type_t type, std::string_view text, int line):
         type(type), text(text), line(line) {};
     
-    TokenType get_type() const { return type; };
+    token_type_t get_type() const { return type; };
     std::string_view get_text() const { return text; };
     int get_line() const { return line; };
 };
 
-class Tokenizer {
+class tokenizer_t {
     
     const std::string::size_type start_default { 0u };
     const std::string::size_type current_default { 0u };
@@ -66,24 +66,24 @@ class Tokenizer {
     char peek_next();
     bool match(char expected);
     
-    Token make_token(TokenType type);
-    Token error_token(const std::string& message) const;
+    token_t make_token(token_type_t type);
+    token_t error_token(const std::string& message) const;
     
     void skip_whitespace();
-    TokenType check_keyword(size_t pos, size_t len, const std::string_view& rest, TokenType type) const;
-    TokenType identifier_type();
-    Token identifier();
-    Token number();
-    Token string_(const char open_char = '"');
+    token_type_t check_keyword(size_t pos, size_t len, const std::string_view& rest, token_type_t type) const;
+    token_type_t identifier_type();
+    token_t identifier();
+    token_t number();
+    token_t string_(const char open_char = '"');
     
 public:
-    explicit Tokenizer(const std::string& source):
+    explicit tokenizer_t(const std::string& source):
         source{source},
         start{start_default},
         current{current_default},
         line{line_default} {};
     
-    Token scan_token();
+    token_t scan_token();
 };
 
 #endif /* scanner_hpp */

@@ -96,9 +96,9 @@ class parser_t {
     const std::nullptr_t null_value = nullptr;
     const bool false_value = false;
 
-    Token previous;
-    Token current;
-    Tokenizer scanner;
+    token_t previous;
+    token_t current;
+    tokenizer_t scanner;
     std::unique_ptr<compiler_t> compiler;
     std::unique_ptr<class_compiler_t> class_compiler;
     
@@ -106,9 +106,9 @@ class parser_t {
     bool panic_mode;
     
     void advance();
-    void consume(TokenType type, const std::string& message);
-    bool check(TokenType type) const;
-    bool match(TokenType type);
+    void consume(token_type_t type, const std::string& message);
+    bool check(token_type_t type) const;
+    bool match(token_type_t type);
     
     void emit(uint8_t byte);
     void emit(opcode_t op);
@@ -137,7 +137,7 @@ class parser_t {
     void this_(bool can_assign);
     void and_(bool can_assign);
     void unary(bool can_assign);
-    parse_rule_t& get_rule(TokenType type);
+    parse_rule_t& get_rule(token_type_t type);
     void parse_precedence(precedence_t precedence);
     int identifier_constant(const std::string& name);
     uint8_t parse_variable(const std::string& errorMessage);
@@ -160,7 +160,7 @@ class parser_t {
     void while_statement();
     void sync();
 
-    void error_at(const Token& token, const std::string& message);
+    void error_at(const token_t& token, const std::string& message);
     
     void error(const std::string& message)
     {
