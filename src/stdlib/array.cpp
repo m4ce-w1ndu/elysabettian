@@ -1,8 +1,8 @@
 #include "library.hpp"
 
-namespace Library {
-    NativeArray::NativeArray()
-    : Library({
+namespace stdlib {
+    libnativearray::libnativearray()
+    : library_t({
 
         // Functions
         {

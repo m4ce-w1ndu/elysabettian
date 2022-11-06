@@ -3,8 +3,8 @@
 #include <random>
 #include <cmath>
 
-namespace Library {
-	Math::Math() : Library(
+namespace stdlib {
+	libmath::libmath() : library_t(
 		// Functions
 		{ 
             {"acos", [](int argc, std::vector<Value>::iterator args) -> Value {

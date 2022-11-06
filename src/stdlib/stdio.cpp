@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstring>
 
-namespace Library {
+namespace stdlib {
 
 	static const inline bool is_number(const std::string& str)
 	{
@@ -28,8 +28,8 @@ namespace Library {
 	}
 
 
-	StdIO::StdIO()
-	: Library({
+	libstdio::libstdio()
+	: library_t({
 		// Console I/O
 		{ "read", [](int argc, std::vector<Value>::iterator args) -> Value {
 			if (argc > 0 && argc < 2) {

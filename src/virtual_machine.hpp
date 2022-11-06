@@ -39,7 +39,7 @@ class VM {
     std::string init_string = "init";
 
     // Load arrays by default
-    const Library::NativeArray array_lib;
+    const stdlib::libnativearray array_lib;
     
     inline void ResetStack()
     {
@@ -96,7 +96,7 @@ public:
             std::string libname;
             try {
                 libname = std::get<std::string>(*args);
-                const auto& lib = Library::Libraries.at(libname);
+                const auto& lib = stdlib::Libraries.at(libname);
 
                 // Loading functions
                 for (const auto& f : lib->functions)
