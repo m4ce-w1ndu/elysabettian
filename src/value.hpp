@@ -20,8 +20,8 @@ struct FileObject;
 struct ArrayObject;
 class FunctionObject;
 class ClosureObject;
-class Compiler;
-class Parser;
+class compiler_t;
+class parser_t;
 class VM;
 using Func = std::shared_ptr<FunctionObject>;
 using NativeFunction = std::shared_ptr<NativeFunctionObject>;
@@ -126,8 +126,8 @@ public:
         return chunk.get_constant(constant);
     }
 
-    friend Compiler;
-    friend Parser;
+    friend compiler_t;
+    friend parser_t;
     friend VM;
     friend Chunk;
     friend ClosureObject;

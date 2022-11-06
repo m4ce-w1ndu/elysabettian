@@ -1,15 +1,17 @@
 #include "compiler.hpp"
 
-Compiler::Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing)
+#include <array>
+
+compiler_t::compiler_t(parser_t* parser, function_type_t type, std::unique_ptr<compiler_t> enclosing)
     : parser(parser), type(type), function{default_function}, enclosing(std::move(enclosing))
 {
-        locals.emplace_back(type == FunctionType::TYPE_FUNCTION ? "" : "this", 0);
-        if (type != FunctionType::TYPE_SCRIPT) {
+        locals.emplace_back(type == function_type_t::TYPE_FUNCTION ? "" : "this", 0);
+        if (type != function_type_t::TYPE_SCRIPT) {
             function->name = parser->previous.get_text();
         }
 };
 
-void Compiler::add_local(const std::string& name)
+void compiler_t::add_local(const std::string& name)
 {
     if (locals.size() == UINT8_COUNT) {
         parser->error("Too many local variables in function.");
@@ -18,7 +20,7 @@ void Compiler::add_local(const std::string& name)
     locals.emplace_back(name, -1);
 }
 
-void Compiler::declare_variable(const std::string& name)
+void compiler_t::declare_variable(const std::string& name)
 {
     if (scope_depth == 0) return;
     
@@ -32,13 +34,13 @@ void Compiler::declare_variable(const std::string& name)
     add_local(name);
 }
 
-void Compiler::mark_initialized()
+void compiler_t::mark_initialized()
 {
     if (scope_depth == 0) return;
     locals.back().depth = scope_depth;
 }
 
-int Compiler::resolve_local(const std::string_view& name)
+int compiler_t::resolve_local(const std::string_view& name)
 {
     for (auto i = static_cast<long>(locals.size() - 1); i >=0; i--) {
         if (locals[i].name == name) {
@@ -52,7 +54,7 @@ int Compiler::resolve_local(const std::string_view& name)
     return -1;
 }
 
-int Compiler::resolve_upvalue(const std::string& name)
+int compiler_t::resolve_upvalue(const std::string& name)
 {
     if (enclosing == nullptr) return -1;
 
@@ -68,7 +70,7 @@ int Compiler::resolve_upvalue(const std::string& name)
     return -1;
 }
 
-int Compiler::add_upvalue(uint8_t index, bool is_local)
+int compiler_t::add_upvalue(uint8_t index, bool is_local)
 {
     for (long i = 0; i < upvalues.size(); i++) {
         if (upvalues[i].index == index && upvalues[i].is_local == is_local) {
@@ -81,18 +83,18 @@ int Compiler::add_upvalue(uint8_t index, bool is_local)
         return 0;
     }
 
-    upvalues.emplace_back(Upvalue(index, is_local));
+    upvalues.emplace_back(upvalue_t(index, is_local));
     auto upvalue_count = static_cast<int>(upvalues.size());
     function->upvalue_count = upvalue_count;
     return upvalue_count - 1;
 }
 
-void Compiler::begin_scope()
+void compiler_t::begin_scope()
 {
     scope_depth++;
 }
 
-void Compiler::end_scope()
+void compiler_t::end_scope()
 {
     scope_depth--;
     while (!locals.empty() && locals.back().depth > scope_depth) {
@@ -105,26 +107,26 @@ void Compiler::end_scope()
     }
 }
 
-bool Compiler::is_local() const
+bool compiler_t::is_local() const
 {
     return scope_depth > 0;
 }
 
-ClassCompiler::ClassCompiler(std::unique_ptr<ClassCompiler> enclosing)
+class_compiler_t::class_compiler_t(std::unique_ptr<class_compiler_t> enclosing)
     : enclosing(std::move(enclosing)), has_superclass{superclass_default} {};
 
-Parser::Parser(const std::string& source) :
+parser_t::parser_t(const std::string& source) :
     previous(Token(TokenType::_EOF, source, 0)),
     current(Token(TokenType::_EOF, source, 0)),
     scanner(Tokenizer(source)),
     class_compiler{null_value},
     had_error{false_value}, panic_mode{false_value}
 {
-    compiler = std::make_unique<Compiler>(this, FunctionType::TYPE_SCRIPT, nullptr);
+    compiler = std::make_unique<compiler_t>(this, function_type_t::TYPE_SCRIPT, nullptr);
     advance();
 }
 
-std::optional<Func> Parser::Compile()
+std::optional<Func> parser_t::compile()
 {
     while (!match(TokenType::_EOF)) {
         declaration();
@@ -138,7 +140,7 @@ std::optional<Func> Parser::Compile()
     }
 }
 
-void Parser::advance()
+void parser_t::advance()
 {
     previous = current;
     
@@ -150,7 +152,7 @@ void Parser::advance()
     }
 }
 
-void Parser::consume(TokenType type, const std::string& message)
+void parser_t::consume(TokenType type, const std::string& message)
 {
     if (current.get_type() == type) {
         advance();
@@ -160,41 +162,41 @@ void Parser::consume(TokenType type, const std::string& message)
     error_at_current(message);
 }
 
-bool Parser::check(TokenType type) const
+bool parser_t::check(TokenType type) const
 {
     return current.get_type() == type;
 }
 
-bool Parser::match(TokenType type)
+bool parser_t::match(TokenType type)
 {
     if (!check(type)) return false;
     advance();
     return true;
 }
 
-void Parser::emit(uint8_t byte)
+void parser_t::emit(uint8_t byte)
 {
     CurrentChunk().write(byte, previous.get_line());
 }
 
-void Parser::emit(OpCode op)
+void parser_t::emit(OpCode op)
 {
     CurrentChunk().write(op, previous.get_line());
 }
 
-void Parser::emit(OpCode op, uint8_t byte)
+void parser_t::emit(OpCode op, uint8_t byte)
 {
     emit(op);
     emit(byte);
 }
 
-void Parser::emit(OpCode op1, OpCode op2)
+void parser_t::emit(OpCode op1, OpCode op2)
 {
     emit(op1);
     emit(op2);
 }
 
-void Parser::emit_loop(int loopStart)
+void parser_t::emit_loop(int loopStart)
 {
     emit(OpCode::LOOP);
     
@@ -205,7 +207,7 @@ void Parser::emit_loop(int loopStart)
     emit(offset & 0xff);
 }
 
-int Parser::emit_jump(OpCode op)
+int parser_t::emit_jump(OpCode op)
 {
     emit(op);
     emit(0xff);
@@ -213,9 +215,9 @@ int Parser::emit_jump(OpCode op)
     return CurrentChunk().count() - 2;
 }
 
-void Parser::emit_return()
+void parser_t::emit_return()
 {
-    if (compiler->type == FunctionType::TYPE_INITIALIZER) {
+    if (compiler->type == function_type_t::TYPE_INITIALIZER) {
         emit(OpCode::GET_LOCAL, 0);
     } else {
         emit(OpCode::NULLOP);
@@ -223,7 +225,7 @@ void Parser::emit_return()
     emit(OpCode::RETURN);
 }
 
-uint8_t Parser::make_constant(const Value& value)
+uint8_t parser_t::make_constant(const Value& value)
 {
     auto constant = CurrentChunk().add_constant(value);
     if (constant > UINT8_MAX) {
@@ -234,12 +236,12 @@ uint8_t Parser::make_constant(const Value& value)
     return (uint8_t)constant;
 }
 
-void Parser::emit_constant(const Value& value)
+void parser_t::emit_constant(const Value& value)
 {
     emit(OpCode::CONSTANT, make_constant(value));
 }
 
-void Parser::patch_jump(int offset)
+void parser_t::patch_jump(int offset)
 {
     // -2 to adjust for the bytecode for the jump offset itself.
     int jump = CurrentChunk().count() - offset - 2;
@@ -252,7 +254,7 @@ void Parser::patch_jump(int offset)
     CurrentChunk().set_code(offset + 1, jump & 0xff);
 }
 
-Func Parser::end_compiler()
+Func parser_t::end_compiler()
 {
     emit_return();
     
@@ -268,14 +270,14 @@ Func Parser::end_compiler()
     return function;
 }
 
-void Parser::binary([[maybe_unused]] bool can_assign)
+void parser_t::binary([[maybe_unused]] bool can_assign)
 {
     // Remember the operator.
     auto operatorType = previous.get_type();
     
     // Compile the right operand.
     auto rule = get_rule(operatorType);
-    parse_precedence(Precedence(static_cast<int>(rule.precedence) + 1));
+    parse_precedence(precedence_t(static_cast<int>(rule.precedence) + 1));
     
     // Emit the operator instruction.
     switch (operatorType) {
@@ -297,13 +299,13 @@ void Parser::binary([[maybe_unused]] bool can_assign)
     }
 }
 
-void Parser::call([[maybe_unused]] bool can_assign)
+void parser_t::call([[maybe_unused]] bool can_assign)
 {
     auto arg_count = args_list();
     emit(OpCode::CALL, arg_count);
 }
 
-void Parser::dot([[maybe_unused]] bool can_assign)
+void parser_t::dot([[maybe_unused]] bool can_assign)
 {
     consume(TokenType::IDENTIFIER, "Expected property name after '.'.");
     auto name = identifier_constant(std::string(previous.get_text()));
@@ -320,7 +322,7 @@ void Parser::dot([[maybe_unused]] bool can_assign)
     }
 }
 
-void Parser::literal([[maybe_unused]] bool can_assign)
+void parser_t::literal([[maybe_unused]] bool can_assign)
 {
     switch (previous.get_type()) {
         case TokenType::FALSE:      emit(OpCode::FALSE); break;
@@ -330,19 +332,19 @@ void Parser::literal([[maybe_unused]] bool can_assign)
     }
 }
 
-void Parser::grouping([[maybe_unused]] bool can_assign)
+void parser_t::grouping([[maybe_unused]] bool can_assign)
 {
     expression();
     consume(TokenType::CLOSE_PAREN, "Expected ')' after expression.");
 }
 
-void Parser::number([[maybe_unused]] bool can_assign)
+void parser_t::number([[maybe_unused]] bool can_assign)
 {
     Value value = std::stod(std::string(previous.get_text()));
     emit_constant(value);
 }
 
-void Parser::or_([[maybe_unused]] bool can_assign)
+void parser_t::or_([[maybe_unused]] bool can_assign)
 {
     int else_jump = emit_jump(OpCode::JUMP_IF_FALSE);
     int end_jump = emit_jump(OpCode::JUMP);
@@ -350,11 +352,11 @@ void Parser::or_([[maybe_unused]] bool can_assign)
     patch_jump(else_jump);
     emit(OpCode::POP);
     
-    parse_precedence(Precedence::OR);
+    parse_precedence(precedence_t::OR);
     patch_jump(end_jump);
 }
 
-void Parser::string_([[maybe_unused]] bool can_assign)
+void parser_t::string_([[maybe_unused]] bool can_assign)
 {
     auto str = previous.get_text();
     str.remove_prefix(1);
@@ -362,7 +364,7 @@ void Parser::string_([[maybe_unused]] bool can_assign)
     emit_constant(std::string(str));
 }
 
-void Parser::named_variable(const std::string& name, bool can_assign)
+void parser_t::named_variable(const std::string& name, bool can_assign)
 {
     OpCode get_op;
     OpCode set_op;
@@ -387,12 +389,12 @@ void Parser::named_variable(const std::string& name, bool can_assign)
     }
 }
 
-void Parser::variable([[maybe_unused]] bool can_assign)
+void parser_t::variable([[maybe_unused]] bool can_assign)
 {
     named_variable(std::string(previous.get_text()), can_assign);
 }
 
-void Parser::super([[maybe_unused]] bool can_assign)
+void parser_t::super([[maybe_unused]] bool can_assign)
 {
     if (class_compiler == nullptr) {
         error("'super' cannot be used outside of a class.");
@@ -409,7 +411,7 @@ void Parser::super([[maybe_unused]] bool can_assign)
     emit(OpCode::GET_SUPER, static_cast<uint8_t>(name));
 }
 
-void Parser::this_([[maybe_unused]] bool can_assign)
+void parser_t::this_([[maybe_unused]] bool can_assign)
 {
     if (class_compiler == nullptr) {
         error("'this' cannot be outside of a class.");
@@ -418,22 +420,22 @@ void Parser::this_([[maybe_unused]] bool can_assign)
     variable(false);
 }
 
-void Parser::and_([[maybe_unused]] bool can_assign)
+void parser_t::and_([[maybe_unused]] bool can_assign)
 {
     int end_jump = emit_jump(OpCode::JUMP_IF_FALSE);
     
     emit(OpCode::POP);
-    parse_precedence(Precedence::AND);
+    parse_precedence(precedence_t::AND);
     
     patch_jump(end_jump);
 }
 
-void Parser::unary([[maybe_unused]] bool can_assign)
+void parser_t::unary([[maybe_unused]] bool can_assign)
 {
     auto operator_type = previous.get_type();
     
     // Compile the operand.
-    parse_precedence(Precedence::UNARY);
+    parse_precedence(precedence_t::UNARY);
     
     // Emit the operator instruciton.
     switch (operator_type) {
@@ -446,7 +448,7 @@ void Parser::unary([[maybe_unused]] bool can_assign)
     }
 }
 
-ParseRule& Parser::get_rule(TokenType type)
+parse_rule_t& parser_t::get_rule(TokenType type)
 {
     auto grouping = [this](bool can_assign) { this->grouping(can_assign); };
     auto unary = [this](bool can_assign) { this->unary(can_assign); };
@@ -462,57 +464,57 @@ ParseRule& Parser::get_rule(TokenType type)
     auto and_ = [this](bool can_assign) { this->and_(can_assign); };
     auto or_ = [this](bool can_assign) { this->or_(can_assign); };
     
-    static std::array<ParseRule, 44> rules = {{
-        { grouping,    call,       Precedence::CALL },       // TOKEN_LEFT_PAREN
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_RIGHT_PAREN
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_LEFT_BRACE
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_RIGHT_BRACE
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_COMMA
-        { nullptr,     dot,        Precedence::CALL },       // TOKEN_DOT
-        { unary,       binary,     Precedence::TERM },       // TOKEN_MINUS
-        { nullptr,     binary,     Precedence::TERM },       // TOKEN_PLUS
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_SEMICOLON
-        { nullptr,     binary,     Precedence::FACTOR },     // TOKEN_SLASH
-        { nullptr,     binary,     Precedence::FACTOR },     // TOKEN_STAR
-        { unary,       nullptr,    Precedence::NONE },       // TOKEN_BANG
-        { nullptr,     binary,     Precedence::EQUALITY },   // TOKEN_BANG_EQUAL
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_EQUAL
-        { nullptr,     binary,     Precedence::EQUALITY },   // TOKEN_EQUAL_EQUAL
-        { nullptr,     binary,     Precedence::COMPARISON }, // TOKEN_GREATER
-        { nullptr,     binary,     Precedence::COMPARISON }, // TOKEN_GREATER_EQUAL
-        { nullptr,     binary,     Precedence::COMPARISON }, // TOKEN_LESS
-        { nullptr,     binary,     Precedence::COMPARISON }, // TOKEN_LESS_EQUAL
-        { variable,    nullptr,    Precedence::NONE },       // TOKEN_IDENTIFIER
-        { string,      nullptr,    Precedence::NONE },       // TOKEN_STRING
-        { number,      nullptr,    Precedence::NONE },       // TOKEN_NUMBER
-        { nullptr,     and_,       Precedence::AND },        // TOKEN_AND
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_CLASS
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_ELSE
-        { literal,     nullptr,    Precedence::NONE },       // TOKEN_FALSE
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_FUN
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_FOR
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_IF
-        { literal,     nullptr,    Precedence::NONE },       // TOKEN_NIL
-        { nullptr,     or_,        Precedence::OR },         // TOKEN_OR
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_PRINT
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_RETURN
-        { super_,      nullptr,    Precedence::NONE },       // TOKEN_SUPER
-        { this_,       nullptr,    Precedence::NONE },       // TOKEN_THIS
-        { literal,     nullptr,    Precedence::NONE },       // TOKEN_TRUE
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_VAR
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_WHILE
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_ERROR
-        { nullptr,     nullptr,    Precedence::NONE },       // TOKEN_EOF
-        { nullptr,     binary,     Precedence::TERM },       // TOKEN_BW_AND
-        { nullptr,     binary,     Precedence::TERM },       // TOKEN_BW_OR
-        { nullptr,     binary,     Precedence::TERM },       // TOKEN_BW_XOR
-        { unary,       nullptr,    Precedence::UNARY},       // TOKEN_BW_NOT
+    static std::array<parse_rule_t, 44> rules = {{
+        { grouping,    call,       precedence_t::CALL },       // TOKEN_LEFT_PAREN
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_RIGHT_PAREN
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_LEFT_BRACE
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_RIGHT_BRACE
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_COMMA
+        { nullptr,     dot,        precedence_t::CALL },       // TOKEN_DOT
+        { unary,       binary,     precedence_t::TERM },       // TOKEN_MINUS
+        { nullptr,     binary,     precedence_t::TERM },       // TOKEN_PLUS
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_SEMICOLON
+        { nullptr,     binary,     precedence_t::FACTOR },     // TOKEN_SLASH
+        { nullptr,     binary,     precedence_t::FACTOR },     // TOKEN_STAR
+        { unary,       nullptr,    precedence_t::NONE },       // TOKEN_BANG
+        { nullptr,     binary,     precedence_t::EQUALITY },   // TOKEN_BANG_EQUAL
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_EQUAL
+        { nullptr,     binary,     precedence_t::EQUALITY },   // TOKEN_EQUAL_EQUAL
+        { nullptr,     binary,     precedence_t::COMPARISON }, // TOKEN_GREATER
+        { nullptr,     binary,     precedence_t::COMPARISON }, // TOKEN_GREATER_EQUAL
+        { nullptr,     binary,     precedence_t::COMPARISON }, // TOKEN_LESS
+        { nullptr,     binary,     precedence_t::COMPARISON }, // TOKEN_LESS_EQUAL
+        { variable,    nullptr,    precedence_t::NONE },       // TOKEN_IDENTIFIER
+        { string,      nullptr,    precedence_t::NONE },       // TOKEN_STRING
+        { number,      nullptr,    precedence_t::NONE },       // TOKEN_NUMBER
+        { nullptr,     and_,       precedence_t::AND },        // TOKEN_AND
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_CLASS
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_ELSE
+        { literal,     nullptr,    precedence_t::NONE },       // TOKEN_FALSE
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_FUN
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_FOR
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_IF
+        { literal,     nullptr,    precedence_t::NONE },       // TOKEN_NIL
+        { nullptr,     or_,        precedence_t::OR },         // TOKEN_OR
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_PRINT
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_RETURN
+        { super_,      nullptr,    precedence_t::NONE },       // TOKEN_SUPER
+        { this_,       nullptr,    precedence_t::NONE },       // TOKEN_THIS
+        { literal,     nullptr,    precedence_t::NONE },       // TOKEN_TRUE
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_VAR
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_WHILE
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_ERROR
+        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_EOF
+        { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_AND
+        { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_OR
+        { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_XOR
+        { unary,       nullptr,    precedence_t::UNARY},       // TOKEN_BW_NOT
     }};
     
     return rules[static_cast<int>(type)];
 }
 
-void Parser::parse_precedence(Precedence precedence)
+void parser_t::parse_precedence(precedence_t precedence)
 {
     advance();
     auto prefix_rule = get_rule(previous.get_type()).prefix;
@@ -521,7 +523,7 @@ void Parser::parse_precedence(Precedence precedence)
         return;
     }
     
-    auto can_assign = precedence <= Precedence::ASSIGNMENT;
+    auto can_assign = precedence <= precedence_t::ASSIGNMENT;
     prefix_rule(can_assign);
     
     while (precedence <= get_rule(current.get_type()).precedence) {
@@ -536,12 +538,12 @@ void Parser::parse_precedence(Precedence precedence)
     }
 }
 
-int Parser::identifier_constant(const std::string& name)
+int parser_t::identifier_constant(const std::string& name)
 {
     return make_constant(name);
 }
 
-uint8_t Parser::parse_variable(const std::string& errorMessage)
+uint8_t parser_t::parse_variable(const std::string& errorMessage)
 {
     consume(TokenType::IDENTIFIER, errorMessage);
     
@@ -551,7 +553,7 @@ uint8_t Parser::parse_variable(const std::string& errorMessage)
     return static_cast<uint8_t>(identifier_constant(std::string(previous.get_text())));
 }
 
-void Parser::define_variable(uint8_t global)
+void parser_t::define_variable(uint8_t global)
 {
     if (compiler->is_local()) {
         compiler->mark_initialized();
@@ -561,7 +563,7 @@ void Parser::define_variable(uint8_t global)
     emit(OpCode::DEFINE_GLOBAL, global);
 }
 
-uint8_t Parser::args_list()
+uint8_t parser_t::args_list()
 {
     uint8_t arg_count = 0;
     if (!check(TokenType::CLOSE_PAREN)) {
@@ -577,12 +579,12 @@ uint8_t Parser::args_list()
     return arg_count;
 }
 
-void Parser::expression()
+void parser_t::expression()
 {
-    parse_precedence(Precedence::ASSIGNMENT);
+    parse_precedence(precedence_t::ASSIGNMENT);
 }
 
-void Parser::block()
+void parser_t::block()
 {
     while (!check(TokenType::CLOSE_CURLY) && !check(TokenType::_EOF)) {
         declaration();
@@ -591,9 +593,9 @@ void Parser::block()
     consume(TokenType::CLOSE_CURLY, "Expected '}' after block.");
 }
 
-void Parser::function(FunctionType type)
+void parser_t::function(function_type_t type)
 {
-    compiler = std::make_unique<Compiler>(this, type, std::move(compiler));
+    compiler = std::make_unique<compiler_t>(this, type, std::move(compiler));
     compiler->begin_scope();
 
     consume(TokenType::OPEN_PAREN, "Expected '(' after function name.");
@@ -622,16 +624,16 @@ void Parser::function(FunctionType type)
     }
 }
 
-void Parser::method()
+void parser_t::method()
 {
     consume(TokenType::IDENTIFIER, "Expected method name.");
     const auto constant = identifier_constant(std::string(previous.get_text()));
-    const auto type = previous.get_text() == "init" ? FunctionType::TYPE_INITIALIZER : FunctionType::TYPE_METHOD;
+    const auto type = previous.get_text() == "init" ? function_type_t::TYPE_INITIALIZER : function_type_t::TYPE_METHOD;
     function(type);
     emit(OpCode::METHOD, static_cast<uint8_t>(constant));
 }
 
-void Parser::class_declaration()
+void parser_t::class_declaration()
 {
     consume(TokenType::IDENTIFIER, "Expected class name.");
     const auto class_name = std::string(previous.get_text());
@@ -641,7 +643,7 @@ void Parser::class_declaration()
     emit(OpCode::CLASS, static_cast<uint8_t>(name_constant));
     define_variable(static_cast<uint8_t>(name_constant));
     
-    class_compiler = std::make_unique<ClassCompiler>(std::move(class_compiler));
+    class_compiler = std::make_unique<class_compiler_t>(std::move(class_compiler));
     
     if (match(TokenType::LESS)) {
         consume(TokenType::IDENTIFIER, "Expected superclass name.");
@@ -675,15 +677,15 @@ void Parser::class_declaration()
     class_compiler = std::move(class_compiler->enclosing);
 }
 
-void Parser::func_declaration()
+void parser_t::func_declaration()
 {
     auto global = parse_variable("Expected function name.");
     compiler->mark_initialized();
-    function(FunctionType::TYPE_FUNCTION);
+    function(function_type_t::TYPE_FUNCTION);
     define_variable(global);
 }
 
-void Parser::var_declaration()
+void parser_t::var_declaration()
 {
     const auto global = parse_variable("Expected variable name.");
 
@@ -697,14 +699,14 @@ void Parser::var_declaration()
     define_variable(global);
 }
 
-void Parser::expression_statement()
+void parser_t::expression_statement()
 {
     expression();
     emit(OpCode::POP);
     consume(TokenType::SEMICOLON, "Expected ';' after expression.");
 }
 
-void Parser::for_statement()
+void parser_t::for_statement()
 {
     compiler->begin_scope();
     
@@ -754,7 +756,7 @@ void Parser::for_statement()
     compiler->end_scope();
 }
 
-void Parser::if_statement()
+void parser_t::if_statement()
 {
     consume(TokenType::OPEN_PAREN, "Expected '(' after 'if'.");
     expression();
@@ -771,7 +773,7 @@ void Parser::if_statement()
     patch_jump(else_jump);
 }
 
-void Parser::declaration()
+void parser_t::declaration()
 {
     if (match(TokenType::CLASS)) {
         class_declaration();
@@ -786,7 +788,7 @@ void Parser::declaration()
     if (panic_mode) sync();
 }
 
-void Parser::statement()
+void parser_t::statement()
 {
     if (match(TokenType::PRINT)) {
         print_statement();
@@ -807,23 +809,23 @@ void Parser::statement()
     }
 }
 
-void Parser::print_statement()
+void parser_t::print_statement()
 {
     expression();
     consume(TokenType::SEMICOLON, "Expected ';' after value.");
     emit(OpCode::PRINT);
 }
 
-void Parser::return_statement()
+void parser_t::return_statement()
 {
-    if (compiler->type == FunctionType::TYPE_SCRIPT) {
+    if (compiler->type == function_type_t::TYPE_SCRIPT) {
         error("Cannot return from top-level code.");
     }
     
     if (match(TokenType::SEMICOLON)) {
         emit_return();
     } else {
-        if (compiler->type == FunctionType::TYPE_INITIALIZER) {
+        if (compiler->type == function_type_t::TYPE_INITIALIZER) {
             error("Cannot return a value from an initializer.");
         }
         
@@ -833,7 +835,7 @@ void Parser::return_statement()
     }
 }
 
-void Parser::while_statement()
+void parser_t::while_statement()
 {
     const int loop_start = CurrentChunk().count();
     
@@ -852,7 +854,7 @@ void Parser::while_statement()
     emit(OpCode::POP);
 }
 
-void Parser::sync()
+void parser_t::sync()
 {
     panic_mode = false;
     
@@ -877,7 +879,7 @@ void Parser::sync()
     }
 }
 
-void Parser::error_at(const Token& token, const std::string& message)
+void parser_t::error_at(const Token& token, const std::string& message)
 {
     if (panic_mode) return;
     

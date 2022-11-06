@@ -197,8 +197,8 @@ bool VM::call(const Closure& closure, int arg_count)
 
 IResult VM::Interpret(const std::string& source)
 {
-    auto parser = Parser(source);
-    auto opt = parser.Compile();
+    auto parser = parser_t(source);
+    auto opt = parser.compile();
     if (!opt) { return IResult::COMPILE_ERROR; }
 
     auto& function = *opt;

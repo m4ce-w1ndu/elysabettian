@@ -9,7 +9,7 @@
 #include <optional>
 #include <cstddef>
 
-enum class Precedence {
+enum class precedence_t {
     NONE,
     ASSIGNMENT,  // =
     OR,          // or
@@ -23,52 +23,52 @@ enum class Precedence {
     PRIMARY
 };
 
-class Parser;
+class parser_t;
 
-using ParseFn = void (Parser::*)(bool);
+using parsefn_t = void (parser_t::*)(bool);
 
-struct ParseRule {
+struct parse_rule_t {
     std::function<void(bool)> prefix;
     std::function<void(bool)> infix;
-    Precedence precedence;
+    precedence_t precedence;
 };
 
-struct Local {
+struct local_t {
     const bool false_value = false;
     
     std::string name;
     int depth;
     bool is_captured;
-    Local(const std::string& name, int depth): name(name), depth(depth), is_captured{false_value} {};
+    local_t(const std::string& name, int depth): name(name), depth(depth), is_captured{false_value} {};
 };
 
-class Upvalue {
+class upvalue_t {
 public:
     uint8_t index;
     bool is_local;
-    explicit Upvalue(uint8_t index, bool is_local)
+    explicit upvalue_t(uint8_t index, bool is_local)
         : index(index), is_local(is_local) {}
 };
 
-enum class FunctionType {
+enum class function_type_t {
     TYPE_FUNCTION, TYPE_INITIALIZER, TYPE_METHOD, TYPE_SCRIPT
 };
 
-class Compiler {
+class compiler_t {
     const Func default_function = std::make_shared<FunctionObject>(0, "");
-    Parser* parser;
+    parser_t* parser;
 
-    FunctionType type;
+    function_type_t type;
     Func function;
 
-    std::unique_ptr<Compiler> enclosing;
+    std::unique_ptr<compiler_t> enclosing;
     
-    std::vector<Local> locals;
-    std::vector<Upvalue> upvalues;
+    std::vector<local_t> locals;
+    std::vector<upvalue_t> upvalues;
     int scope_depth = 0;
 
 public:
-    explicit Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing);
+    explicit compiler_t(parser_t* parser, function_type_t type, std::unique_ptr<compiler_t> enclosing);
     void add_local(const std::string& name);
     void declare_variable(const std::string& name);
     void mark_initialized();
@@ -79,28 +79,28 @@ public:
     void end_scope();
     bool is_local() const;
 
-    friend Parser;
+    friend parser_t;
 };
 
-class ClassCompiler {
+class class_compiler_t {
     const bool superclass_default = false;
 
-    std::unique_ptr<ClassCompiler> enclosing;
+    std::unique_ptr<class_compiler_t> enclosing;
     bool has_superclass;
 public:
-    explicit ClassCompiler(std::unique_ptr<ClassCompiler> enclosing);
-    friend Parser;
+    explicit class_compiler_t(std::unique_ptr<class_compiler_t> enclosing);
+    friend parser_t;
 };
 
-class Parser {
+class parser_t {
     const std::nullptr_t null_value = nullptr;
     const bool false_value = false;
 
     Token previous;
     Token current;
     Tokenizer scanner;
-    std::unique_ptr<Compiler> compiler;
-    std::unique_ptr<ClassCompiler> class_compiler;
+    std::unique_ptr<compiler_t> compiler;
+    std::unique_ptr<class_compiler_t> class_compiler;
     
     bool had_error;
     bool panic_mode;
@@ -137,15 +137,15 @@ class Parser {
     void this_(bool can_assign);
     void and_(bool can_assign);
     void unary(bool can_assign);
-    ParseRule& get_rule(TokenType type);
-    void parse_precedence(Precedence precedence);
+    parse_rule_t& get_rule(TokenType type);
+    void parse_precedence(precedence_t precedence);
     int identifier_constant(const std::string& name);
     uint8_t parse_variable(const std::string& errorMessage);
     void define_variable(uint8_t global);
     uint8_t args_list();
     void expression();
     void block();
-    void function(FunctionType type);
+    void function(function_type_t type);
     void method();
     void class_declaration();
     void func_declaration();
@@ -172,15 +172,15 @@ class Parser {
         error_at(current, message);
     };
     
-    friend Compiler;
+    friend compiler_t;
     
 public:
-    explicit Parser(const std::string& source);
+    explicit parser_t(const std::string& source);
     Chunk& CurrentChunk()
     {
         return compiler->function->get_chunk();
     }
-    std::optional<Func> Compile();
+    std::optional<Func> compile();
 };
 
 #endif /* compiler_hpp */
