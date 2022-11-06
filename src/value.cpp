@@ -6,7 +6,7 @@ void Chunk::write(uint8_t byte, int line)
     lines.push_back(line);
 }
 
-void Chunk::write(OpCode opcode, int line)
+void Chunk::write(opcode_t opcode, int line)
 {
     write(static_cast<uint8_t>(opcode), line);
 }
@@ -73,79 +73,79 @@ int Chunk::disas_instruction(int offset)
         fmt::print("{:4d} ", lines[offset]);
     }
     
-    auto instruction = OpCode(code[offset]);
+    auto instruction = opcode_t(code[offset]);
     switch (instruction) {
-        case OpCode::CONSTANT:
+        case opcode_t::CONSTANT:
             return ConstantInstruction("OP_CONSTANT", *this, offset);
-        case OpCode::NULLOP:
+        case opcode_t::NULLOP:
             return SimpleInstruction("OP_NULL", offset);
-        case OpCode::TRUE:
+        case opcode_t::TRUE:
             return SimpleInstruction("OP_TRUE", offset);
-        case OpCode::FALSE:
+        case opcode_t::FALSE:
             return SimpleInstruction("OP_FALSE", offset);
-        case OpCode::POP:
+        case opcode_t::POP:
             return SimpleInstruction("OP_POP", offset);
-        case OpCode::GET_LOCAL:
+        case opcode_t::GET_LOCAL:
             return ByteInstruction("OP_GET_LOCAL", *this, offset);
-        case OpCode::GET_GLOBAL:
+        case opcode_t::GET_GLOBAL:
             return ConstantInstruction("OP_GET_GLOBAL", *this, offset);
-        case OpCode::DEFINE_GLOBAL:
+        case opcode_t::DEFINE_GLOBAL:
             return ConstantInstruction("OP_DEFINE_GLOBAL", *this, offset);
-        case OpCode::SET_LOCAL:
+        case opcode_t::SET_LOCAL:
             return ByteInstruction("OP_SET_LOCAL", *this, offset);
-        case OpCode::SET_GLOBAL:
+        case opcode_t::SET_GLOBAL:
             return ConstantInstruction("OP_SET_GLOBAL", *this, offset);
-        case OpCode::GET_UPVALUE:
+        case opcode_t::GET_UPVALUE:
             return ByteInstruction("OP_GET_UPVALUE", *this, offset);
-        case OpCode::SET_UPVALUE:
+        case opcode_t::SET_UPVALUE:
             return ByteInstruction("OP_SET_UPVALUE", *this, offset);
-        case OpCode::GET_PROPERTY:
+        case opcode_t::GET_PROPERTY:
             return ConstantInstruction("OP_GET_PROPERTY", *this, offset);
-        case OpCode::SET_PROPERTY:
+        case opcode_t::SET_PROPERTY:
             return ConstantInstruction("OP_SET_PROPERTY", *this, offset);
-        case OpCode::GET_SUPER:
+        case opcode_t::GET_SUPER:
             return ConstantInstruction("OP_GET_SUPER", *this, offset);
-        case OpCode::EQUAL:
+        case opcode_t::EQUAL:
             return SimpleInstruction("OP_EQUAL", offset);
-        case OpCode::GREATER:
+        case opcode_t::GREATER:
             return SimpleInstruction("OP_GREATER", offset);
-        case OpCode::LESS:
+        case opcode_t::LESS:
             return SimpleInstruction("OP_LESS", offset);
-        case OpCode::ADD:
+        case opcode_t::ADD:
             return SimpleInstruction("OP_ADD", offset);
-        case OpCode::SUBTRACT:
+        case opcode_t::SUBTRACT:
             return SimpleInstruction("OP_SUBTRACT", offset);
-        case OpCode::MULTIPLY:
+        case opcode_t::MULTIPLY:
             return SimpleInstruction("OP_MULTIPLY", offset);
-        case OpCode::DIVIDE:
+        case opcode_t::DIVIDE:
             return SimpleInstruction("OP_DIVIDE", offset);
-        case OpCode::BW_AND:
+        case opcode_t::BW_AND:
             return SimpleInstruction("OP_BW_AND", offset);
-        case OpCode::BW_OR:
+        case opcode_t::BW_OR:
             return SimpleInstruction("OP_BW_OR", offset);
-        case OpCode::BW_XOR:
+        case opcode_t::BW_XOR:
             return SimpleInstruction("OP_BW_XOR", offset);
-        case OpCode::BW_NOT:
+        case opcode_t::BW_NOT:
             return SimpleInstruction("OP_BW_NOT", offset);
-        case OpCode::NOT:
+        case opcode_t::NOT:
             return SimpleInstruction("OP_NOT", offset);
-        case OpCode::NEGATE:
+        case opcode_t::NEGATE:
             return SimpleInstruction("OP_NEGATE", offset);
-        case OpCode::PRINT:
+        case opcode_t::PRINT:
             return SimpleInstruction("OP_PRINT", offset);
-        case OpCode::JUMP:
+        case opcode_t::JUMP:
             return JmpInstruction("OP_JUMP", 1, *this, offset);
-        case OpCode::JUMP_IF_FALSE:
+        case opcode_t::JUMP_IF_FALSE:
             return JmpInstruction("OP_JUMP_IF_FALSE", 1, *this, offset);
-        case OpCode::LOOP:
+        case opcode_t::LOOP:
             return JmpInstruction("OP_JUMP", -1, *this, offset);
-        case OpCode::CALL:
+        case opcode_t::CALL:
             return ByteInstruction("OP_CALL", *this, offset);
-        case OpCode::INVOKE:
+        case opcode_t::INVOKE:
             return InvokeInstruction("OP_INVOKE", *this, offset);
-        case OpCode::SUPER_INVOKE:
+        case opcode_t::SUPER_INVOKE:
             return InvokeInstruction("OP_SUPER_INVOKE", *this, offset);
-        case OpCode::CLOSURE: {
+        case opcode_t::CLOSURE: {
             offset++;
             auto constant = code[offset++];
             fmt::print("{:<16s} {:4d}", "OP_CLOSURE", constant);
@@ -162,15 +162,15 @@ int Chunk::disas_instruction(int offset)
             
             return offset;
         }
-        case OpCode::CLOSE_UPVALUE:
+        case opcode_t::CLOSE_UPVALUE:
             return SimpleInstruction("OP_CLOSE_UPVALUE", offset);
-        case OpCode::RETURN:
+        case opcode_t::RETURN:
             return SimpleInstruction("OP_RETURN", offset);
-        case OpCode::CLASS:
+        case opcode_t::CLASS:
             return ConstantInstruction("OP_CLASS", *this, offset);
-        case OpCode::INHERIT:
+        case opcode_t::INHERIT:
             return SimpleInstruction("OP_INHERIT", offset);
-        case OpCode::METHOD:
+        case opcode_t::METHOD:
             return ConstantInstruction("OP_METHOD", *this, offset);
     }
     

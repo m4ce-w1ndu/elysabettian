@@ -99,9 +99,9 @@ void compiler_t::end_scope()
     scope_depth--;
     while (!locals.empty() && locals.back().depth > scope_depth) {
         if (locals.back().is_captured) {
-            parser->emit(OpCode::CLOSE_UPVALUE);
+            parser->emit(opcode_t::CLOSE_UPVALUE);
         } else {
-            parser->emit(OpCode::POP);
+            parser->emit(opcode_t::POP);
         }
         locals.pop_back();
     }
@@ -179,18 +179,18 @@ void parser_t::emit(uint8_t byte)
     CurrentChunk().write(byte, previous.get_line());
 }
 
-void parser_t::emit(OpCode op)
+void parser_t::emit(opcode_t op)
 {
     CurrentChunk().write(op, previous.get_line());
 }
 
-void parser_t::emit(OpCode op, uint8_t byte)
+void parser_t::emit(opcode_t op, uint8_t byte)
 {
     emit(op);
     emit(byte);
 }
 
-void parser_t::emit(OpCode op1, OpCode op2)
+void parser_t::emit(opcode_t op1, opcode_t op2)
 {
     emit(op1);
     emit(op2);
@@ -198,7 +198,7 @@ void parser_t::emit(OpCode op1, OpCode op2)
 
 void parser_t::emit_loop(int loopStart)
 {
-    emit(OpCode::LOOP);
+    emit(opcode_t::LOOP);
     
     int offset = CurrentChunk().count() - loopStart + 2;
     if (offset > UINT16_MAX) { error("Loop body too large."); }
@@ -207,7 +207,7 @@ void parser_t::emit_loop(int loopStart)
     emit(offset & 0xff);
 }
 
-int parser_t::emit_jump(OpCode op)
+int parser_t::emit_jump(opcode_t op)
 {
     emit(op);
     emit(0xff);
@@ -218,11 +218,11 @@ int parser_t::emit_jump(OpCode op)
 void parser_t::emit_return()
 {
     if (compiler->type == function_type_t::TYPE_INITIALIZER) {
-        emit(OpCode::GET_LOCAL, 0);
+        emit(opcode_t::GET_LOCAL, 0);
     } else {
-        emit(OpCode::NULLOP);
+        emit(opcode_t::NULLOP);
     }
-    emit(OpCode::RETURN);
+    emit(opcode_t::RETURN);
 }
 
 uint8_t parser_t::make_constant(const Value& value)
@@ -238,7 +238,7 @@ uint8_t parser_t::make_constant(const Value& value)
 
 void parser_t::emit_constant(const Value& value)
 {
-    emit(OpCode::CONSTANT, make_constant(value));
+    emit(opcode_t::CONSTANT, make_constant(value));
 }
 
 void parser_t::patch_jump(int offset)
@@ -281,19 +281,19 @@ void parser_t::binary([[maybe_unused]] bool can_assign)
     
     // Emit the operator instruction.
     switch (operatorType) {
-        case TokenType::EXCL_EQUAL:    emit(OpCode::EQUAL, OpCode::NOT); break;
-        case TokenType::EQUAL_EQUAL:   emit(OpCode::EQUAL); break;
-        case TokenType::GREATER:       emit(OpCode::GREATER); break;
-        case TokenType::GREATER_EQUAL: emit(OpCode::LESS, OpCode::NOT); break;
-        case TokenType::LESS:          emit(OpCode::LESS); break;
-        case TokenType::LESS_EQUAL:    emit(OpCode::GREATER, OpCode::NOT); break;
-        case TokenType::PLUS:          emit(OpCode::ADD); break;
-        case TokenType::MINUS:         emit(OpCode::SUBTRACT); break;
-        case TokenType::STAR:          emit(OpCode::MULTIPLY); break;
-        case TokenType::SLASH:         emit(OpCode::DIVIDE); break;
-        case TokenType::BW_OR:         emit(OpCode::BW_OR); break;
-        case TokenType::BW_AND:        emit(OpCode::BW_AND); break;
-        case TokenType::BW_XOR:        emit(OpCode::BW_XOR); break;
+        case TokenType::EXCL_EQUAL:    emit(opcode_t::EQUAL, opcode_t::NOT); break;
+        case TokenType::EQUAL_EQUAL:   emit(opcode_t::EQUAL); break;
+        case TokenType::GREATER:       emit(opcode_t::GREATER); break;
+        case TokenType::GREATER_EQUAL: emit(opcode_t::LESS, opcode_t::NOT); break;
+        case TokenType::LESS:          emit(opcode_t::LESS); break;
+        case TokenType::LESS_EQUAL:    emit(opcode_t::GREATER, opcode_t::NOT); break;
+        case TokenType::PLUS:          emit(opcode_t::ADD); break;
+        case TokenType::MINUS:         emit(opcode_t::SUBTRACT); break;
+        case TokenType::STAR:          emit(opcode_t::MULTIPLY); break;
+        case TokenType::SLASH:         emit(opcode_t::DIVIDE); break;
+        case TokenType::BW_OR:         emit(opcode_t::BW_OR); break;
+        case TokenType::BW_AND:        emit(opcode_t::BW_AND); break;
+        case TokenType::BW_XOR:        emit(opcode_t::BW_XOR); break;
         default:
             return; // Unreachable.
     }
@@ -302,7 +302,7 @@ void parser_t::binary([[maybe_unused]] bool can_assign)
 void parser_t::call([[maybe_unused]] bool can_assign)
 {
     auto arg_count = args_list();
-    emit(OpCode::CALL, arg_count);
+    emit(opcode_t::CALL, arg_count);
 }
 
 void parser_t::dot([[maybe_unused]] bool can_assign)
@@ -312,22 +312,22 @@ void parser_t::dot([[maybe_unused]] bool can_assign)
     
     if (can_assign && match(TokenType::EQUAL)) {
         expression();
-        emit(OpCode::SET_PROPERTY, static_cast<uint8_t>(name));
+        emit(opcode_t::SET_PROPERTY, static_cast<uint8_t>(name));
     } else if (match(TokenType::OPEN_PAREN)) {
         auto arg_count = args_list();
-        emit(OpCode::INVOKE, static_cast<uint8_t>(name));
+        emit(opcode_t::INVOKE, static_cast<uint8_t>(name));
         emit(arg_count);
     } else {
-        emit(OpCode::GET_PROPERTY, static_cast<uint8_t>(name));
+        emit(opcode_t::GET_PROPERTY, static_cast<uint8_t>(name));
     }
 }
 
 void parser_t::literal([[maybe_unused]] bool can_assign)
 {
     switch (previous.get_type()) {
-        case TokenType::FALSE:      emit(OpCode::FALSE); break;
-        case TokenType::NULLVAL:    emit(OpCode::NULLOP); break;
-        case TokenType::TRUE:       emit(OpCode::TRUE); break;
+        case TokenType::FALSE:      emit(opcode_t::FALSE); break;
+        case TokenType::NULLVAL:    emit(opcode_t::NULLOP); break;
+        case TokenType::TRUE:       emit(opcode_t::TRUE); break;
         default:                    return; // Unreachable.
     }
 }
@@ -346,11 +346,11 @@ void parser_t::number([[maybe_unused]] bool can_assign)
 
 void parser_t::or_([[maybe_unused]] bool can_assign)
 {
-    int else_jump = emit_jump(OpCode::JUMP_IF_FALSE);
-    int end_jump = emit_jump(OpCode::JUMP);
+    int else_jump = emit_jump(opcode_t::JUMP_IF_FALSE);
+    int end_jump = emit_jump(opcode_t::JUMP);
     
     patch_jump(else_jump);
-    emit(OpCode::POP);
+    emit(opcode_t::POP);
     
     parse_precedence(precedence_t::OR);
     patch_jump(end_jump);
@@ -366,19 +366,19 @@ void parser_t::string_([[maybe_unused]] bool can_assign)
 
 void parser_t::named_variable(const std::string& name, bool can_assign)
 {
-    OpCode get_op;
-    OpCode set_op;
+    opcode_t get_op;
+    opcode_t set_op;
     auto arg = compiler->resolve_local(name);
     if (arg != -1) {
-        get_op = OpCode::GET_LOCAL;
-        set_op = OpCode::SET_LOCAL;
+        get_op = opcode_t::GET_LOCAL;
+        set_op = opcode_t::SET_LOCAL;
     } else if ((arg = compiler->resolve_upvalue(name)) != -1) {
-        get_op = OpCode::GET_UPVALUE;
-        set_op = OpCode::SET_UPVALUE;
+        get_op = opcode_t::GET_UPVALUE;
+        set_op = opcode_t::SET_UPVALUE;
     } else {
         arg = identifier_constant(name);
-        get_op = OpCode::GET_GLOBAL;
-        set_op = OpCode::SET_GLOBAL;
+        get_op = opcode_t::GET_GLOBAL;
+        set_op = opcode_t::SET_GLOBAL;
     }
     
     if (can_assign && match(TokenType::EQUAL)) {
@@ -408,7 +408,7 @@ void parser_t::super([[maybe_unused]] bool can_assign)
     
     named_variable("this", false);
     named_variable("super", false);
-    emit(OpCode::GET_SUPER, static_cast<uint8_t>(name));
+    emit(opcode_t::GET_SUPER, static_cast<uint8_t>(name));
 }
 
 void parser_t::this_([[maybe_unused]] bool can_assign)
@@ -422,9 +422,9 @@ void parser_t::this_([[maybe_unused]] bool can_assign)
 
 void parser_t::and_([[maybe_unused]] bool can_assign)
 {
-    int end_jump = emit_jump(OpCode::JUMP_IF_FALSE);
+    int end_jump = emit_jump(opcode_t::JUMP_IF_FALSE);
     
-    emit(OpCode::POP);
+    emit(opcode_t::POP);
     parse_precedence(precedence_t::AND);
     
     patch_jump(end_jump);
@@ -439,9 +439,9 @@ void parser_t::unary([[maybe_unused]] bool can_assign)
     
     // Emit the operator instruciton.
     switch (operator_type) {
-        case TokenType::EXCL: emit(OpCode::NOT); break;
-        case TokenType::MINUS: emit(OpCode::NEGATE); break;
-        case TokenType::BW_NOT: emit(OpCode::BW_NOT); break;
+        case TokenType::EXCL: emit(opcode_t::NOT); break;
+        case TokenType::MINUS: emit(opcode_t::NEGATE); break;
+        case TokenType::BW_NOT: emit(opcode_t::BW_NOT); break;
             
         default:
             return; // Unreachable.
@@ -560,7 +560,7 @@ void parser_t::define_variable(uint8_t global)
         return;
     }
     
-    emit(OpCode::DEFINE_GLOBAL, global);
+    emit(opcode_t::DEFINE_GLOBAL, global);
 }
 
 uint8_t parser_t::args_list()
@@ -616,7 +616,7 @@ void parser_t::function(function_type_t type)
     auto new_compiler = std::move(compiler);
     compiler = std::move(new_compiler->enclosing);
 
-    emit(OpCode::CLOSURE, make_constant(function));
+    emit(opcode_t::CLOSURE, make_constant(function));
     
     for (const auto& upvalue : new_compiler->upvalues) {
         emit(upvalue.is_local ? 1 : 0);
@@ -630,7 +630,7 @@ void parser_t::method()
     const auto constant = identifier_constant(std::string(previous.get_text()));
     const auto type = previous.get_text() == "init" ? function_type_t::TYPE_INITIALIZER : function_type_t::TYPE_METHOD;
     function(type);
-    emit(OpCode::METHOD, static_cast<uint8_t>(constant));
+    emit(opcode_t::METHOD, static_cast<uint8_t>(constant));
 }
 
 void parser_t::class_declaration()
@@ -640,7 +640,7 @@ void parser_t::class_declaration()
     const auto name_constant = identifier_constant(class_name);
     compiler->declare_variable(std::string(previous.get_text()));
     
-    emit(OpCode::CLASS, static_cast<uint8_t>(name_constant));
+    emit(opcode_t::CLASS, static_cast<uint8_t>(name_constant));
     define_variable(static_cast<uint8_t>(name_constant));
     
     class_compiler = std::make_unique<class_compiler_t>(std::move(class_compiler));
@@ -658,7 +658,7 @@ void parser_t::class_declaration()
         define_variable(0);
         
         named_variable(class_name, false);
-        emit(OpCode::INHERIT);
+        emit(opcode_t::INHERIT);
         class_compiler->has_superclass = true;
     }
     
@@ -668,7 +668,7 @@ void parser_t::class_declaration()
         method();
     }
     consume(TokenType::CLOSE_CURLY, "Expected '}' after class body.");
-    emit(OpCode::POP);
+    emit(opcode_t::POP);
     
     if (class_compiler->has_superclass) {
         compiler->end_scope();
@@ -692,7 +692,7 @@ void parser_t::var_declaration()
     if (match(TokenType::EQUAL)) {
         expression();
     } else {
-        emit(OpCode::NULLOP);
+        emit(opcode_t::NULLOP);
     }
     consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
     
@@ -702,7 +702,7 @@ void parser_t::var_declaration()
 void parser_t::expression_statement()
 {
     expression();
-    emit(OpCode::POP);
+    emit(opcode_t::POP);
     consume(TokenType::SEMICOLON, "Expected ';' after expression.");
 }
 
@@ -727,16 +727,16 @@ void parser_t::for_statement()
         consume(TokenType::SEMICOLON, "Expected ';' after loop condition.");
         
         // Jump out of the loop if the condition is false.
-        exit_jump = emit_jump(OpCode::JUMP_IF_FALSE);
-        emit(OpCode::POP);
+        exit_jump = emit_jump(opcode_t::JUMP_IF_FALSE);
+        emit(opcode_t::POP);
     }
 
     if (!match(TokenType::CLOSE_PAREN)) {
-        const int body_jump = emit_jump(OpCode::JUMP);
+        const int body_jump = emit_jump(opcode_t::JUMP);
         
         int increment_start = CurrentChunk().count();
         expression();
-        emit(OpCode::POP);
+        emit(opcode_t::POP);
         consume(TokenType::CLOSE_PAREN, "Expected ')' after for clauses.");
         
         emit_loop(loop_start);
@@ -750,7 +750,7 @@ void parser_t::for_statement()
     
     if (exit_jump != -1) {
         patch_jump(exit_jump);
-        emit(OpCode::POP); // Condition.
+        emit(opcode_t::POP); // Condition.
     }
 
     compiler->end_scope();
@@ -762,13 +762,13 @@ void parser_t::if_statement()
     expression();
     consume(TokenType::CLOSE_PAREN, "Expected ')' after condition.");
     
-    const int then_jump = emit_jump(OpCode::JUMP_IF_FALSE);
-    emit(OpCode::POP);
+    const int then_jump = emit_jump(opcode_t::JUMP_IF_FALSE);
+    emit(opcode_t::POP);
     statement();
-    const int else_jump = emit_jump(OpCode::JUMP);
+    const int else_jump = emit_jump(opcode_t::JUMP);
     
     patch_jump(then_jump);
-    emit(OpCode::POP);
+    emit(opcode_t::POP);
     if (match(TokenType::ELSE)) { statement(); }
     patch_jump(else_jump);
 }
@@ -813,7 +813,7 @@ void parser_t::print_statement()
 {
     expression();
     consume(TokenType::SEMICOLON, "Expected ';' after value.");
-    emit(OpCode::PRINT);
+    emit(opcode_t::PRINT);
 }
 
 void parser_t::return_statement()
@@ -831,7 +831,7 @@ void parser_t::return_statement()
         
         expression();
         consume(TokenType::SEMICOLON, "Expected ';' after return value.");
-        emit(OpCode::RETURN);
+        emit(opcode_t::RETURN);
     }
 }
 
@@ -843,15 +843,15 @@ void parser_t::while_statement()
     expression();
     consume(TokenType::CLOSE_PAREN, "Expected ')' after condition.");
     
-    const int exit_jump = emit_jump(OpCode::JUMP_IF_FALSE);
+    const int exit_jump = emit_jump(opcode_t::JUMP_IF_FALSE);
     
-    emit(OpCode::POP);
+    emit(opcode_t::POP);
     statement();
     
     emit_loop(loop_start);
     
     patch_jump(exit_jump);
-    emit(OpCode::POP);
+    emit(opcode_t::POP);
 }
 
 void parser_t::sync()
