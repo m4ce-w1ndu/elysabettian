@@ -5,7 +5,7 @@
 #include "value.hpp"
 #include "virtual_machine.hpp"
 
-static void Repl(VM& vm)
+static void Repl(virtual_machine_t& vm)
 {
     std::string line;
     while (true) {
@@ -36,7 +36,7 @@ static std::string ReadFile(const std::string& path)
     return str;
 }
 
-static void RunFile(VM& vm, const std::string& path)
+static void RunFile(virtual_machine_t& vm, const std::string& path)
 {
     auto source = ReadFile(path);
     auto result = vm.Interpret(source);
@@ -48,14 +48,14 @@ static void RunFile(VM& vm, const std::string& path)
     }
 }
 
-static void RunCommand(VM& vm, const std::string& command)
+static void RunCommand(virtual_machine_t& vm, const std::string& command)
 {
     vm.Interpret(command);
 }
 
 int main(int argc, const char * argv[])
 {
-    auto vm = VM();
+    auto vm = virtual_machine_t();
     
     if (argc == 1) {
         Repl(vm);

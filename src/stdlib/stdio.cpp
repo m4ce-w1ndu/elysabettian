@@ -31,7 +31,7 @@ namespace stdlib {
 	libstdio::libstdio()
 	: library_t({
 		// Console I/O
-		{ "read", [](int argc, std::vector<Value>::iterator args) -> Value {
+		{ "read", [](int argc, std::vector<value_t>::iterator args) -> value_t {
 			if (argc > 0 && argc < 2) {
 				try {
 					const auto param = std::get<std::string>(*args);
@@ -57,7 +57,7 @@ namespace stdlib {
 				return input;
 		}},
 
-		{ "fopen", [](int argc, std::vector<Value>::iterator args) -> Value {
+		{ "fopen", [](int argc, std::vector<value_t>::iterator args) -> value_t {
 			if (argc < 2 || argc > 2) {
 				fprintf(stderr, "fopen(filename, mode) expects 2 parameters. Got %d.\n", argc);
 				return std::monostate();
@@ -67,7 +67,7 @@ namespace stdlib {
 				auto mode = std::get<std::string>(*(args + 1));
 
 				try {
-					auto file = std::make_shared<FileObject>(name, mode);
+					auto file = std::make_shared<file_obj>(name, mode);
 					if (!file->is_open()) {
 						fprintf(stderr, "Error: file %s is not open.\n", file->path.c_str());
 						return std::monostate();
@@ -85,13 +85,13 @@ namespace stdlib {
 			}
 		}},
 
-		{ "fclose", [](int argc, std::vector<Value>::iterator args) -> Value {
+		{ "fclose", [](int argc, std::vector<value_t>::iterator args) -> value_t {
 			if (argc < 1 || argc > 1) {
 				fprintf(stderr, "fclose(filestream) expects 1 parameter. Got %d.\n", argc);
 				return std::monostate();
 			}
 			try {
-				auto file_ptr = std::get<File>(*args);
+				auto file_ptr = std::get<file_t>(*args);
 				if (!file_ptr->is_open()) {
 					fprintf(stderr, "Error: file %s is not open.\n", file_ptr->path.c_str());
 					return std::monostate();
@@ -106,13 +106,13 @@ namespace stdlib {
 			}
 		}},
 
-		{ "fflush", [](int argc, std::vector<Value>::iterator args) -> Value {
+		{ "fflush", [](int argc, std::vector<value_t>::iterator args) -> value_t {
 			if (argc < 1 || argc > 1) {
 				fprintf(stderr, "fflush(filestream) expects 1 parameter. Got %d.\n", argc);
 				return std::monostate();
 			}
 			try {
-				auto file_ptr = std::get<File>(*args);
+				auto file_ptr = std::get<file_t>(*args);
 				if (!file_ptr->is_open()) {
 					fprintf(stderr, "Error: file %s is not open.\n", file_ptr->path.c_str());
 					return std::monostate();
@@ -126,13 +126,13 @@ namespace stdlib {
 			}
 		}},
 
-		{ "fread", [](int argc, std::vector<Value>::iterator args) -> Value {
+		{ "fread", [](int argc, std::vector<value_t>::iterator args) -> value_t {
 			if (argc < 1 || argc > 1) {
 				fprintf(stderr, "fread(filestream) expects 1 parameter. Got %d.\n", argc);
 				return std::monostate();
 			}
 			try {
-				auto file_ptr = std::get<File>(*args);
+				auto file_ptr = std::get<file_t>(*args);
 				if (!file_ptr->is_open()) {
 					fprintf(stderr, "Error: file %s is not open.\n", file_ptr->path.c_str());
 					return std::monostate();
@@ -145,13 +145,13 @@ namespace stdlib {
 			}
 		}},
 		
-		{ "fwrite", [](int argc, std::vector<Value>::iterator args) -> Value {
+		{ "fwrite", [](int argc, std::vector<value_t>::iterator args) -> value_t {
 			if (argc < 2 || argc > 2) {
 				fprintf(stderr, "fwrite(filestream, data) expects 2 parameters. Got %d.\n", argc);
 				return std::monostate();
 			}
 			try {
-				auto file_ptr = std::get<File>(*args);
+				auto file_ptr = std::get<file_t>(*args);
 				if (!file_ptr->is_open()) {
 					fprintf(stderr, "Error: file %s is not open.\n", file_ptr->path.c_str());
 					return std::monostate();

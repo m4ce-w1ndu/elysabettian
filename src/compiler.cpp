@@ -126,7 +126,7 @@ parser_t::parser_t(const std::string& source) :
     advance();
 }
 
-std::optional<Func> parser_t::compile()
+std::optional<func_t> parser_t::compile()
 {
     while (!match(token_type_t::_EOF)) {
         declaration();
@@ -225,7 +225,7 @@ void parser_t::emit_return()
     emit(opcode_t::RETURN);
 }
 
-uint8_t parser_t::make_constant(const Value& value)
+uint8_t parser_t::make_constant(const value_t& value)
 {
     auto constant = CurrentChunk().add_constant(value);
     if (constant > UINT8_MAX) {
@@ -236,7 +236,7 @@ uint8_t parser_t::make_constant(const Value& value)
     return (uint8_t)constant;
 }
 
-void parser_t::emit_constant(const Value& value)
+void parser_t::emit_constant(const value_t& value)
 {
     emit(opcode_t::CONSTANT, make_constant(value));
 }
@@ -254,7 +254,7 @@ void parser_t::patch_jump(int offset)
     CurrentChunk().set_code(offset + 1, jump & 0xff);
 }
 
-Func parser_t::end_compiler()
+func_t parser_t::end_compiler()
 {
     emit_return();
     
@@ -340,7 +340,7 @@ void parser_t::grouping([[maybe_unused]] bool can_assign)
 
 void parser_t::number([[maybe_unused]] bool can_assign)
 {
-    Value value = std::stod(std::string(previous.get_text()));
+    value_t value = std::stod(std::string(previous.get_text()));
     emit_constant(value);
 }
 

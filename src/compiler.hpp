@@ -55,11 +55,11 @@ enum class function_type_t {
 };
 
 class compiler_t {
-    const Func default_function = std::make_shared<FunctionObject>(0, "");
+    const func_t default_function = std::make_shared<function_obj>(0, "");
     parser_t* parser;
 
     function_type_t type;
-    Func function;
+    func_t function;
 
     std::unique_ptr<compiler_t> enclosing;
     
@@ -117,11 +117,11 @@ class parser_t {
     void emit_loop(int loopStart);
     int emit_jump(opcode_t op);
     void emit_return();
-    uint8_t make_constant(const Value& value);
-    void emit_constant(const Value& value);
+    uint8_t make_constant(const value_t& value);
+    void emit_constant(const value_t& value);
     void patch_jump(int offset);
     
-    Func end_compiler();
+    func_t end_compiler();
     
     void binary(bool can_assign);
     void call(bool can_assign);
@@ -180,7 +180,7 @@ public:
     {
         return compiler->function->get_chunk();
     }
-    std::optional<Func> compile();
+    std::optional<func_t> compile();
 };
 
 #endif /* compiler_hpp */

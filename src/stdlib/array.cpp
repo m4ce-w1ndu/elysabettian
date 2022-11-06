@@ -6,14 +6,14 @@ namespace stdlib {
 
         // Functions
         {
-            { "__Array", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__Array", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc > 0) {
                     fprintf(stderr, "Error: Array() constructor expects 0 paramters. Got %d.\n", argc);
                     return std::monostate();
                 }
-                return std::make_shared<ArrayObject>();
+                return std::make_shared<array_obj>();
             }},
-            { "__arrayPush", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__arrayPush", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc < 2) {
                     fprintf(stderr, "Error: arrayPush(array, [items...]) expects at least 2 paramters. Got %d.\n", argc);
                     return std::monostate();
@@ -21,7 +21,7 @@ namespace stdlib {
 
                 // getting array
                 try {
-                    Array array = std::get<Array>(*args);
+                    array_t array = std::get<array_t>(*args);
                     // inserting elements into array
                     for (int i = 1; i < argc; ++i)
                         array->values.push_back(*(args + i));
@@ -32,14 +32,14 @@ namespace stdlib {
 					return std::monostate();
 				}
             }},
-            { "__arrayGet", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__arrayGet", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc > 2 || argc < 2) {
                     fprintf(stderr, "Error: arrayGet(array, index) expects 2 paramters. Got %d.\n", argc);
                     return std::monostate();
                 }
 
                 try {
-                    Array array = std::get<Array>(*args);
+                    array_t array = std::get<array_t>(*args);
                     // getting index
                     try {
                         auto index = static_cast<size_t>(std::get<double>(*(args + 1)));
@@ -56,7 +56,7 @@ namespace stdlib {
 					return std::monostate();
 				}
             }},
-            { "__arraySet", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__arraySet", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc > 3 || argc < 3) {
                     fprintf(stderr, "Error: arraySet(array, index, item) expects 3 paramters. Got %d.\n", argc);
                     return std::monostate();
@@ -64,7 +64,7 @@ namespace stdlib {
 
                 size_t index;
                 try {
-                    Array array = std::get<Array>(*args);
+                    array_t array = std::get<array_t>(*args);
                     // getting index
                     try {
                         index = static_cast<size_t>(std::get<double>(*(args + 1)));
@@ -83,14 +83,14 @@ namespace stdlib {
 					return std::monostate();
                 }
             }},
-            { "__arrayLen", [](int argc, std::vector<Value>::iterator args) -> Value {
+            { "__arrayLen", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc > 1 || argc < 1) {
                     fprintf(stderr, "Error: arrayLen(array) expects 1 paramters. Got %d.\n", argc);
                     return std::monostate();
                 }
 
                 try {
-                    Array array = std::get<Array>(*args);
+                    array_t array = std::get<array_t>(*args);
                     return static_cast<double>(array->values.size());
                 }
                 catch (std::bad_variant_access&) {
