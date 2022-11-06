@@ -16,24 +16,24 @@
 constexpr auto FRAMES_MAX = 64;
 constexpr auto STACK_MAX = (FRAMES_MAX* UINT8_COUNT);
 
-enum class IResult {
+enum class interpret_result_t {
     OK,
     COMPILE_ERROR,
     RUNTIME_ERROR
 };
 
-struct CallFrame {
+struct call_frame_t {
     closure_t closure;
     unsigned ip;
     unsigned long stack_offset;
 };
 
-struct CallVisitor;
+struct call_visitor_t;
 
 class virtual_machine_t {
     // TODO: Switch to a fixed array to prevent pointer invalidation
     std::vector<value_t> stack;
-    std::vector<CallFrame> frames;
+    std::vector<call_frame_t> frames;
     std::unordered_map<std::string, value_t> globals;
     upvalue_value_t open_upvalues;
     std::string init_string = "init";
@@ -193,10 +193,10 @@ public:
         define_native("import", import_lib);
         define_native("toString", to_native_string);
     }
-    IResult Interpret(const std::string& source);
-    IResult Run();
+    interpret_result_t Interpret(const std::string& source);
+    interpret_result_t Run();
     
-    friend CallVisitor;
+    friend call_visitor_t;
 };
 
 #endif /* vm_hpp */

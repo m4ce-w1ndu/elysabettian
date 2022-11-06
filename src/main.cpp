@@ -42,9 +42,9 @@ static void RunFile(virtual_machine_t& vm, const std::string& path)
     auto result = vm.Interpret(source);
     
     switch (result) {
-        case IResult::OK: break;
-        case IResult::COMPILE_ERROR: exit(65);
-        case IResult::RUNTIME_ERROR: exit(70);
+        case interpret_result_t::OK: break;
+        case interpret_result_t::COMPILE_ERROR: exit(65);
+        case interpret_result_t::RUNTIME_ERROR: exit(70);
     }
 }
 

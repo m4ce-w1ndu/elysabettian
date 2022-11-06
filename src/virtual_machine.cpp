@@ -21,11 +21,11 @@ const std::string operator+(double num, const std::string& str)
     return str_num + str;
 }
 
-struct CallVisitor {
+struct call_visitor_t {
     const int arg_count;
     virtual_machine_t& vm;
     
-    CallVisitor(int arg_count, virtual_machine_t& vm)
+    call_visitor_t(int arg_count, virtual_machine_t& vm)
         : arg_count(arg_count), vm(vm) {}
     
     bool operator()(const native_function_t& native) const
@@ -79,7 +79,7 @@ struct CallVisitor {
 
 bool virtual_machine_t::call_value(const value_t& callee, int arg_count)
 {
-    return std::visit(CallVisitor(arg_count, *this), callee);
+    return std::visit(call_visitor_t(arg_count, *this), callee);
 }
 
 bool virtual_machine_t::invoke(const std::string& name, int arg_count)
@@ -186,7 +186,7 @@ bool virtual_machine_t::call(const closure_t& closure, int arg_count)
         return false;
     }
 
-    frames.emplace_back(CallFrame());
+    frames.emplace_back(call_frame_t());
     auto& frame = frames.back();
     frame.ip = 0;
     frame.closure = closure;
@@ -195,11 +195,11 @@ bool virtual_machine_t::call(const closure_t& closure, int arg_count)
     return true;
 }
 
-IResult virtual_machine_t::Interpret(const std::string& source)
+interpret_result_t virtual_machine_t::Interpret(const std::string& source)
 {
     auto parser = parser_t(source);
     auto opt = parser.compile();
-    if (!opt) { return IResult::COMPILE_ERROR; }
+    if (!opt) { return interpret_result_t::COMPILE_ERROR; }
 
     auto& function = *opt;
     auto closure = std::make_shared<closure_obj>(function);
@@ -266,7 +266,7 @@ void virtual_machine_t::double_pop_and_push(const value_t& v)
     push(v);
 }
 
-IResult virtual_machine_t::Run()
+interpret_result_t virtual_machine_t::Run()
 {
     auto read_byte = [this]() -> uint8_t {
         return this->frames.back().closure->function->get_code(this->frames.back().ip++);
@@ -299,14 +299,14 @@ IResult virtual_machine_t::Run()
 #define BINARY_OP(op) \
     do { \
         if (!binary_op([](double a, double b) -> value_t { return a op b; })) { \
-            return IResult::RUNTIME_ERROR; \
+            return interpret_result_t::RUNTIME_ERROR; \
         } \
     } while (false)
         
 #define INTEGER_BINARY_OP(op) \
     do { \
         if (!binary_op([](int a, int b) -> value_t { return static_cast<double>(a op b); })) { \
-            return IResult::RUNTIME_ERROR; \
+            return interpret_result_t::RUNTIME_ERROR; \
         } \
     } while (false)
         
@@ -333,7 +333,7 @@ IResult virtual_machine_t::Run()
                 auto found = globals.find(name);
                 if (found == globals.end()) {
                     runtime_error("Undefined variable '%s'.", name.c_str());
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 auto value = found->second;
                 push(value);
@@ -358,7 +358,7 @@ IResult virtual_machine_t::Run()
                 auto found = globals.find(name);
                 if (found == globals.end()) {
                     runtime_error("Undefined variable '%s'.", name.c_str());
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 found->second = peek(0);
                 break;
@@ -380,7 +380,7 @@ IResult virtual_machine_t::Run()
                     instance = std::get<instance_value_t>(peek(0));
                 } catch (std::bad_variant_access&) {
                     runtime_error("Only instances have properties.");
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
 
                 auto name = read_string();
@@ -393,7 +393,7 @@ IResult virtual_machine_t::Run()
                 }
 
                 if (!bind_method(instance->class_value, name)) {
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 break;
             }
@@ -408,7 +408,7 @@ IResult virtual_machine_t::Run()
                     push(value);
                 } catch (std::bad_variant_access&) {
                     runtime_error("Only instances have fields.");
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 break;
             }
@@ -417,7 +417,7 @@ IResult virtual_machine_t::Run()
                 auto superclass = std::get<class_value_t>(pop());
                 
                 if (!bind_method(superclass, name)) {
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 break;
             }
@@ -460,7 +460,7 @@ IResult virtual_machine_t::Run()
                 }, peek(0), peek(1));
                 
                 if (!success)
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 
                 break;
             }
@@ -480,7 +480,7 @@ IResult virtual_machine_t::Run()
                     push(static_cast<double>(bw_notted));
                 } catch (std::bad_variant_access) {
                     runtime_error("Operand must be a number.");
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
             }
                 
@@ -491,7 +491,7 @@ IResult virtual_machine_t::Run()
                     push(negated);
                 } catch (std::bad_variant_access&) {
                     runtime_error("Operand must be a number.");
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 break;
                 
@@ -523,7 +523,7 @@ IResult virtual_machine_t::Run()
             case opcode_t::CALL: {
                 int argCount = read_byte();
                 if (!call_value(peek(argCount), argCount)) {
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 break;
             }
@@ -532,7 +532,7 @@ IResult virtual_machine_t::Run()
                 auto method = read_string();
                 int argCount = read_byte();
                 if (!invoke(method, argCount)) {
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 break;
             }
@@ -542,7 +542,7 @@ IResult virtual_machine_t::Run()
                 int argCount = read_byte();
                 auto superclass = std::get<class_value_t>(pop());
                 if (!invoke_from_class(superclass, method, argCount)) {
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
                 break;
             }
@@ -576,7 +576,7 @@ IResult virtual_machine_t::Run()
                 frames.pop_back();
                 if (frames.empty()) {
                     pop();
-                    return IResult::OK;
+                    return interpret_result_t::OK;
                 }
 
                 stack.resize(lastOffset);
@@ -598,7 +598,7 @@ IResult virtual_machine_t::Run()
                     break;
                 } catch (std::bad_variant_access&) {
                     runtime_error("Superclass must be a class.");
-                    return IResult::RUNTIME_ERROR;
+                    return interpret_result_t::RUNTIME_ERROR;
                 }
             }
                 
@@ -608,7 +608,7 @@ IResult virtual_machine_t::Run()
         }
     }
     
-    return IResult::OK;
+    return interpret_result_t::OK;
 
 #undef BINARY_OP
 }
