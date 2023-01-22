@@ -72,7 +72,7 @@ int compiler_t::resolve_upvalue(const std::string& name)
 
 int compiler_t::add_upvalue(uint8_t index, bool is_local)
 {
-    for (long i = 0; i < upvalues.size(); i++) {
+    for (long i = 0; i < static_cast<long>(upvalues.size()); i++) {
         if (upvalues[i].index == index && upvalues[i].is_local == is_local) {
             return static_cast<int>(i);
         }
