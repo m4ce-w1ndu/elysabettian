@@ -16,24 +16,24 @@
 constexpr auto FRAMES_MAX = 64;
 constexpr auto STACK_MAX = (FRAMES_MAX* UINT8_COUNT);
 
-enum class interpret_result_t {
-    OK,
-    COMPILE_ERROR,
-    RUNTIME_ERROR
+enum class InterpretResult {
+    Ok,
+    CompileError,
+    RuntimeError
 };
 
-struct call_frame_t {
+struct CallFrame {
     closure_t closure;
     unsigned ip;
     unsigned long stack_offset;
 };
 
-struct call_visitor_t;
+struct CallVisitor;
 
-class virtual_machine_t {
+class VirtualMachine {
     // TODO: Switch to a fixed array to prevent pointer invalidation
     std::vector<value_t> stack;
-    std::vector<call_frame_t> frames;
+    std::vector<CallFrame> frames;
     std::unordered_map<std::string, value_t> globals;
     upvalue_value_t open_upvalues;
     std::string init_string = "init";
@@ -41,7 +41,7 @@ class virtual_machine_t {
     // Load arrays by default
     const stdlib::libnativearray array_lib;
     
-    inline void ResetStack()
+    inline void reset_stack()
     {
         stack.clear();
         frames.clear();
@@ -84,7 +84,7 @@ class virtual_machine_t {
     bool call(const closure_t& closure, int arg_count);
 
 public:
-    explicit virtual_machine_t()
+    explicit VirtualMachine()
     {
         // Library loader
         auto import_lib = [this](int argc, std::vector<value_t>::iterator args) -> value_t {
@@ -172,7 +172,7 @@ public:
 
         auto native_version = [](int argc, std::vector<value_t>::iterator args) -> value_t {
             fmt::print("{}\n", VERSION_FULLNAME);
-            return "Elysabettian 1.0 Maurizio";
+            return "Elysabettian 1.1 Maurizio";
         };
 
         auto exit_env = [](int argc, std::vector<value_t>::iterator args) -> value_t {
@@ -191,12 +191,12 @@ public:
         define_native("date", native_date);
         define_native("version", native_version);
         define_native("import", import_lib);
-        define_native("toString", to_native_string);
+        define_native("string", to_native_string);
     }
-    interpret_result_t Interpret(const std::string& source);
-    interpret_result_t Run();
+    InterpretResult Interpret(const std::string& source);
+    InterpretResult Run();
     
-    friend call_visitor_t;
+    friend CallVisitor;
 };
 
 #endif /* vm_hpp */

@@ -22,7 +22,7 @@ class function_obj;
 class closure_obj;
 class compiler_t;
 class parser_t;
-class virtual_machine_t;
+class VirtualMachine;
 using func_t = std::shared_ptr<function_obj>;
 using native_function_t = std::shared_ptr<native_func_obj>;
 using closure_t = std::shared_ptr<closure_obj>;
@@ -128,7 +128,7 @@ public:
 
     friend compiler_t;
     friend parser_t;
-    friend virtual_machine_t;
+    friend VirtualMachine;
     friend Chunk;
     friend closure_obj;
 };

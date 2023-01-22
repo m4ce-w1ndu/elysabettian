@@ -5,7 +5,7 @@
 #include "value.hpp"
 #include "virtual_machine.hpp"
 
-static void Repl(virtual_machine_t& vm)
+static void Repl(VirtualMachine& vm)
 {
     std::string line;
     while (true) {
@@ -36,26 +36,26 @@ static std::string ReadFile(const std::string& path)
     return str;
 }
 
-static void RunFile(virtual_machine_t& vm, const std::string& path)
+static void RunFile(VirtualMachine& vm, const std::string& path)
 {
     auto source = ReadFile(path);
     auto result = vm.Interpret(source);
     
     switch (result) {
-        case interpret_result_t::OK: break;
-        case interpret_result_t::COMPILE_ERROR: exit(65);
-        case interpret_result_t::RUNTIME_ERROR: exit(70);
+        case InterpretResult::Ok: break;
+        case InterpretResult::CompileError: exit(65);
+        case InterpretResult::RuntimeError: exit(70);
     }
 }
 
-static void RunCommand(virtual_machine_t& vm, const std::string& command)
+static void RunCommand(VirtualMachine& vm, const std::string& command)
 {
     vm.Interpret(command);
 }
 
 int main(int argc, const char * argv[])
 {
-    auto vm = virtual_machine_t();
+    auto vm = VirtualMachine();
     
     if (argc == 1) {
         Repl(vm);
