@@ -478,7 +478,7 @@ interpret_result_t virtual_machine_t::Run()
                     auto bw_notted = ~static_cast<int>(std::get<double>(peek(0)));
                     pop();
                     push(static_cast<double>(bw_notted));
-                } catch (std::bad_variant_access) {
+                } catch (std::bad_variant_access&) {
                     runtime_error("Operand must be a number.");
                     return interpret_result_t::RUNTIME_ERROR;
                 }
@@ -601,7 +601,67 @@ interpret_result_t virtual_machine_t::Run()
 
 				push(new_arr);
 				break;
-			}	
+			}
+
+            case opcode_t::ARR_INDEX: {
+                try {
+                    auto index = static_cast<size_t>(std::get<double>(pop()));
+                    array_t list;
+
+                    try {
+                        list = std::get<array_t>(pop());
+                    }
+                    catch (std::bad_variant_access&) {
+                        runtime_error("Object is not an array");
+                        return interpret_result_t::RUNTIME_ERROR;
+                    }
+
+                    if (index < 0 || index >= list->values.size()) {
+                        runtime_error("Array index out of bounds");
+                        return interpret_result_t::RUNTIME_ERROR;
+                    }
+
+                    auto& result = list->values[index];
+                    push(result);
+
+                } catch (std::bad_variant_access&) {
+                    runtime_error("Index is not a number");
+                    return interpret_result_t::RUNTIME_ERROR;
+                }
+
+                break;
+            }
+
+            case opcode_t::ARR_STORE: {
+                try {
+                    auto item = pop();
+                    auto index = static_cast<size_t>(std::get<double>(pop()));
+                    array_t list;
+
+                    try {
+                        list = std::get<array_t>(pop());
+                    }
+                    catch (std::bad_variant_access&) {
+                        runtime_error("Object is not an array");
+                        return interpret_result_t::RUNTIME_ERROR;
+                    }
+
+                    if (index < 0 || index >= list->values.size()) {
+                        runtime_error("Array index out of bounds");
+                        return interpret_result_t::RUNTIME_ERROR;
+                    }
+
+                    list->values[index] = item;
+
+                    push(item);
+                }
+                catch (std::bad_variant_access&) {
+                    runtime_error("Index is not a number");
+                    return interpret_result_t::RUNTIME_ERROR;
+                }
+
+                break;
+            }
                 
             case opcode_t::CLASS:
                 push(std::make_shared<class_obj>(read_string()));
@@ -609,8 +669,8 @@ interpret_result_t virtual_machine_t::Run()
                 
             case opcode_t::INHERIT: {
                 try {
-                    auto superclass = std::get<class_value_t>(peek(1));
-                    auto subclass = std::get<class_value_t>(peek(0));
+                    auto& superclass = std::get<class_value_t>(peek(1));
+                    auto& subclass = std::get<class_value_t>(peek(0));
                     subclass->methods = superclass->methods;
                     pop(); // Subclass.
                     break;
