@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <cstddef>
+#include <array>
 
 enum class precedence_t {
     NONE,
@@ -173,6 +174,10 @@ class parser_t {
     {
         error_at(current, message);
     };
+
+    void build_parse_rules();
+
+    std::array<parse_rule_t, 46> rules;
     
     friend compiler_t;
     

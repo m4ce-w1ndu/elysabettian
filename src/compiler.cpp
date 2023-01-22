@@ -5,11 +5,11 @@
 compiler_t::compiler_t(parser_t* parser, function_type_t type, std::unique_ptr<compiler_t> enclosing)
     : parser(parser), type(type), function{default_function}, enclosing(std::move(enclosing))
 {
-        locals.emplace_back(type == function_type_t::TYPE_FUNCTION ? "" : "this", 0);
-        if (type != function_type_t::TYPE_SCRIPT) {
-            function->name = parser->previous.get_text();
-        }
-};
+    locals.emplace_back(type == function_type_t::TYPE_FUNCTION ? "" : "this", 0);
+    if (type != function_type_t::TYPE_SCRIPT) {
+        function->name = parser->previous.get_text();
+    }
+}
 
 void compiler_t::add_local(const std::string& name)
 {
@@ -124,6 +124,8 @@ parser_t::parser_t(const std::string& source) :
 {
     compiler = std::make_unique<compiler_t>(this, function_type_t::TYPE_SCRIPT, nullptr);
     advance();
+
+    build_parse_rules();
 }
 
 std::optional<func_t> parser_t::compile()
@@ -486,6 +488,11 @@ void parser_t::unary([[maybe_unused]] bool can_assign)
 
 parse_rule_t& parser_t::get_rule(token_type_t type)
 {
+    return rules[static_cast<int>(type)];
+}
+
+void parser_t::build_parse_rules()
+{
     auto grouping = [this](bool can_assign) { this->grouping(can_assign); };
     auto unary = [this](bool can_assign) { this->unary(can_assign); };
     auto binary = [this](bool can_assign) { this->binary(can_assign); };
@@ -501,8 +508,8 @@ parse_rule_t& parser_t::get_rule(token_type_t type)
     auto or_ = [this](bool can_assign) { this->or_(can_assign); };
     auto array = [this](bool can_assign) { this->array(can_assign); };
     auto array_idx = [this](bool can_assign) { this->array_idx(can_assign); };
-    
-    static std::array<parse_rule_t, 46> rules = {{
+
+    rules = { {
         { grouping,    call,       precedence_t::CALL },       // TOKEN_LEFT_PAREN
         { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_RIGHT_PAREN
         { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_LEFT_BRACE
@@ -547,11 +554,9 @@ parse_rule_t& parser_t::get_rule(token_type_t type)
         { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_OR
         { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_XOR
         { unary,       nullptr,    precedence_t::UNARY},       // TOKEN_BW_NOT
-        { array,       array_idx,  precedence_t::UNARY},       // TOKEN_OPEN_SQUARE
-        { unary,       nullptr,    precedence_t::UNARY},       // TOKEN_CLOSE_SQUARE
-    }};
-    
-    return rules[static_cast<int>(type)];
+        { array,       array_idx,  precedence_t::OR   },       // TOKEN_OPEN_SQUARE
+        { unary,       nullptr,    precedence_t::NONE },       // TOKEN_CLOSE_SQUARE
+    } };
 }
 
 void parser_t::parse_precedence(precedence_t precedence)
