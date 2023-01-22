@@ -584,6 +584,24 @@ interpret_result_t virtual_machine_t::Run()
                 push(result);
                 break;
             }
+
+            case opcode_t::ARR_BUILD: {
+                array_t new_arr = std::make_shared<array_obj>();
+                uint8_t item_count = read_byte();
+
+				push(new_arr);
+				for (int i = item_count; i > 0; i--) {
+					new_arr->values.push_back(peek(i));
+            	}
+				pop();
+
+				while (item_count-- > 0) {
+					pop();
+				}
+
+				push(new_arr);
+				break;
+			}	
                 
             case opcode_t::CLASS:
                 push(std::make_shared<class_obj>(read_string()));
