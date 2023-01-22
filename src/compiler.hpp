@@ -24,9 +24,9 @@ enum class precedence_t {
     PRIMARY
 };
 
-class parser_t;
+class Parser;
 
-using parsefn_t = void (parser_t::*)(bool);
+using parsefn_t = void (Parser::*)(bool);
 
 struct parse_rule_t {
     std::function<void(bool)> prefix;
@@ -55,21 +55,21 @@ enum class function_type_t {
     TYPE_FUNCTION, TYPE_INITIALIZER, TYPE_METHOD, TYPE_SCRIPT
 };
 
-class compiler_t {
-    const func_t default_function = std::make_shared<function_obj>(0, "");
-    parser_t* parser;
+class Compiler {
+    const Func default_function = std::make_shared<FunctionObj>(0, "");
+    Parser* parser;
 
     function_type_t type;
-    func_t function;
+    Func function;
 
-    std::unique_ptr<compiler_t> enclosing;
+    std::unique_ptr<Compiler> enclosing;
     
     std::vector<local_t> locals;
     std::vector<upvalue_t> upvalues;
     int scope_depth = 0;
 
 public:
-    explicit compiler_t(parser_t* parser, function_type_t type, std::unique_ptr<compiler_t> enclosing);
+    explicit Compiler(Parser* parser, function_type_t type, std::unique_ptr<Compiler> enclosing);
     void add_local(const std::string& name);
     void declare_variable(const std::string& name);
     void mark_initialized();
@@ -80,7 +80,7 @@ public:
     void end_scope();
     bool is_local() const;
 
-    friend parser_t;
+    friend Parser;
 };
 
 class class_compiler_t {
@@ -90,17 +90,17 @@ class class_compiler_t {
     bool has_superclass;
 public:
     explicit class_compiler_t(std::unique_ptr<class_compiler_t> enclosing);
-    friend parser_t;
+    friend Parser;
 };
 
-class parser_t {
+class Parser {
     const std::nullptr_t null_value = nullptr;
     const bool false_value = false;
 
     token_t previous;
     token_t current;
     tokenizer_t scanner;
-    std::unique_ptr<compiler_t> compiler;
+    std::unique_ptr<Compiler> compiler;
     std::unique_ptr<class_compiler_t> class_compiler;
     
     bool had_error;
@@ -118,11 +118,11 @@ class parser_t {
     void emit_loop(int loopStart);
     int emit_jump(opcode_t op);
     void emit_return();
-    uint8_t make_constant(const value_t& value);
-    void emit_constant(const value_t& value);
+    uint8_t make_constant(const Value& value);
+    void emit_constant(const Value& value);
     void patch_jump(int offset);
     
-    func_t end_compiler();
+    Func end_compiler();
     
     void array(bool can_assign);
     void array_idx(bool can_assign);
@@ -179,15 +179,15 @@ class parser_t {
 
     std::array<parse_rule_t, 46> rules;
     
-    friend compiler_t;
+    friend Compiler;
     
 public:
-    explicit parser_t(const std::string& source);
+    explicit Parser(const std::string& source);
     Chunk& CurrentChunk()
     {
         return compiler->function->get_chunk();
     }
-    std::optional<func_t> compile();
+    std::optional<Func> compile();
 };
 
 #endif /* compiler_hpp */

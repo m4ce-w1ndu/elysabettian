@@ -11,7 +11,7 @@ void Chunk::write(opcode_t opcode, int line)
     write(static_cast<uint8_t>(opcode), line);
 }
 
-unsigned long Chunk::add_constant(value_t value)
+unsigned long Chunk::add_constant(Value value)
 {
     constants.push_back(value);
     return static_cast<unsigned long>(constants.size() - 1);
@@ -152,7 +152,7 @@ int Chunk::disas_instruction(int offset)
             std::cout << constants[constant];
             std::cout << std::endl;
             
-            auto function = std::get<func_t>(constants[constant]);
+            auto function = std::get<Func>(constants[constant]);
             for (int j = 0; j < function->upvalue_count; j++) {
                 int is_local = code[offset++];
                 int index = code[offset++];

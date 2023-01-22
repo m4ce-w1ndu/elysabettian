@@ -11,86 +11,86 @@
 #include <functional>
 #include <cstdio>
 
-struct native_func_obj;
-struct upvalue_obj;
-struct class_obj;
-struct instance_obj;
-struct member_func_obj;
-struct file_obj;
-struct array_obj;
-class function_obj;
-class closure_obj;
-class compiler_t;
-class parser_t;
+struct NativeFuncObj;
+struct UpvalueObj;
+struct ClassObj;
+struct InstanceObj;
+struct MemberFuncObj;
+struct FileObj;
+struct ArrayObj;
+class FunctionObj;
+class ClosureObj;
+class Compiler;
+class Parser;
 class VirtualMachine;
-using func_t = std::shared_ptr<function_obj>;
-using native_function_t = std::shared_ptr<native_func_obj>;
-using closure_t = std::shared_ptr<closure_obj>;
-using upvalue_value_t = std::shared_ptr<upvalue_obj>;
-using class_value_t = std::shared_ptr<class_obj>;
-using instance_value_t = std::shared_ptr<instance_obj>;
-using member_func_value_t = std::shared_ptr<member_func_obj>;
-using file_t = std::shared_ptr<file_obj>;
-using array_t = std::shared_ptr<array_obj>;
+using Func = std::shared_ptr<FunctionObj>;
+using NativeFunc = std::shared_ptr<NativeFuncObj>;
+using Closure = std::shared_ptr<ClosureObj>;
+using Upvalue = std::shared_ptr<UpvalueObj>;
+using Class = std::shared_ptr<ClassObj>;
+using Instance = std::shared_ptr<InstanceObj>;
+using MemberFunc = std::shared_ptr<MemberFuncObj>;
+using File = std::shared_ptr<FileObj>;
+using Array = std::shared_ptr<ArrayObj>;
 
-using value_t = std::variant<
+using Value = std::variant<
     double, bool, std::monostate,
-    std::string, func_t, native_function_t,
-    closure_t, upvalue_value_t, class_value_t,
-    instance_value_t, member_func_value_t,
-    file_t, array_t, FILE*>;
+    std::string, Func, NativeFunc,
+    Closure, Upvalue, Class,
+    Instance, MemberFunc,
+    File, Array, FILE*>;
 
 class Chunk {
     std::vector<uint8_t> code;
-    std::vector<value_t> constants;
+    std::vector<Value> constants;
     std::vector<int> lines;
 
 public:
     uint8_t get_code(int offset) const { return code[offset]; };
     void set_code(int offset, uint8_t value) { code[offset] = value; }
-    const value_t& get_constant(int constant) const { return constants[constant]; };
+    const Value& get_constant(int constant) const { return constants[constant]; };
     void write(uint8_t byte, int line);
     void write(opcode_t opcode, int line);
-    unsigned long add_constant(value_t value);
+    unsigned long add_constant(Value value);
     int disas_instruction(int offset);
     void disassemble(const std::string& name);
     int get_line(int instruction) { return lines[instruction]; }
     int count() { return static_cast<int>(code.size()); }
 };
 
-using native_fn_t = std::function<value_t(int, std::vector<value_t>::iterator)>;
+using NativeFn = std::function<Value(int, std::vector<Value>::iterator)>;
 
-struct native_func_obj {
-    native_fn_t function;
+struct NativeFuncObj {
+    NativeFn function;
 };
 
-struct upvalue_obj {
-    value_t* location;
-    value_t closed;
-    upvalue_value_t next;
-    upvalue_obj(value_t* slot): location(slot), closed(std::monostate()), next(nullptr) {}
+struct UpvalueObj {
+    Value* location;
+    Value closed;
+    Upvalue next;
+    UpvalueObj(Value* slot): location(slot), closed(std::monostate()), next(nullptr) {}
 };
 
-struct class_obj {
+struct ClassObj {
     std::string name;
-    std::unordered_map<std::string, closure_t> methods;
-    explicit class_obj(std::string name): name(name) {}
+    std::unordered_map<std::string, Closure> methods;
+    explicit ClassObj(std::string name): name(name) {}
 };
 
-struct instance_obj {
-    class_value_t class_value;
-    std::unordered_map<std::string, value_t> fields;
-    explicit instance_obj(class_value_t klass): class_value(klass) {}
+struct InstanceObj {
+    Class class_value;
+    std::unordered_map<std::string, Value> fields;
+    explicit InstanceObj(Class klass): class_value(klass) {}
 };
 
-struct member_func_obj {
-    instance_value_t receiver;
-    closure_t method;
-    explicit member_func_obj(instance_value_t receiver, closure_t method)
+struct MemberFuncObj {
+    Instance receiver;
+    Closure method;
+    explicit MemberFuncObj(Instance receiver, Closure method)
         : receiver(receiver), method(method) {}
 };
 
-class function_obj {
+class FunctionObj {
 private:
     int arity;
     int upvalue_count = 0;
@@ -98,7 +98,7 @@ private:
     Chunk chunk;
 
 public:
-    function_obj(int arity, const std::string& name)
+    FunctionObj(int arity, const std::string& name)
         : arity(arity), name(name), chunk(Chunk()) {}
     
     const std::string& get_name() const
@@ -106,7 +106,7 @@ public:
         return name;
     }
 
-    bool operator==(const func_t& rhs) const
+    bool operator==(const Func& rhs) const
     {
         return false;
     }
@@ -121,33 +121,33 @@ public:
         return chunk.get_code(offset);
     }
     
-    const value_t& get_const(int constant) const
+    const Value& get_const(int constant) const
     {
         return chunk.get_constant(constant);
     }
 
-    friend compiler_t;
-    friend parser_t;
+    friend Compiler;
+    friend Parser;
     friend VirtualMachine;
     friend Chunk;
-    friend closure_obj;
+    friend ClosureObj;
 };
 
-class closure_obj {
+class ClosureObj {
 public:
-    func_t function;
-    std::vector<upvalue_value_t> upvalues;
-    explicit closure_obj(func_t function): function(function)
+    Func function;
+    std::vector<Upvalue> upvalues;
+    explicit ClosureObj(Func function): function(function)
     {
         upvalues.resize(function->upvalue_count, nullptr);
     };
 };
 
-struct file_obj {
+struct FileObj {
     const std::string path;
     std::FILE* file;
 
-    file_obj(const std::string& path, const std::string& mode)
+    FileObj(const std::string& path, const std::string& mode)
         : path(path), file(fopen(path.c_str(), mode.c_str()))
     {}
 
@@ -195,24 +195,24 @@ struct file_obj {
         fwrite(data.data(), 1, data.size(), file);
     }
 
-    ~file_obj()
+    ~FileObj()
     {
         close();
     }
 };
 
-struct array_obj {
-    std::vector<value_t> values;
+struct ArrayObj {
+    std::vector<Value> values;
 };
 
-std::ostream& operator<<(std::ostream& os, const value_t& v);
+std::ostream& operator<<(std::ostream& os, const Value& v);
 
 struct OutputVisitor {
     void operator()(const double d) const { std::cout << d; }
     void operator()(const bool b) const { std::cout << (b ? "true" : "false"); }
     void operator()(const std::monostate n) const { std::cout << "null"; }
     void operator()(const std::string& s) const { std::cout << s; }
-    void operator()(const func_t& f) const
+    void operator()(const Func& f) const
     {
         if (f->get_name().empty()) {
             std::cout << "<script>";
@@ -220,13 +220,13 @@ struct OutputVisitor {
             std::cout << "<fn " << f->get_name() << ">";
         }
     }
-    void operator()(const native_function_t& f) const { std::cout << "<native fn>"; }
-    void operator()(const closure_t& c) const { std::cout << value_t(c->function); }
-    void operator()(const upvalue_value_t& u) const { std::cout << "upvalue"; }
-    void operator()(const class_value_t& c) const { std::cout << c->name; }
-    void operator()(const instance_value_t& i) const { std::cout << i->class_value->name << " instance"; }
-    void operator()(const member_func_value_t& m) const { std::cout << value_t(m->method->function); }
-    void operator()(const file_t& f) const
+    void operator()(const NativeFunc& f) const { std::cout << "<native fn>"; }
+    void operator()(const Closure& c) const { std::cout << Value(c->function); }
+    void operator()(const Upvalue& u) const { std::cout << "upvalue"; }
+    void operator()(const Class& c) const { std::cout << c->name; }
+    void operator()(const Instance& i) const { std::cout << i->class_value->name << " instance"; }
+    void operator()(const MemberFunc& m) const { std::cout << Value(m->method->function); }
+    void operator()(const File& f) const
     {
         if (f->file == stdin) {
             std::cout << "stdin" << std::endl;
@@ -242,7 +242,7 @@ struct OutputVisitor {
         std::cout << "path: " << f->path << ", open: "
             << std::boolalpha << f->is_open();
     }
-    void operator()(const array_t& a) const
+    void operator()(const Array& a) const
     {
         std::cout << "array { ";
         for (size_t i = 0; i < a->values.size(); ++i) {
@@ -255,7 +255,7 @@ struct OutputVisitor {
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const value_t& v)
+inline std::ostream& operator<<(std::ostream& os, const Value& v)
 {
     std::visit(OutputVisitor(), v);
     return os;
@@ -269,7 +269,7 @@ struct FalseVisitor {
     bool operator()(const T& value) const { return false; }
 };
 
-inline bool is_false(const value_t& v)
+inline bool is_false(const Value& v)
 {
     return std::visit(FalseVisitor(), v);
 }

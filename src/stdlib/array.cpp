@@ -6,7 +6,7 @@ namespace stdlib {
 
         // Functions
         {
-            { "push", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "push", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 2) {
                     fmt::print(stderr, "Error: push(arr, [items...]) expects at least 2 paramters. Got {}.\n", argc);
                     return std::monostate();
@@ -14,7 +14,7 @@ namespace stdlib {
 
                 // getting array
                 try {
-                    array_t array = std::get<array_t>(*args);
+                    Array array = std::get<Array>(*args);
                     // inserting elements into array
                     for (int i = 1; i < argc; ++i)
                         array->values.push_back(*(args + i));
@@ -25,14 +25,14 @@ namespace stdlib {
 					return std::monostate();
 				}
             }},
-            { "pop", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "pop", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 2) {
                     fmt::print(stderr, "Error: push(arr, [items...]) expects 1 parameter. Got {}.\n", argc);
                     return std::monostate();
                 }
 
                 try {
-                    array_t array = std::get<array_t>(*args);
+                    Array array = std::get<Array>(*args);
                     array->values.pop_back();
 
                     return *(args + 1);
@@ -42,14 +42,14 @@ namespace stdlib {
                     return std::monostate();
                 }
             }},
-            { "len", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "len", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc > 1 || argc < 1) {
                     fmt::print(stderr, "Error: arrayLen(array) expects 1 paramters. Got {}.\n", argc);
                     return std::monostate();
                 }
 
                 try {
-                    array_t array = std::get<array_t>(*args);
+                    Array array = std::get<Array>(*args);
                     return static_cast<double>(array->values.size());
                 }
                 catch (std::bad_variant_access&) {

@@ -2,7 +2,7 @@
 
 #include <array>
 
-compiler_t::compiler_t(parser_t* parser, function_type_t type, std::unique_ptr<compiler_t> enclosing)
+Compiler::Compiler(Parser* parser, function_type_t type, std::unique_ptr<Compiler> enclosing)
     : parser(parser), type(type), function{default_function}, enclosing(std::move(enclosing))
 {
     locals.emplace_back(type == function_type_t::TYPE_FUNCTION ? "" : "this", 0);
@@ -11,7 +11,7 @@ compiler_t::compiler_t(parser_t* parser, function_type_t type, std::unique_ptr<c
     }
 }
 
-void compiler_t::add_local(const std::string& name)
+void Compiler::add_local(const std::string& name)
 {
     if (locals.size() == UINT8_COUNT) {
         parser->error("Too many local variables in function.");
@@ -20,7 +20,7 @@ void compiler_t::add_local(const std::string& name)
     locals.emplace_back(name, -1);
 }
 
-void compiler_t::declare_variable(const std::string& name)
+void Compiler::declare_variable(const std::string& name)
 {
     if (scope_depth == 0) return;
     
@@ -34,13 +34,13 @@ void compiler_t::declare_variable(const std::string& name)
     add_local(name);
 }
 
-void compiler_t::mark_initialized()
+void Compiler::mark_initialized()
 {
     if (scope_depth == 0) return;
     locals.back().depth = scope_depth;
 }
 
-int compiler_t::resolve_local(const std::string_view& name)
+int Compiler::resolve_local(const std::string_view& name)
 {
     for (auto i = static_cast<long>(locals.size() - 1); i >=0; i--) {
         if (locals[i].name == name) {
@@ -54,7 +54,7 @@ int compiler_t::resolve_local(const std::string_view& name)
     return -1;
 }
 
-int compiler_t::resolve_upvalue(const std::string& name)
+int Compiler::resolve_upvalue(const std::string& name)
 {
     if (enclosing == nullptr) return -1;
 
@@ -70,7 +70,7 @@ int compiler_t::resolve_upvalue(const std::string& name)
     return -1;
 }
 
-int compiler_t::add_upvalue(uint8_t index, bool is_local)
+int Compiler::add_upvalue(uint8_t index, bool is_local)
 {
     for (long i = 0; i < static_cast<long>(upvalues.size()); i++) {
         if (upvalues[i].index == index && upvalues[i].is_local == is_local) {
@@ -89,12 +89,12 @@ int compiler_t::add_upvalue(uint8_t index, bool is_local)
     return upvalue_count - 1;
 }
 
-void compiler_t::begin_scope()
+void Compiler::begin_scope()
 {
     scope_depth++;
 }
 
-void compiler_t::end_scope()
+void Compiler::end_scope()
 {
     scope_depth--;
     while (!locals.empty() && locals.back().depth > scope_depth) {
@@ -107,7 +107,7 @@ void compiler_t::end_scope()
     }
 }
 
-bool compiler_t::is_local() const
+bool Compiler::is_local() const
 {
     return scope_depth > 0;
 }
@@ -115,20 +115,20 @@ bool compiler_t::is_local() const
 class_compiler_t::class_compiler_t(std::unique_ptr<class_compiler_t> enclosing)
     : enclosing(std::move(enclosing)), has_superclass{superclass_default} {};
 
-parser_t::parser_t(const std::string& source) :
+Parser::Parser(const std::string& source) :
     previous(token_t(token_type_t::_EOF, source, 0)),
     current(token_t(token_type_t::_EOF, source, 0)),
     scanner(tokenizer_t(source)),
     class_compiler{null_value},
     had_error{false_value}, panic_mode{false_value}
 {
-    compiler = std::make_unique<compiler_t>(this, function_type_t::TYPE_SCRIPT, nullptr);
+    compiler = std::make_unique<Compiler>(this, function_type_t::TYPE_SCRIPT, nullptr);
     advance();
 
     build_parse_rules();
 }
 
-std::optional<func_t> parser_t::compile()
+std::optional<Func> Parser::compile()
 {
     while (!match(token_type_t::_EOF)) {
         declaration();
@@ -142,7 +142,7 @@ std::optional<func_t> parser_t::compile()
     }
 }
 
-void parser_t::advance()
+void Parser::advance()
 {
     previous = current;
     
@@ -154,7 +154,7 @@ void parser_t::advance()
     }
 }
 
-void parser_t::consume(token_type_t type, const std::string& message)
+void Parser::consume(token_type_t type, const std::string& message)
 {
     if (current.get_type() == type) {
         advance();
@@ -164,41 +164,41 @@ void parser_t::consume(token_type_t type, const std::string& message)
     error_at_current(message);
 }
 
-bool parser_t::check(token_type_t type) const
+bool Parser::check(token_type_t type) const
 {
     return current.get_type() == type;
 }
 
-bool parser_t::match(token_type_t type)
+bool Parser::match(token_type_t type)
 {
     if (!check(type)) return false;
     advance();
     return true;
 }
 
-void parser_t::emit(uint8_t byte)
+void Parser::emit(uint8_t byte)
 {
     CurrentChunk().write(byte, previous.get_line());
 }
 
-void parser_t::emit(opcode_t op)
+void Parser::emit(opcode_t op)
 {
     CurrentChunk().write(op, previous.get_line());
 }
 
-void parser_t::emit(opcode_t op, uint8_t byte)
+void Parser::emit(opcode_t op, uint8_t byte)
 {
     emit(op);
     emit(byte);
 }
 
-void parser_t::emit(opcode_t op1, opcode_t op2)
+void Parser::emit(opcode_t op1, opcode_t op2)
 {
     emit(op1);
     emit(op2);
 }
 
-void parser_t::emit_loop(int loopStart)
+void Parser::emit_loop(int loopStart)
 {
     emit(opcode_t::LOOP);
     
@@ -209,7 +209,7 @@ void parser_t::emit_loop(int loopStart)
     emit(offset & 0xff);
 }
 
-int parser_t::emit_jump(opcode_t op)
+int Parser::emit_jump(opcode_t op)
 {
     emit(op);
     emit(0xff);
@@ -217,7 +217,7 @@ int parser_t::emit_jump(opcode_t op)
     return CurrentChunk().count() - 2;
 }
 
-void parser_t::emit_return()
+void Parser::emit_return()
 {
     if (compiler->type == function_type_t::TYPE_INITIALIZER) {
         emit(opcode_t::GET_LOCAL, 0);
@@ -227,7 +227,7 @@ void parser_t::emit_return()
     emit(opcode_t::RETURN);
 }
 
-uint8_t parser_t::make_constant(const value_t& value)
+uint8_t Parser::make_constant(const Value& value)
 {
     auto constant = CurrentChunk().add_constant(value);
     if (constant > UINT8_MAX) {
@@ -238,12 +238,12 @@ uint8_t parser_t::make_constant(const value_t& value)
     return (uint8_t)constant;
 }
 
-void parser_t::emit_constant(const value_t& value)
+void Parser::emit_constant(const Value& value)
 {
     emit(opcode_t::CONSTANT, make_constant(value));
 }
 
-void parser_t::patch_jump(int offset)
+void Parser::patch_jump(int offset)
 {
     // -2 to adjust for the bytecode for the jump offset itself.
     int jump = CurrentChunk().count() - offset - 2;
@@ -256,7 +256,7 @@ void parser_t::patch_jump(int offset)
     CurrentChunk().set_code(offset + 1, jump & 0xff);
 }
 
-func_t parser_t::end_compiler()
+Func Parser::end_compiler()
 {
     emit_return();
     
@@ -272,7 +272,7 @@ func_t parser_t::end_compiler()
     return function;
 }
 
-void parser_t::array([[maybe_unused]] bool can_assign)
+void Parser::array([[maybe_unused]] bool can_assign)
 {
     size_t count = 0;
 
@@ -294,7 +294,7 @@ void parser_t::array([[maybe_unused]] bool can_assign)
     emit(static_cast<uint8_t>(count));
 }
 
-void parser_t::array_idx([[maybe_unused]] bool can_assign)
+void Parser::array_idx([[maybe_unused]] bool can_assign)
 {
     parse_precedence(precedence_t::OR);
     consume(token_type_t::CLOSE_SQUARE, "Expected ']' after array index.");
@@ -308,7 +308,7 @@ void parser_t::array_idx([[maybe_unused]] bool can_assign)
     }
 }
 
-void parser_t::binary([[maybe_unused]] bool can_assign)
+void Parser::binary([[maybe_unused]] bool can_assign)
 {
     // Remember the operator.
     auto operatorType = previous.get_type();
@@ -337,13 +337,13 @@ void parser_t::binary([[maybe_unused]] bool can_assign)
     }
 }
 
-void parser_t::call([[maybe_unused]] bool can_assign)
+void Parser::call([[maybe_unused]] bool can_assign)
 {
     auto arg_count = args_list();
     emit(opcode_t::CALL, arg_count);
 }
 
-void parser_t::dot([[maybe_unused]] bool can_assign)
+void Parser::dot([[maybe_unused]] bool can_assign)
 {
     consume(token_type_t::IDENTIFIER, "Expected property name after '.'.");
     auto name = identifier_constant(std::string(previous.get_text()));
@@ -360,7 +360,7 @@ void parser_t::dot([[maybe_unused]] bool can_assign)
     }
 }
 
-void parser_t::literal([[maybe_unused]] bool can_assign)
+void Parser::literal([[maybe_unused]] bool can_assign)
 {
     switch (previous.get_type()) {
         case token_type_t::FALSE:      emit(opcode_t::FALSE); break;
@@ -370,19 +370,19 @@ void parser_t::literal([[maybe_unused]] bool can_assign)
     }
 }
 
-void parser_t::grouping([[maybe_unused]] bool can_assign)
+void Parser::grouping([[maybe_unused]] bool can_assign)
 {
     expression();
     consume(token_type_t::CLOSE_PAREN, "Expected ')' after expression.");
 }
 
-void parser_t::number([[maybe_unused]] bool can_assign)
+void Parser::number([[maybe_unused]] bool can_assign)
 {
-    value_t value = std::stod(std::string(previous.get_text()));
+    Value value = std::stod(std::string(previous.get_text()));
     emit_constant(value);
 }
 
-void parser_t::or_([[maybe_unused]] bool can_assign)
+void Parser::or_([[maybe_unused]] bool can_assign)
 {
     int else_jump = emit_jump(opcode_t::JUMP_IF_FALSE);
     int end_jump = emit_jump(opcode_t::JUMP);
@@ -394,7 +394,7 @@ void parser_t::or_([[maybe_unused]] bool can_assign)
     patch_jump(end_jump);
 }
 
-void parser_t::string_([[maybe_unused]] bool can_assign)
+void Parser::string_([[maybe_unused]] bool can_assign)
 {
     auto str = previous.get_text();
     str.remove_prefix(1);
@@ -402,7 +402,7 @@ void parser_t::string_([[maybe_unused]] bool can_assign)
     emit_constant(std::string(str));
 }
 
-void parser_t::named_variable(const std::string& name, bool can_assign)
+void Parser::named_variable(const std::string& name, bool can_assign)
 {
     opcode_t get_op;
     opcode_t set_op;
@@ -427,12 +427,12 @@ void parser_t::named_variable(const std::string& name, bool can_assign)
     }
 }
 
-void parser_t::variable([[maybe_unused]] bool can_assign)
+void Parser::variable([[maybe_unused]] bool can_assign)
 {
     named_variable(std::string(previous.get_text()), can_assign);
 }
 
-void parser_t::super([[maybe_unused]] bool can_assign)
+void Parser::super([[maybe_unused]] bool can_assign)
 {
     if (class_compiler == nullptr) {
         error("'super' cannot be used outside of a class.");
@@ -449,7 +449,7 @@ void parser_t::super([[maybe_unused]] bool can_assign)
     emit(opcode_t::GET_SUPER, static_cast<uint8_t>(name));
 }
 
-void parser_t::this_([[maybe_unused]] bool can_assign)
+void Parser::this_([[maybe_unused]] bool can_assign)
 {
     if (class_compiler == nullptr) {
         error("'this' cannot be outside of a class.");
@@ -458,7 +458,7 @@ void parser_t::this_([[maybe_unused]] bool can_assign)
     variable(false);
 }
 
-void parser_t::and_([[maybe_unused]] bool can_assign)
+void Parser::and_([[maybe_unused]] bool can_assign)
 {
     int end_jump = emit_jump(opcode_t::JUMP_IF_FALSE);
     
@@ -468,7 +468,7 @@ void parser_t::and_([[maybe_unused]] bool can_assign)
     patch_jump(end_jump);
 }
 
-void parser_t::unary([[maybe_unused]] bool can_assign)
+void Parser::unary([[maybe_unused]] bool can_assign)
 {
     auto operator_type = previous.get_type();
     
@@ -486,12 +486,12 @@ void parser_t::unary([[maybe_unused]] bool can_assign)
     }
 }
 
-parse_rule_t& parser_t::get_rule(token_type_t type)
+parse_rule_t& Parser::get_rule(token_type_t type)
 {
     return rules[static_cast<int>(type)];
 }
 
-void parser_t::build_parse_rules()
+void Parser::build_parse_rules()
 {
     auto grouping = [this](bool can_assign) { this->grouping(can_assign); };
     auto unary = [this](bool can_assign) { this->unary(can_assign); };
@@ -559,7 +559,7 @@ void parser_t::build_parse_rules()
     } };
 }
 
-void parser_t::parse_precedence(precedence_t precedence)
+void Parser::parse_precedence(precedence_t precedence)
 {
     advance();
     auto prefix_rule = get_rule(previous.get_type()).prefix;
@@ -583,12 +583,12 @@ void parser_t::parse_precedence(precedence_t precedence)
     }
 }
 
-int parser_t::identifier_constant(const std::string& name)
+int Parser::identifier_constant(const std::string& name)
 {
     return make_constant(name);
 }
 
-uint8_t parser_t::parse_variable(const std::string& errorMessage)
+uint8_t Parser::parse_variable(const std::string& errorMessage)
 {
     consume(token_type_t::IDENTIFIER, errorMessage);
     
@@ -598,7 +598,7 @@ uint8_t parser_t::parse_variable(const std::string& errorMessage)
     return static_cast<uint8_t>(identifier_constant(std::string(previous.get_text())));
 }
 
-void parser_t::define_variable(uint8_t global)
+void Parser::define_variable(uint8_t global)
 {
     if (compiler->is_local()) {
         compiler->mark_initialized();
@@ -608,7 +608,7 @@ void parser_t::define_variable(uint8_t global)
     emit(opcode_t::DEFINE_GLOBAL, global);
 }
 
-uint8_t parser_t::args_list()
+uint8_t Parser::args_list()
 {
     uint8_t arg_count = 0;
     if (!check(token_type_t::CLOSE_PAREN)) {
@@ -624,12 +624,12 @@ uint8_t parser_t::args_list()
     return arg_count;
 }
 
-void parser_t::expression()
+void Parser::expression()
 {
     parse_precedence(precedence_t::ASSIGNMENT);
 }
 
-void parser_t::block()
+void Parser::block()
 {
     while (!check(token_type_t::CLOSE_CURLY) && !check(token_type_t::_EOF)) {
         declaration();
@@ -638,9 +638,9 @@ void parser_t::block()
     consume(token_type_t::CLOSE_CURLY, "Expected '}' after block.");
 }
 
-void parser_t::function(function_type_t type)
+void Parser::function(function_type_t type)
 {
-    compiler = std::make_unique<compiler_t>(this, type, std::move(compiler));
+    compiler = std::make_unique<Compiler>(this, type, std::move(compiler));
     compiler->begin_scope();
 
     consume(token_type_t::OPEN_PAREN, "Expected '(' after function name.");
@@ -669,7 +669,7 @@ void parser_t::function(function_type_t type)
     }
 }
 
-void parser_t::method()
+void Parser::method()
 {
     consume(token_type_t::IDENTIFIER, "Expected method name.");
     const auto constant = identifier_constant(std::string(previous.get_text()));
@@ -678,7 +678,7 @@ void parser_t::method()
     emit(opcode_t::METHOD, static_cast<uint8_t>(constant));
 }
 
-void parser_t::class_declaration()
+void Parser::class_declaration()
 {
     consume(token_type_t::IDENTIFIER, "Expected class name.");
     const auto class_name = std::string(previous.get_text());
@@ -722,7 +722,7 @@ void parser_t::class_declaration()
     class_compiler = std::move(class_compiler->enclosing);
 }
 
-void parser_t::func_declaration()
+void Parser::func_declaration()
 {
     auto global = parse_variable("Expected function name.");
     compiler->mark_initialized();
@@ -730,7 +730,7 @@ void parser_t::func_declaration()
     define_variable(global);
 }
 
-void parser_t::var_declaration()
+void Parser::var_declaration()
 {
     const auto global = parse_variable("Expected variable name.");
 
@@ -744,14 +744,14 @@ void parser_t::var_declaration()
     define_variable(global);
 }
 
-void parser_t::expression_statement()
+void Parser::expression_statement()
 {
     expression();
     emit(opcode_t::POP);
     consume(token_type_t::SEMICOLON, "Expected ';' after expression.");
 }
 
-void parser_t::for_statement()
+void Parser::for_statement()
 {
     compiler->begin_scope();
     
@@ -801,7 +801,7 @@ void parser_t::for_statement()
     compiler->end_scope();
 }
 
-void parser_t::if_statement()
+void Parser::if_statement()
 {
     consume(token_type_t::OPEN_PAREN, "Expected '(' after 'if'.");
     expression();
@@ -818,7 +818,7 @@ void parser_t::if_statement()
     patch_jump(else_jump);
 }
 
-void parser_t::declaration()
+void Parser::declaration()
 {
     if (match(token_type_t::CLASS)) {
         class_declaration();
@@ -833,7 +833,7 @@ void parser_t::declaration()
     if (panic_mode) sync();
 }
 
-void parser_t::statement()
+void Parser::statement()
 {
     if (match(token_type_t::PRINT)) {
         print_statement();
@@ -854,14 +854,14 @@ void parser_t::statement()
     }
 }
 
-void parser_t::print_statement()
+void Parser::print_statement()
 {
     expression();
     consume(token_type_t::SEMICOLON, "Expected ';' after value.");
     emit(opcode_t::PRINT);
 }
 
-void parser_t::return_statement()
+void Parser::return_statement()
 {
     if (compiler->type == function_type_t::TYPE_SCRIPT) {
         error("Cannot return from top-level code.");
@@ -880,7 +880,7 @@ void parser_t::return_statement()
     }
 }
 
-void parser_t::while_statement()
+void Parser::while_statement()
 {
     const int loop_start = CurrentChunk().count();
     
@@ -899,7 +899,7 @@ void parser_t::while_statement()
     emit(opcode_t::POP);
 }
 
-void parser_t::sync()
+void Parser::sync()
 {
     panic_mode = false;
     
@@ -924,7 +924,7 @@ void parser_t::sync()
     }
 }
 
-void parser_t::error_at(const token_t& token, const std::string& message)
+void Parser::error_at(const token_t& token, const std::string& message)
 {
     if (panic_mode) return;
     

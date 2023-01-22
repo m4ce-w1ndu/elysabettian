@@ -7,7 +7,7 @@ namespace stdlib {
 	libmath::libmath() : library_t(
 		// Functions
 		{ 
-            {"acos", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            {"acos", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 1 || argc > 1) {
                     fmt::print(stderr, "Error: acos(x) expectes 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -21,7 +21,7 @@ namespace stdlib {
                     return std::monostate();
                 }
             }},
-            {"abs", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            {"abs", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "abs(x) expects 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -35,7 +35,7 @@ namespace stdlib {
                     return std::monostate();
                 }
             }},
-            { "pow", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "pow", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 2) {
                     fmt::print(stderr, "Error: expected 2 arguments. Got {}.", argc);
                     return std::monostate();
@@ -53,7 +53,7 @@ namespace stdlib {
                     return std::monostate();
                 }
             }},
-            { "sqrt", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "sqrt", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -70,7 +70,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "acosh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "acosh", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -84,7 +84,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "asin", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "asin", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -98,7 +98,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "asinh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "asinh", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -112,7 +112,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "atan2", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "atan2", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 2) {
                     fmt::print(stderr, "Error: expected 2 argument. Got {}.", argc);
                     return std::monostate();
@@ -127,7 +127,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "atanh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "atanh", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -141,7 +141,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "cbrt", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "cbrt", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -155,7 +155,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "ceil", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "ceil", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -169,7 +169,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "cos", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "cos", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -183,7 +183,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "cosh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "cosh", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -197,7 +197,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "exp", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "exp", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -211,7 +211,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "expm1", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "expm1", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -225,7 +225,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "floor", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "floor", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -239,7 +239,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "roundf", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "roundf", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -253,7 +253,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "hypot", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "hypot", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 2) {
                     fmt::print(stderr, "Error: expected 2 argument. Got {}.", argc);
                     return std::monostate();
@@ -268,7 +268,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "log", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "log", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -282,7 +282,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "log10", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "log10", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -296,7 +296,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "log1p", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "log1p", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -310,7 +310,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "log2", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "log2", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -324,7 +324,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "max", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "max", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 1) {
                     fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -341,7 +341,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "min", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "min", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 1) {
                     fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -358,7 +358,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "random", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "random", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 2) {
                     fmt::print(stderr, "Error: expected at least 2 argument. Got {}.", argc);
                     return std::monostate();
@@ -375,7 +375,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "signbit", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "signbit", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -389,7 +389,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "sin", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "sin", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -403,7 +403,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "sinh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "sinh", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc != 1) {
                     fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
@@ -417,7 +417,7 @@ namespace stdlib {
                     return "";
                 }
             }},
-            { "sum", [](int argc, std::vector<value_t>::iterator args) -> value_t {
+            { "sum", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc < 1) {
                     fmt::print(stderr, "Error: expected at least 1 argument. Got {}", argc);
                     return std::monostate();

@@ -10,11 +10,11 @@
 
 namespace stdlib {
 	struct library_t {
-		const std::unordered_map<std::string, native_fn_t> functions;
-		const std::unordered_map<std::string, value_t> constants;
+		const std::unordered_map<std::string, NativeFn> functions;
+		const std::unordered_map<std::string, Value> constants;
 
-		library_t(const std::unordered_map<std::string, native_fn_t> functions,
-				const std::unordered_map<std::string, value_t> constants);
+		library_t(const std::unordered_map<std::string, NativeFn> functions,
+				const std::unordered_map<std::string, Value> constants);
 	};
 
 	// Math Library, defined in Math.cpp file
