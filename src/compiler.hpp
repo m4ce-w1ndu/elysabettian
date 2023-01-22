@@ -123,6 +123,8 @@ class parser_t {
     
     func_t end_compiler();
     
+    void array(bool can_assign);
+    void array_idx(bool can_assign);
     void binary(bool can_assign);
     void call(bool can_assign);
     void dot(bool can_assign);

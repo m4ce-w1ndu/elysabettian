@@ -270,6 +270,42 @@ func_t parser_t::end_compiler()
     return function;
 }
 
+void parser_t::array([[maybe_unused]] bool can_assign)
+{
+    size_t count = 0;
+
+    if (!check(token_type_t::CLOSE_SQUARE)) {
+        do {
+            if (check(token_type_t::CLOSE_SQUARE)) break;
+            parse_precedence(precedence_t::OR);
+
+            if (count == UINT8_COUNT)
+                error("List literals do not allow more than 255 items.");
+
+            count++;
+        } while (match(token_type_t::COMMA));
+    }
+
+    consume(token_type_t::CLOSE_SQUARE, "Expected ']' after list literal.");
+
+    emit(opcode_t::ARR_BUILD);
+    emit(static_cast<uint8_t>(count));
+}
+
+void parser_t::array_idx([[maybe_unused]] bool can_assign)
+{
+    parse_precedence(precedence_t::OR);
+    consume(token_type_t::CLOSE_SQUARE, "Expected ']' after array index.");
+
+    if (can_assign && match(token_type_t::EQUAL)) {
+        expression();
+        emit(opcode_t::ARR_STORE);
+    }
+    else {
+        emit(opcode_t::ARR_INDEX);
+    }
+}
+
 void parser_t::binary([[maybe_unused]] bool can_assign)
 {
     // Remember the operator.
@@ -463,8 +499,10 @@ parse_rule_t& parser_t::get_rule(token_type_t type)
     auto this_ = [this](bool can_assign) { this->this_(can_assign); };
     auto and_ = [this](bool can_assign) { this->and_(can_assign); };
     auto or_ = [this](bool can_assign) { this->or_(can_assign); };
+    auto array = [this](bool can_assign) { this->array(can_assign); };
+    auto array_idx = [this](bool can_assign) { this->array_idx(can_assign); };
     
-    static std::array<parse_rule_t, 44> rules = {{
+    static std::array<parse_rule_t, 46> rules = {{
         { grouping,    call,       precedence_t::CALL },       // TOKEN_LEFT_PAREN
         { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_RIGHT_PAREN
         { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_LEFT_BRACE
@@ -509,6 +547,8 @@ parse_rule_t& parser_t::get_rule(token_type_t type)
         { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_OR
         { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_XOR
         { unary,       nullptr,    precedence_t::UNARY},       // TOKEN_BW_NOT
+        { array,       array_idx,  precedence_t::UNARY},       // TOKEN_OPEN_SQUARE
+        { unary,       nullptr,    precedence_t::UNARY},       // TOKEN_CLOSE_SQUARE
     }};
     
     return rules[static_cast<int>(type)];
