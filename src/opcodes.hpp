@@ -45,6 +45,9 @@ enum class opcode_t : uint8_t {
     BW_OR,
     BW_XOR,
     BW_NOT,
+    ARR_BUILD,
+    ARR_INDEX,
+    ARR_STORE,
 };
 
 
