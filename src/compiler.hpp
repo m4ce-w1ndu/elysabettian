@@ -13,8 +13,8 @@
 enum class precedence_t {
     NONE,
     ASSIGNMENT,  // =
-    OR,          // or
-    AND,         // and
+    Or,          // or
+    And,         // and
     EQUALITY,    // == !=
     COMPARISON,  // < > <= >=
     TERM,        // + -
@@ -97,9 +97,9 @@ class Parser {
     const std::nullptr_t null_value = nullptr;
     const bool false_value = false;
 
-    token_t previous;
-    token_t current;
-    tokenizer_t scanner;
+    Token previous;
+    Token current;
+    Tokenizer scanner;
     std::unique_ptr<Compiler> compiler;
     std::unique_ptr<class_compiler_t> class_compiler;
     
@@ -107,9 +107,9 @@ class Parser {
     bool panic_mode;
     
     void advance();
-    void consume(token_type_t type, const std::string& message);
-    bool check(token_type_t type) const;
-    bool match(token_type_t type);
+    void consume(TokenType type, const std::string& message);
+    bool check(TokenType type) const;
+    bool match(TokenType type);
     
     void emit(uint8_t byte);
     void emit(Opcode op);
@@ -140,7 +140,7 @@ class Parser {
     void this_(bool can_assign);
     void and_(bool can_assign);
     void unary(bool can_assign);
-    parse_rule_t& get_rule(token_type_t type);
+    parse_rule_t& get_rule(TokenType type);
     void parse_precedence(precedence_t precedence);
     int identifier_constant(const std::string& name);
     uint8_t parse_variable(const std::string& errorMessage);
@@ -163,7 +163,7 @@ class Parser {
     void while_statement();
     void sync();
 
-    void error_at(const token_t& token, const std::string& message);
+    void error_at(const Token& token, const std::string& message);
     
     void error(const std::string& message)
     {
