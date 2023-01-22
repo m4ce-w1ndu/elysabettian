@@ -18,6 +18,8 @@ token_t tokenizer_t::scan_token()
     switch (c) {
         case '(': return make_token(token_type_t::OPEN_PAREN);
         case ')': return make_token(token_type_t::CLOSE_PAREN);
+        case '[': return make_token(token_type_t::OPEN_SQUARE);
+        case ']': return make_token(token_type_t::CLOSE_SQUARE);
         case '{': return make_token(token_type_t::OPEN_CURLY);
         case '}': return make_token(token_type_t::CLOSE_CURLY);
         case ';': return make_token(token_type_t::SEMICOLON);
