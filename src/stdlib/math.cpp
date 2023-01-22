@@ -9,7 +9,7 @@ namespace stdlib {
 		{ 
             {"acos", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc < 1 || argc > 1) {
-                    fprintf(stderr, "Error: acos(x) expectes 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: acos(x) expectes 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -17,13 +17,13 @@ namespace stdlib {
                     return std::acos(value);
                 }
                 catch (std::bad_variant_access) {
-                    fprintf(stderr, "Error: acos(x) operand must be of numeric type.");
+                    fmt::print(stderr, "Error: acos(x) operand must be of numeric type.");
                     return std::monostate();
                 }
             }},
             {"abs", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "abs(x) expects 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "abs(x) expects 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -31,13 +31,13 @@ namespace stdlib {
                     return std::abs(val);
                 }
                 catch (std::bad_variant_access) {
-                    fprintf(stderr, "Operand must be of numeric type.");
+                    fmt::print(stderr, "Operand must be of numeric type.");
                     return std::monostate();
                 }
             }},
             { "pow", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 2) {
-                    fprintf(stderr, "Error: expected 2 arguments. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 2 arguments. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -46,7 +46,7 @@ namespace stdlib {
                     return std::pow(base, ex);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operands must be numbers.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return std::monostate();
                 }
                 catch (std::length_error) {
@@ -55,7 +55,7 @@ namespace stdlib {
             }},
             { "sqrt", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -63,7 +63,7 @@ namespace stdlib {
                     return sqrt(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
                 catch (std::length_error) {
@@ -72,7 +72,7 @@ namespace stdlib {
             }},
             { "acosh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -80,13 +80,13 @@ namespace stdlib {
                     return std::acosh(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "asin", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -94,13 +94,13 @@ namespace stdlib {
                     return std::asin(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "asinh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -108,13 +108,13 @@ namespace stdlib {
                     return std::asinh(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "atan2", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 2) {
-                    fprintf(stderr, "Error: expected 2 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 2 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -123,13 +123,13 @@ namespace stdlib {
                     return std::atan2(value, value1);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "atanh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -137,13 +137,13 @@ namespace stdlib {
                     return std::atanh(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "cbrt", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -151,13 +151,13 @@ namespace stdlib {
                     return std::cbrt(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "ceil", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -165,13 +165,13 @@ namespace stdlib {
                     return std::ceil(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "cos", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -179,13 +179,13 @@ namespace stdlib {
                     return std::cos(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "cosh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -193,13 +193,13 @@ namespace stdlib {
                     return std::cosh(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "exp", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -207,13 +207,13 @@ namespace stdlib {
                     return std::exp(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "expm1", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -221,13 +221,13 @@ namespace stdlib {
                     return std::expm1(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "floor", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -235,13 +235,13 @@ namespace stdlib {
                     return std::floor(value);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "roundf", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -249,13 +249,13 @@ namespace stdlib {
                     return std::roundf(static_cast<float>(value));
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "hypot", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 2) {
-                    fprintf(stderr, "Error: expected 2 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 2 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -264,13 +264,13 @@ namespace stdlib {
                     return std::hypot(a, b);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "log", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -278,13 +278,13 @@ namespace stdlib {
                     return std::log(a);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "log10", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -292,13 +292,13 @@ namespace stdlib {
                     return std::log10(a);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "log1p", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -306,13 +306,13 @@ namespace stdlib {
                     return std::log1p(a);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "log2", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -320,13 +320,13 @@ namespace stdlib {
                     return std::log2(a);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "max", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc < 1) {
-                    fprintf(stderr, "Error: expected at least 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -337,13 +337,13 @@ namespace stdlib {
                     return max;
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "min", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc < 1) {
-                    fprintf(stderr, "Error: expected at least 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -354,13 +354,13 @@ namespace stdlib {
                     return min;
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "random", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 2) {
-                    fprintf(stderr, "Error: expected at least 2 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected at least 2 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -371,13 +371,13 @@ namespace stdlib {
                     return dist(reng);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "signbit", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected at least 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -385,13 +385,13 @@ namespace stdlib {
                     return std::signbit(min);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "sin", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected at least 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -399,13 +399,13 @@ namespace stdlib {
                     return std::sin(min);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "sinh", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc != 1) {
-                    fprintf(stderr, "Error: expected at least 1 argument. Got %d.", argc);
+                    fmt::print(stderr, "Error: expected at least 1 argument. Got {}.", argc);
                     return std::monostate();
                 }
                 try {
@@ -413,13 +413,13 @@ namespace stdlib {
                     return std::sinh(min);
                 }
                 catch (std::bad_variant_access) {
-                    std::cerr << "Operand must be a number.";
+                    fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
             }},
             { "sum", [](int argc, std::vector<value_t>::iterator args) -> value_t {
                 if (argc < 1) {
-                    fprintf(stderr, "Error: expected at least 1 argument. Got %d", argc);
+                    fmt::print(stderr, "Error: expected at least 1 argument. Got {}", argc);
                     return std::monostate();
                 }
                 double sumVal = 0;
@@ -429,7 +429,7 @@ namespace stdlib {
                     return sumVal;
                 }
                 catch (std::bad_variant_access) {
-                    fprintf(stderr, "Invalid operand detected in sum(). Only numbers are allowed.");
+                    fmt::print(stderr, "Invalid operand detected in sum(). Only numbers are allowed.");
                     return "";
                 }
             }}
