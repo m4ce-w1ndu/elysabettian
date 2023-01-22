@@ -50,7 +50,7 @@ public:
     void set_code(int offset, uint8_t value) { code[offset] = value; }
     const Value& get_constant(int constant) const { return constants[constant]; };
     void write(uint8_t byte, int line);
-    void write(opcode_t opcode, int line);
+    void write(Opcode opcode, int line);
     unsigned long add_constant(Value value);
     int disas_instruction(int offset);
     void disassemble(const std::string& name);

@@ -112,11 +112,11 @@ class Parser {
     bool match(token_type_t type);
     
     void emit(uint8_t byte);
-    void emit(opcode_t op);
-    void emit(opcode_t op, uint8_t byte);
-    void emit(opcode_t op1, opcode_t op2);
+    void emit(Opcode op);
+    void emit(Opcode op, uint8_t byte);
+    void emit(Opcode op1, Opcode op2);
     void emit_loop(int loopStart);
-    int emit_jump(opcode_t op);
+    int emit_jump(Opcode op);
     void emit_return();
     uint8_t make_constant(const Value& value);
     void emit_constant(const Value& value);

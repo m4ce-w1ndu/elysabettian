@@ -315,25 +315,25 @@ InterpretResult VirtualMachine::Run()
         } \
     } while (false)
         
-        auto instruction = opcode_t(read_byte());
+        auto instruction = Opcode(read_byte());
         switch (instruction) {
-            case opcode_t::CONSTANT: {
+            case Opcode::Constant: {
                 auto constant = read_constant();
                 push(constant);
                 break;
             }
-            case opcode_t::NULLOP: push(std::monostate()); break;
-            case opcode_t::TRUE: push(true); break;
-            case opcode_t::FALSE: push(false); break;
-            case opcode_t::POP: pop(); break;
+            case Opcode::Nop: push(std::monostate()); break;
+            case Opcode::True: push(true); break;
+            case Opcode::False: push(false); break;
+            case Opcode::Pop: pop(); break;
                 
-            case opcode_t::GET_LOCAL: {
+            case Opcode::GetLocal: {
                 uint8_t slot = read_byte();
                 push(stack[frames.back().stack_offset + slot]);
                 break;
             }
                 
-            case opcode_t::GET_GLOBAL: {
+            case Opcode::GetGlobal: {
                 auto name = read_string();
                 auto found = globals.find(name);
                 if (found == globals.end()) {
@@ -345,20 +345,20 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
                 
-            case opcode_t::DEFINE_GLOBAL: {
+            case Opcode::DefineGlobal: {
                 auto name = read_string();
                 globals[name] = peek(0);
                 pop();
                 break;
             }
                 
-            case opcode_t::SET_LOCAL: {
+            case Opcode::SetLocal: {
                 uint8_t slot = read_byte();
                 stack[frames.back().stack_offset + slot] = peek(0);
                 break;
             }
                 
-            case opcode_t::SET_GLOBAL: {
+            case Opcode::SetGlobal: {
                 auto name = read_string();
                 auto found = globals.find(name);
                 if (found == globals.end()) {
@@ -368,17 +368,17 @@ InterpretResult VirtualMachine::Run()
                 found->second = peek(0);
                 break;
             }
-            case opcode_t::GET_UPVALUE: {
+            case Opcode::GetUpvalue: {
                 auto slot = read_byte();
                 push(*frames.back().closure->upvalues[slot]->location);
                 break;
             }
-            case opcode_t::SET_UPVALUE: {
+            case Opcode::SetUpvalue: {
                 auto slot = read_byte();
                 *frames.back().closure->upvalues[slot]->location = peek(0);
                 break;
             }
-            case opcode_t::GET_PROPERTY: {
+            case Opcode::GetProperty: {
                 Instance instance;
 
                 try {
@@ -402,7 +402,7 @@ InterpretResult VirtualMachine::Run()
                 }
                 break;
             }
-            case opcode_t::SET_PROPERTY: {
+            case Opcode::SetProperty: {
                 try {
                     auto instance = std::get<Instance>(peek(1));
                     auto name = read_string();
@@ -417,7 +417,7 @@ InterpretResult VirtualMachine::Run()
                 }
                 break;
             }
-            case opcode_t::GET_SUPER: {
+            case Opcode::GetSuper: {
                 auto name = read_string();
                 auto superclass = std::get<Class>(pop());
                 
@@ -426,15 +426,15 @@ InterpretResult VirtualMachine::Run()
                 }
                 break;
             }
-            case opcode_t::EQUAL: {
+            case Opcode::Equal: {
                 double_pop_and_push(peek(0) == peek(1));
                 break;
             }
                 
-            case opcode_t::GREATER:   BINARY_OP(>); break;
-            case opcode_t::LESS:      BINARY_OP(<); break;
+            case Opcode::Greater:   BINARY_OP(>); break;
+            case Opcode::Less:      BINARY_OP(<); break;
                 
-            case opcode_t::ADD: {
+            case Opcode::Add: {
                 auto success = std::visit(overloaded {
                     [this](double b, double a) -> bool {
                         this->double_pop_and_push(a + b);
@@ -470,15 +470,15 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
                 
-            case opcode_t::SUBTRACT:  BINARY_OP(-); break;
-            case opcode_t::MULTIPLY:  BINARY_OP(*); break;
-            case opcode_t::DIVIDE:    BINARY_OP(/); break;
-            case opcode_t::BW_AND:    INTEGER_BINARY_OP(&); break;
-            case opcode_t::BW_OR:     INTEGER_BINARY_OP(|); break;
-            case opcode_t::BW_XOR:    INTEGER_BINARY_OP(^); break;
-            case opcode_t::NOT: push(is_false(pop())); break;
+            case Opcode::Subtract:  BINARY_OP(-); break;
+            case Opcode::Multiply:  BINARY_OP(*); break;
+            case Opcode::Divide:    BINARY_OP(/); break;
+            case Opcode::BwAnd:    INTEGER_BINARY_OP(&); break;
+            case Opcode::BwOr:     INTEGER_BINARY_OP(|); break;
+            case Opcode::BwXor:    INTEGER_BINARY_OP(^); break;
+            case Opcode::Not: push(is_false(pop())); break;
             
-            case opcode_t::BW_NOT: {
+            case Opcode::BwNot: {
                 try {
                     auto bw_notted = ~static_cast<int>(std::get<double>(peek(0)));
                     pop();
@@ -489,7 +489,7 @@ InterpretResult VirtualMachine::Run()
                 }
             }
                 
-            case opcode_t::NEGATE:
+            case Opcode::Negate:
                 try {
                     auto negated = -std::get<double>(peek(0));
                     pop(); // if we get here it means it was good
@@ -500,24 +500,24 @@ InterpretResult VirtualMachine::Run()
                 }
                 break;
                 
-            case opcode_t::PRINT: {
+            case Opcode::Print: {
                 std::cout << pop() << std::endl;
                 break;
             }
             
-            case opcode_t::JUMP: {
+            case Opcode::Jump: {
                 auto offset = read_short();
                 frames.back().ip += offset;
                 break;
             }
                 
-            case opcode_t::LOOP: {
+            case Opcode::Loop: {
                 auto offset = read_short();
                 frames.back().ip -= offset;
                 break;
             }
                 
-            case opcode_t::JUMP_IF_FALSE: {
+            case Opcode::JumpIfFalse: {
                 auto offset = read_short();
                 if (is_false(peek(0))) {
                     frames.back().ip += offset;
@@ -525,7 +525,7 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
                 
-            case opcode_t::CALL: {
+            case Opcode::Call: {
                 int argCount = read_byte();
                 if (!call_value(peek(argCount), argCount)) {
                     return InterpretResult::RuntimeError;
@@ -533,7 +533,7 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
                 
-            case opcode_t::INVOKE: {
+            case Opcode::Invoke: {
                 auto method = read_string();
                 int argCount = read_byte();
                 if (!invoke(method, argCount)) {
@@ -542,7 +542,7 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
                 
-            case opcode_t::SUPER_INVOKE: {
+            case Opcode::SuperInvoke: {
                 auto method = read_string();
                 int argCount = read_byte();
                 auto superclass = std::get<Class>(pop());
@@ -552,7 +552,7 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
                 
-            case opcode_t::CLOSURE: {
+            case Opcode::Closure: {
                 auto function = std::get<Func>(read_constant());
                 auto closure = std::make_shared<ClosureObj>(function);
                 push(closure);
@@ -568,12 +568,12 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
             
-            case opcode_t::CLOSE_UPVALUE:
+            case Opcode::CloseUpvalue:
                 close_upvalues(&stack.back());
                 pop();
                 break;
                 
-            case opcode_t::RETURN: {
+            case Opcode::Return: {
                 auto result = pop();
                 close_upvalues(&stack[frames.back().stack_offset]);
                 
@@ -590,7 +590,7 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
 
-            case opcode_t::ARR_BUILD: {
+            case Opcode::ArrBuild: {
                 Array new_arr = std::make_shared<ArrayObj>();
                 uint8_t item_count = read_byte();
 
@@ -608,7 +608,7 @@ InterpretResult VirtualMachine::Run()
 				break;
 			}
 
-            case opcode_t::ARR_INDEX: {
+            case Opcode::ArrIndex: {
                 try {
                     auto index = static_cast<size_t>(std::get<double>(pop()));
                     Array list;
@@ -637,7 +637,7 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
 
-            case opcode_t::ARR_STORE: {
+            case Opcode::ArrStore: {
                 try {
                     auto item = pop();
                     auto index = static_cast<size_t>(std::get<double>(pop()));
@@ -668,11 +668,11 @@ InterpretResult VirtualMachine::Run()
                 break;
             }
                 
-            case opcode_t::CLASS:
+            case Opcode::Class:
                 push(std::make_shared<ClassObj>(read_string()));
                 break;
                 
-            case opcode_t::INHERIT: {
+            case Opcode::Inherit: {
                 try {
                     auto& superclass = std::get<Class>(peek(1));
                     auto& subclass = std::get<Class>(peek(0));
@@ -685,7 +685,7 @@ InterpretResult VirtualMachine::Run()
                 }
             }
                 
-            case opcode_t::METHOD:
+            case Opcode::Method:
                 define_method(read_string());
                 break;
         }
