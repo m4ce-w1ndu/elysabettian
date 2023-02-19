@@ -1,5 +1,8 @@
 #include "value.hpp"
 
+/// @brief Writes code into the chunk
+/// @param byte byte of code to write
+/// @param line line bound to this byte
 void Chunk::write(uint8_t byte, int line)
 {
     code.push_back(byte);
@@ -25,13 +28,13 @@ void Chunk::disassemble(const std::string& name)
         i = disas_instruction(i);
 }
 
-static int SimpleInstruction(const std::string& name, int offset)
+static int simple_instruction(const std::string& name, int offset)
 {
     fmt::print("{}\n", name);
     return offset + 1;
 }
 
-static int ConstantInstruction(const std::string& name, const Chunk& chunk, int offset)
+static int constant_instruction(const std::string& name, const Chunk& chunk, int offset)
 {
     auto constant = chunk.get_code(offset + 1);
 	fmt::print("{:<16s} {:4d} '", name, constant);
@@ -40,7 +43,7 @@ static int ConstantInstruction(const std::string& name, const Chunk& chunk, int 
     return offset + 2;
 }
 
-static int InvokeInstruction(const std::string& name, const Chunk& chunk, int offset)
+static int invoke_instruction(const std::string& name, const Chunk& chunk, int offset)
 {
     auto constant = chunk.get_code(offset + 1);
     auto arg_count = chunk.get_code(offset + 2);
@@ -49,14 +52,14 @@ static int InvokeInstruction(const std::string& name, const Chunk& chunk, int of
     return offset + 3;
 }
 
-static int ByteInstruction(const std::string& name, const Chunk& chunk, int offset)
+static int byte_instruction(const std::string& name, const Chunk& chunk, int offset)
 {
     auto slot = chunk.get_code(offset + 1);
     fmt::print("{:<16s} {:4d}\n", name, slot);
     return offset + 2;
 }
 
-static int JmpInstruction(const std::string& name, int sign, const Chunk& chunk, int offset)
+static int jmp_instruction(const std::string& name, int sign, const Chunk& chunk, int offset)
 {
     uint16_t jump = static_cast<uint16_t>(chunk.get_code(offset + 1) << 8);
     jump |= static_cast<uint16_t>(chunk.get_code(offset + 2));
@@ -76,75 +79,75 @@ int Chunk::disas_instruction(int offset)
     auto instruction = Opcode(code[offset]);
     switch (instruction) {
         case Opcode::Constant:
-            return ConstantInstruction("OP_CONSTANT", *this, offset);
+            return constant_instruction("OP_CONSTANT", *this, offset);
         case Opcode::Nop:
-            return SimpleInstruction("OP_NULL", offset);
+            return simple_instruction("OP_NULL", offset);
         case Opcode::True:
-            return SimpleInstruction("OP_TRUE", offset);
+            return simple_instruction("OP_TRUE", offset);
         case Opcode::False:
-            return SimpleInstruction("OP_FALSE", offset);
+            return simple_instruction("OP_FALSE", offset);
         case Opcode::Pop:
-            return SimpleInstruction("OP_POP", offset);
+            return simple_instruction("OP_POP", offset);
         case Opcode::GetLocal:
-            return ByteInstruction("OP_GET_LOCAL", *this, offset);
+            return byte_instruction("OP_GET_LOCAL", *this, offset);
         case Opcode::GetGlobal:
-            return ConstantInstruction("OP_GET_GLOBAL", *this, offset);
+            return constant_instruction("OP_GET_GLOBAL", *this, offset);
         case Opcode::DefineGlobal:
-            return ConstantInstruction("OP_DEFINE_GLOBAL", *this, offset);
+            return constant_instruction("OP_DEFINE_GLOBAL", *this, offset);
         case Opcode::SetLocal:
-            return ByteInstruction("OP_SET_LOCAL", *this, offset);
+            return byte_instruction("OP_SET_LOCAL", *this, offset);
         case Opcode::SetGlobal:
-            return ConstantInstruction("OP_SET_GLOBAL", *this, offset);
+            return constant_instruction("OP_SET_GLOBAL", *this, offset);
         case Opcode::GetUpvalue:
-            return ByteInstruction("OP_GET_UPVALUE", *this, offset);
+            return byte_instruction("OP_GET_UPVALUE", *this, offset);
         case Opcode::SetUpvalue:
-            return ByteInstruction("OP_SET_UPVALUE", *this, offset);
+            return byte_instruction("OP_SET_UPVALUE", *this, offset);
         case Opcode::GetProperty:
-            return ConstantInstruction("OP_GET_PROPERTY", *this, offset);
+            return constant_instruction("OP_GET_PROPERTY", *this, offset);
         case Opcode::SetProperty:
-            return ConstantInstruction("OP_SET_PROPERTY", *this, offset);
+            return constant_instruction("OP_SET_PROPERTY", *this, offset);
         case Opcode::GetSuper:
-            return ConstantInstruction("OP_GET_SUPER", *this, offset);
+            return constant_instruction("OP_GET_SUPER", *this, offset);
         case Opcode::Equal:
-            return SimpleInstruction("OP_EQUAL", offset);
+            return simple_instruction("OP_EQUAL", offset);
         case Opcode::Greater:
-            return SimpleInstruction("OP_GREATER", offset);
+            return simple_instruction("OP_GREATER", offset);
         case Opcode::Less:
-            return SimpleInstruction("OP_LESS", offset);
+            return simple_instruction("OP_LESS", offset);
         case Opcode::Add:
-            return SimpleInstruction("OP_ADD", offset);
+            return simple_instruction("OP_ADD", offset);
         case Opcode::Subtract:
-            return SimpleInstruction("OP_SUBTRACT", offset);
+            return simple_instruction("OP_SUBTRACT", offset);
         case Opcode::Multiply:
-            return SimpleInstruction("OP_MULTIPLY", offset);
+            return simple_instruction("OP_MULTIPLY", offset);
         case Opcode::Divide:
-            return SimpleInstruction("OP_DIVIDE", offset);
+            return simple_instruction("OP_DIVIDE", offset);
         case Opcode::BwAnd:
-            return SimpleInstruction("OP_BW_AND", offset);
+            return simple_instruction("OP_BW_AND", offset);
         case Opcode::BwOr:
-            return SimpleInstruction("OP_BW_OR", offset);
+            return simple_instruction("OP_BW_OR", offset);
         case Opcode::BwXor:
-            return SimpleInstruction("OP_BW_XOR", offset);
+            return simple_instruction("OP_BW_XOR", offset);
         case Opcode::BwNot:
-            return SimpleInstruction("OP_BW_NOT", offset);
+            return simple_instruction("OP_BW_NOT", offset);
         case Opcode::Not:
-            return SimpleInstruction("OP_NOT", offset);
+            return simple_instruction("OP_NOT", offset);
         case Opcode::Negate:
-            return SimpleInstruction("OP_NEGATE", offset);
+            return simple_instruction("OP_NEGATE", offset);
         case Opcode::Print:
-            return SimpleInstruction("OP_PRINT", offset);
+            return simple_instruction("OP_PRINT", offset);
         case Opcode::Jump:
-            return JmpInstruction("OP_JUMP", 1, *this, offset);
+            return jmp_instruction("OP_JUMP", 1, *this, offset);
         case Opcode::JumpIfFalse:
-            return JmpInstruction("OP_JUMP_IF_FALSE", 1, *this, offset);
+            return jmp_instruction("OP_JUMP_IF_FALSE", 1, *this, offset);
         case Opcode::Loop:
-            return JmpInstruction("OP_JUMP", -1, *this, offset);
+            return jmp_instruction("OP_JUMP", -1, *this, offset);
         case Opcode::Call:
-            return ByteInstruction("OP_CALL", *this, offset);
+            return byte_instruction("OP_CALL", *this, offset);
         case Opcode::Invoke:
-            return InvokeInstruction("OP_INVOKE", *this, offset);
+            return invoke_instruction("OP_INVOKE", *this, offset);
         case Opcode::SuperInvoke:
-            return InvokeInstruction("OP_SUPER_INVOKE", *this, offset);
+            return invoke_instruction("OP_SUPER_INVOKE", *this, offset);
         case Opcode::Closure: {
             offset++;
             auto constant = code[offset++];
@@ -163,15 +166,21 @@ int Chunk::disas_instruction(int offset)
             return offset;
         }
         case Opcode::CloseUpvalue:
-            return SimpleInstruction("OP_CLOSE_UPVALUE", offset);
+            return simple_instruction("OP_CLOSE_UPVALUE", offset);
         case Opcode::Return:
-            return SimpleInstruction("OP_RETURN", offset);
+            return simple_instruction("OP_RETURN", offset);
         case Opcode::Class:
-            return ConstantInstruction("OP_CLASS", *this, offset);
+            return constant_instruction("OP_CLASS", *this, offset);
         case Opcode::Inherit:
-            return SimpleInstruction("OP_INHERIT", offset);
+            return simple_instruction("OP_INHERIT", offset);
         case Opcode::Method:
-            return ConstantInstruction("OP_METHOD", *this, offset);
+            return constant_instruction("OP_METHOD", *this, offset);
+        case Opcode::ArrBuild:
+            return constant_instruction("ARR_BUILD", *this, offset);
+        case Opcode::ArrIndex:
+            return simple_instruction("ARR_INDEX", offset);
+        case Opcode::ArrStore:
+            return constant_instruction("ARR_STORE", *this, offset);
     }
     
 	fmt::print("Uknown opcode: {}\n", code[offset]);
