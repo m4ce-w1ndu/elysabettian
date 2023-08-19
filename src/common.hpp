@@ -16,7 +16,7 @@
 
 constexpr auto UINT8_COUNT = UINT8_MAX + 1;
 
-constexpr auto VERSION = "1.1.0";
-constexpr auto VERSION_FULLNAME = "Elysabettian 1.1.0 Maurizio (JIT)";
+constexpr auto VERSION = "1.1.2";
+constexpr auto VERSION_FULLNAME = "Elysabettian 1.1.2 Jupiter (JIT)";
 
 #endif

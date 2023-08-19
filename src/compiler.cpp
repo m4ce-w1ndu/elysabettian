@@ -279,7 +279,7 @@ void Parser::array([[maybe_unused]] bool can_assign)
     if (!check(TokenType::CloseSquare)) {
         do {
             if (check(TokenType::CloseSquare)) break;
-            parse_precedence(precedence_t::Or);
+            parse_precedence(PrecedenceType::Or);
 
             if (count == UINT8_COUNT)
                 error("List literals do not allow more than 255 items.");
@@ -296,7 +296,7 @@ void Parser::array([[maybe_unused]] bool can_assign)
 
 void Parser::array_idx([[maybe_unused]] bool can_assign)
 {
-    parse_precedence(precedence_t::Or);
+    parse_precedence(PrecedenceType::Or);
     consume(TokenType::CloseSquare, "Expected ']' after array index.");
 
     if (can_assign && match(TokenType::Equal)) {
@@ -315,7 +315,7 @@ void Parser::binary([[maybe_unused]] bool can_assign)
     
     // Compile the right operand.
     auto rule = get_rule(operatorType);
-    parse_precedence(precedence_t(static_cast<int>(rule.precedence) + 1));
+    parse_precedence(PrecedenceType(static_cast<int>(rule.precedence) + 1));
     
     // Emit the operator instruction.
     switch (operatorType) {
@@ -390,7 +390,7 @@ void Parser::or_([[maybe_unused]] bool can_assign)
     patch_jump(else_jump);
     emit(Opcode::Pop);
     
-    parse_precedence(precedence_t::Or);
+    parse_precedence(PrecedenceType::Or);
     patch_jump(end_jump);
 }
 
@@ -463,7 +463,7 @@ void Parser::and_([[maybe_unused]] bool can_assign)
     int end_jump = emit_jump(Opcode::JumpIfFalse);
     
     emit(Opcode::Pop);
-    parse_precedence(precedence_t::And);
+    parse_precedence(PrecedenceType::And);
     
     patch_jump(end_jump);
 }
@@ -473,7 +473,7 @@ void Parser::unary([[maybe_unused]] bool can_assign)
     auto operator_type = previous.get_type();
     
     // Compile the operand.
-    parse_precedence(precedence_t::UNARY);
+    parse_precedence(PrecedenceType::UNARY);
     
     // Emit the operator instruciton.
     switch (operator_type) {
@@ -510,56 +510,56 @@ void Parser::build_parse_rules()
     auto array_idx = [this](bool can_assign) { this->array_idx(can_assign); };
 
     rules = { {
-        { grouping,    call,       precedence_t::CALL },       // TOKEN_LEFT_PAREN
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_RIGHT_PAREN
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_LEFT_BRACE
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_RIGHT_BRACE
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_COMMA
-        { nullptr,     dot,        precedence_t::CALL },       // TOKEN_DOT
-        { unary,       binary,     precedence_t::TERM },       // TOKEN_MINUS
-        { nullptr,     binary,     precedence_t::TERM },       // TOKEN_PLUS
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_SEMICOLON
-        { nullptr,     binary,     precedence_t::FACTOR },     // TOKEN_SLASH
-        { nullptr,     binary,     precedence_t::FACTOR },     // TOKEN_STAR
-        { unary,       nullptr,    precedence_t::NONE },       // TOKEN_BANG
-        { nullptr,     binary,     precedence_t::EQUALITY },   // TOKEN_BANG_EQUAL
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_EQUAL
-        { nullptr,     binary,     precedence_t::EQUALITY },   // TOKEN_EQUAL_EQUAL
-        { nullptr,     binary,     precedence_t::COMPARISON }, // TOKEN_GREATER
-        { nullptr,     binary,     precedence_t::COMPARISON }, // TOKEN_GREATER_EQUAL
-        { nullptr,     binary,     precedence_t::COMPARISON }, // TOKEN_LESS
-        { nullptr,     binary,     precedence_t::COMPARISON }, // TOKEN_LESS_EQUAL
-        { variable,    nullptr,    precedence_t::NONE },       // TOKEN_IDENTIFIER
-        { string,      nullptr,    precedence_t::NONE },       // TOKEN_STRING
-        { number,      nullptr,    precedence_t::NONE },       // TOKEN_NUMBER
-        { nullptr,     and_,       precedence_t::And },        // TOKEN_AND
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_CLASS
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_ELSE
-        { literal,     nullptr,    precedence_t::NONE },       // TOKEN_FALSE
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_FUN
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_FOR
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_IF
-        { literal,     nullptr,    precedence_t::NONE },       // TOKEN_NIL
-        { nullptr,     or_,        precedence_t::Or },         // TOKEN_OR
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_PRINT
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_RETURN
-        { super_,      nullptr,    precedence_t::NONE },       // TOKEN_SUPER
-        { this_,       nullptr,    precedence_t::NONE },       // TOKEN_THIS
-        { literal,     nullptr,    precedence_t::NONE },       // TOKEN_TRUE
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_VAR
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_WHILE
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_ERROR
-        { nullptr,     nullptr,    precedence_t::NONE },       // TOKEN_EOF
-        { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_AND
-        { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_OR
-        { nullptr,     binary,     precedence_t::TERM },       // TOKEN_BW_XOR
-        { unary,       nullptr,    precedence_t::UNARY},       // TOKEN_BW_NOT
-        { array,       array_idx,  precedence_t::Or   },       // TOKEN_OPEN_SQUARE
-        { unary,       nullptr,    precedence_t::NONE },       // TOKEN_CLOSE_SQUARE
+        { grouping,    call,       PrecedenceType::CALL },       // TOKEN_LEFT_PAREN
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_RIGHT_PAREN
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_LEFT_BRACE
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_RIGHT_BRACE
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_COMMA
+        { nullptr,     dot,        PrecedenceType::CALL },       // TOKEN_DOT
+        { unary,       binary,     PrecedenceType::TERM },       // TOKEN_MINUS
+        { nullptr,     binary,     PrecedenceType::TERM },       // TOKEN_PLUS
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_SEMICOLON
+        { nullptr,     binary,     PrecedenceType::FACTOR },     // TOKEN_SLASH
+        { nullptr,     binary,     PrecedenceType::FACTOR },     // TOKEN_STAR
+        { unary,       nullptr,    PrecedenceType::NONE },       // TOKEN_BANG
+        { nullptr,     binary,     PrecedenceType::EQUALITY },   // TOKEN_BANG_EQUAL
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_EQUAL
+        { nullptr,     binary,     PrecedenceType::EQUALITY },   // TOKEN_EQUAL_EQUAL
+        { nullptr,     binary,     PrecedenceType::COMPARISON }, // TOKEN_GREATER
+        { nullptr,     binary,     PrecedenceType::COMPARISON }, // TOKEN_GREATER_EQUAL
+        { nullptr,     binary,     PrecedenceType::COMPARISON }, // TOKEN_LESS
+        { nullptr,     binary,     PrecedenceType::COMPARISON }, // TOKEN_LESS_EQUAL
+        { variable,    nullptr,    PrecedenceType::NONE },       // TOKEN_IDENTIFIER
+        { string,      nullptr,    PrecedenceType::NONE },       // TOKEN_STRING
+        { number,      nullptr,    PrecedenceType::NONE },       // TOKEN_NUMBER
+        { nullptr,     and_,       PrecedenceType::And },        // TOKEN_AND
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_CLASS
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_ELSE
+        { literal,     nullptr,    PrecedenceType::NONE },       // TOKEN_FALSE
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_FUN
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_FOR
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_IF
+        { literal,     nullptr,    PrecedenceType::NONE },       // TOKEN_NIL
+        { nullptr,     or_,        PrecedenceType::Or },         // TOKEN_OR
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_PRINT
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_RETURN
+        { super_,      nullptr,    PrecedenceType::NONE },       // TOKEN_SUPER
+        { this_,       nullptr,    PrecedenceType::NONE },       // TOKEN_THIS
+        { literal,     nullptr,    PrecedenceType::NONE },       // TOKEN_TRUE
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_VAR
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_WHILE
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_ERROR
+        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_EOF
+        { nullptr,     binary,     PrecedenceType::TERM },       // TOKEN_BW_AND
+        { nullptr,     binary,     PrecedenceType::TERM },       // TOKEN_BW_OR
+        { nullptr,     binary,     PrecedenceType::TERM },       // TOKEN_BW_XOR
+        { unary,       nullptr,    PrecedenceType::UNARY},       // TOKEN_BW_NOT
+        { array,       array_idx,  PrecedenceType::Or   },       // TOKEN_OPEN_SQUARE
+        { unary,       nullptr,    PrecedenceType::NONE },       // TOKEN_CLOSE_SQUARE
     } };
 }
 
-void Parser::parse_precedence(precedence_t precedence)
+void Parser::parse_precedence(PrecedenceType precedence)
 {
     advance();
     auto prefix_rule = get_rule(previous.get_type()).prefix;
@@ -568,7 +568,7 @@ void Parser::parse_precedence(precedence_t precedence)
         return;
     }
     
-    auto can_assign = precedence <= precedence_t::ASSIGNMENT;
+    auto can_assign = precedence <= PrecedenceType::ASSIGNMENT;
     prefix_rule(can_assign);
     
     while (precedence <= get_rule(current.get_type()).precedence) {
@@ -626,7 +626,7 @@ uint8_t Parser::args_list()
 
 void Parser::expression()
 {
-    parse_precedence(precedence_t::ASSIGNMENT);
+    parse_precedence(PrecedenceType::ASSIGNMENT);
 }
 
 void Parser::block()

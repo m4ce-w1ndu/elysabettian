@@ -10,11 +10,11 @@
 #include <cstddef>
 #include <array>
 
-enum class precedence_t {
+enum class PrecedenceType {
     NONE,
     ASSIGNMENT,  // =
-    Or,          // or
-    And,         // and
+    Or,          // ||, |
+    And,         // &&, &
     EQUALITY,    // == !=
     COMPARISON,  // < > <= >=
     TERM,        // + -
@@ -31,7 +31,7 @@ using parsefn_t = void (Parser::*)(bool);
 struct parse_rule_t {
     std::function<void(bool)> prefix;
     std::function<void(bool)> infix;
-    precedence_t precedence;
+    PrecedenceType precedence;
 };
 
 struct local_t {
@@ -141,7 +141,7 @@ class Parser {
     void and_(bool can_assign);
     void unary(bool can_assign);
     parse_rule_t& get_rule(TokenType type);
-    void parse_precedence(precedence_t precedence);
+    void parse_precedence(PrecedenceType precedence);
     int identifier_constant(const std::string& name);
     uint8_t parse_variable(const std::string& errorMessage);
     void define_variable(uint8_t global);
@@ -190,4 +190,4 @@ public:
     std::optional<Func> compile();
 };
 
-#endif /* compiler_hpp */
+#endif
