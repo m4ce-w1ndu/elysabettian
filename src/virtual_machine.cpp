@@ -1,4 +1,4 @@
-#include "virtual_machine.hpp"
+#include "runtime/core_vm.h"
 
 #include <cstdarg>
 #include <exception>

@@ -1,12 +1,12 @@
-#ifndef LIBRARY_HPP
-#define LIBRARY_HPP
+#ifndef ELY_RT_LIBRARY_H
+#define ELY_RT_LIBRARY_H
 
 #include <string>
 #include <utility>
 #include <memory>
 #include <unordered_map>
 
-#include "value.hpp"
+#include "runtime/value.h"
 
 namespace stdlib {
 	struct library_t {

@@ -1,8 +1,8 @@
-#ifndef COMPILER_HPP
-#define COMPILER_HPP
+#ifndef ELY_RT_COMPILER_H
+#define ELY_RT_COMPILER_H
 
-#include "tokenizer.hpp"
-#include "value.hpp"
+#include "language/tokenizer.h"
+#include "runtime/value.h"
 
 #include <iostream>
 #include <memory>

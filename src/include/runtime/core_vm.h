@@ -1,10 +1,10 @@
-#ifndef VIRTUALMACHINE_HPP
-#define VIRTUALMACHINE_HPP
+#ifndef ELY_RT_COREVM_H
+#define ELY_RT_COREVM_H
 
-#include "value.hpp"
-#include "compiler.hpp"
+#include "runtime/value.h"
+#include "runtime/compiler.h"
 
-#include "library.hpp"
+#include "provider/library.h"
 
 #include <unordered_map>
 #include <map>

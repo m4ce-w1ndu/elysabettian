@@ -16,7 +16,7 @@ else()
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-include_directories(src)
+include_directories(src/include)
 include_directories(lib/fmt/include)
 add_subdirectory(lib/fmt)
 

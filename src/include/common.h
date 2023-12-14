@@ -1,5 +1,5 @@
-#ifndef COMMON_HPP
-#define COMMON_HPP
+#ifndef ELY_RT_COMMON_H
+#define ELY_RT_COMMON_H
 
 #include <iostream>
 #include <vector>

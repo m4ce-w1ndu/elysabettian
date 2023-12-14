@@ -1,5 +1,5 @@
-#ifndef SCANNER_HPP
-#define SCANNER_HPP
+#ifndef ELY_RT_TOKENIZER_H
+#define ELY_RT_TOKENIZER_H
 
 #include <string>
 

@@ -1,8 +1,8 @@
-#ifndef VALUE_HPP
-#define VALUE_HPP
+#ifndef ELY_RT_VALUE_HPP
+#define ELY_RT_VALUE_HPP
 
-#include "common.hpp"
-#include "opcodes.hpp"
+#include "common.h"
+#include "opcodes.h"
 
 #include <variant>
 #include <memory>

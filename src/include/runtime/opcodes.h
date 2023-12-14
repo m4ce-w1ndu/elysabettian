@@ -1,7 +1,7 @@
-#ifndef OPCODE_HPP
-#define OPCODE_HPP
+#ifndef ELY_RT_OPCODE_H
+#define ELY_RT_OPCODE_H
 
-#include "common.hpp"
+#include "common.h"
 
 enum class Opcode : uint8_t {
     Constant,
