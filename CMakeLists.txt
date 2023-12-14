@@ -17,8 +17,8 @@ else()
 endif()
 
 include_directories(src/include)
-include_directories(lib/fmt/include)
-add_subdirectory(lib/fmt)
+include_directories(dep/fmt/include)
+add_subdirectory(dep/fmt)
 
 file(
     GLOB_RECURSE
