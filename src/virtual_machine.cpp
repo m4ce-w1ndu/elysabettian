@@ -200,7 +200,7 @@ bool VirtualMachine::call(const Closure& closure, int arg_count)
     return true;
 }
 
-InterpretResult VirtualMachine::Interpret(const std::string& source)
+InterpretResult VirtualMachine::interpret(const std::string& source)
 {
     auto parser = Parser(source);
     auto opt = parser.compile();
@@ -211,7 +211,7 @@ InterpretResult VirtualMachine::Interpret(const std::string& source)
     push(closure);
     call(closure, 0);
 
-    return Run();
+    return run();
 }
 
 void VirtualMachine::runtime_error(const char* format, ...)
@@ -271,7 +271,7 @@ void VirtualMachine::double_pop_and_push(const Value& v)
     push(v);
 }
 
-InterpretResult VirtualMachine::Run()
+InterpretResult VirtualMachine::run()
 {
     auto read_byte = [this]() -> uint8_t {
         return this->frames.back().closure->function->get_code(this->frames.back().ip++);

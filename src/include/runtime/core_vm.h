@@ -192,8 +192,8 @@ public:
         define_native("import", import_lib);
         define_native("string", to_native_string);
     }
-    InterpretResult Interpret(const std::string& source);
-    InterpretResult Run();
+    InterpretResult interpret(const std::string& source);
+    InterpretResult run();
     
     friend CallVisitor;
 };

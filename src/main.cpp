@@ -12,7 +12,7 @@ static void Repl(VirtualMachine& vm)
         std::cout << "> ";
         std::getline(std::cin, line);
         
-        vm.Interpret(line);
+        vm.interpret(line);
         
         if (std::cin.eof()) {
             std::cout << std::endl;
@@ -39,7 +39,7 @@ static std::string ReadFile(const std::string& path)
 static void RunFile(VirtualMachine& vm, const std::string& path)
 {
     auto source = ReadFile(path);
-    auto result = vm.Interpret(source);
+    auto result = vm.interpret(source);
     
     switch (result) {
         case InterpretResult::Ok: break;
@@ -50,7 +50,7 @@ static void RunFile(VirtualMachine& vm, const std::string& path)
 
 static void RunCommand(VirtualMachine& vm, const std::string& command)
 {
-    vm.Interpret(command);
+    vm.interpret(command);
 }
 
 int main(int argc, const char * argv[])
