@@ -9,67 +9,68 @@
 #include <optional>
 #include <cstddef>
 #include <array>
+#include <functional>
 
 enum class PrecedenceType {
-    NONE,
-    ASSIGNMENT,  // =
+    None,
+    Assignment,  // =
     Or,          // ||, |
     And,         // &&, &
-    EQUALITY,    // == !=
-    COMPARISON,  // < > <= >=
-    TERM,        // + -
-    FACTOR,      // * /
-    UNARY,       // ! - +
-    CALL,        // . () []
-    PRIMARY
+    Equality,    // == !=
+    Comparison,  // < > <= >=
+    Term,        // + -
+    Factor,      // * /
+    Unary,       // ! - +
+    Call,        // . () []
+    Primary
 };
 
 class Parser;
 
-using parsefn_t = void (Parser::*)(bool);
+using ParseFn = std::function<void(bool)>;
 
-struct parse_rule_t {
+struct ParseRule {
     std::function<void(bool)> prefix;
     std::function<void(bool)> infix;
     PrecedenceType precedence;
 };
 
-struct local_t {
+struct LocalVar {
     const bool false_value = false;
     
     std::string name;
     int depth;
     bool is_captured;
-    local_t(const std::string& name, int depth): name(name), depth(depth), is_captured{false_value} {};
+    LocalVar(const std::string& name, int depth): name(name), depth(depth), is_captured{false_value} {};
 };
 
-class upvalue_t {
+class UpvalueVar {
 public:
     uint8_t index;
     bool is_local;
-    explicit upvalue_t(uint8_t index, bool is_local)
+    explicit UpvalueVar(uint8_t index, bool is_local)
         : index(index), is_local(is_local) {}
 };
 
-enum class function_type_t {
-    TYPE_FUNCTION, TYPE_INITIALIZER, TYPE_METHOD, TYPE_SCRIPT
+enum class FunctionType {
+    Function, Initializer, Method, Script
 };
 
 class Compiler {
     const Func default_function = std::make_shared<FunctionObj>(0, "");
     Parser* parser;
 
-    function_type_t type;
+    FunctionType type;
     Func function;
 
     std::unique_ptr<Compiler> enclosing;
     
-    std::vector<local_t> locals;
-    std::vector<upvalue_t> upvalues;
+    std::vector<LocalVar> locals;
+    std::vector<UpvalueVar> upvalues;
     int scope_depth = 0;
 
 public:
-    explicit Compiler(Parser* parser, function_type_t type, std::unique_ptr<Compiler> enclosing);
+    explicit Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing);
     void add_local(const std::string& name);
     void declare_variable(const std::string& name);
     void mark_initialized();
@@ -140,7 +141,7 @@ class Parser {
     void this_(bool can_assign);
     void and_(bool can_assign);
     void unary(bool can_assign);
-    parse_rule_t& get_rule(TokenType type);
+    ParseRule& get_rule(TokenType type);
     void parse_precedence(PrecedenceType precedence);
     int identifier_constant(const std::string& name);
     uint8_t parse_variable(const std::string& errorMessage);
@@ -148,7 +149,7 @@ class Parser {
     uint8_t args_list();
     void expression();
     void block();
-    void function(function_type_t type);
+    void function(FunctionType type);
     void method();
     void class_declaration();
     void func_declaration();
@@ -177,7 +178,7 @@ class Parser {
 
     void build_parse_rules();
 
-    std::array<parse_rule_t, 46> rules;
+    std::array<ParseRule, 46> rules;
     
     friend Compiler;
     

@@ -2,11 +2,11 @@
 
 #include <array>
 
-Compiler::Compiler(Parser* parser, function_type_t type, std::unique_ptr<Compiler> enclosing)
+Compiler::Compiler(Parser* parser, FunctionType type, std::unique_ptr<Compiler> enclosing)
     : parser(parser), type(type), function{default_function}, enclosing(std::move(enclosing))
 {
-    locals.emplace_back(type == function_type_t::TYPE_FUNCTION ? "" : "this", 0);
-    if (type != function_type_t::TYPE_SCRIPT) {
+    locals.emplace_back(type == FunctionType::Function ? "" : "this", 0);
+    if (type != FunctionType::Script) {
         function->name = parser->previous.get_text();
     }
 }
@@ -83,7 +83,7 @@ int Compiler::add_upvalue(uint8_t index, bool is_local)
         return 0;
     }
 
-    upvalues.emplace_back(upvalue_t(index, is_local));
+    upvalues.emplace_back(UpvalueVar(index, is_local));
     auto upvalue_count = static_cast<int>(upvalues.size());
     function->upvalue_count = upvalue_count;
     return upvalue_count - 1;
@@ -122,7 +122,7 @@ Parser::Parser(const std::string& source) :
     class_compiler{null_value},
     had_error{false_value}, panic_mode{false_value}
 {
-    compiler = std::make_unique<Compiler>(this, function_type_t::TYPE_SCRIPT, nullptr);
+    compiler = std::make_unique<Compiler>(this, FunctionType::Script, nullptr);
     advance();
 
     build_parse_rules();
@@ -219,7 +219,7 @@ int Parser::emit_jump(Opcode op)
 
 void Parser::emit_return()
 {
-    if (compiler->type == function_type_t::TYPE_INITIALIZER) {
+    if (compiler->type == FunctionType::Initializer) {
         emit(Opcode::GetLocal, 0);
     } else {
         emit(Opcode::Nop);
@@ -473,7 +473,7 @@ void Parser::unary([[maybe_unused]] bool can_assign)
     auto operator_type = previous.get_type();
     
     // Compile the operand.
-    parse_precedence(PrecedenceType::UNARY);
+    parse_precedence(PrecedenceType::Unary);
     
     // Emit the operator instruciton.
     switch (operator_type) {
@@ -486,7 +486,7 @@ void Parser::unary([[maybe_unused]] bool can_assign)
     }
 }
 
-parse_rule_t& Parser::get_rule(TokenType type)
+ParseRule& Parser::get_rule(TokenType type)
 {
     return rules[static_cast<int>(type)];
 }
@@ -510,52 +510,52 @@ void Parser::build_parse_rules()
     auto array_idx = [this](bool can_assign) { this->array_idx(can_assign); };
 
     rules = { {
-        { grouping,    call,       PrecedenceType::CALL },       // TOKEN_LEFT_PAREN
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_RIGHT_PAREN
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_LEFT_BRACE
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_RIGHT_BRACE
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_COMMA
-        { nullptr,     dot,        PrecedenceType::CALL },       // TOKEN_DOT
-        { unary,       binary,     PrecedenceType::TERM },       // TOKEN_MINUS
-        { nullptr,     binary,     PrecedenceType::TERM },       // TOKEN_PLUS
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_SEMICOLON
-        { nullptr,     binary,     PrecedenceType::FACTOR },     // TOKEN_SLASH
-        { nullptr,     binary,     PrecedenceType::FACTOR },     // TOKEN_STAR
-        { unary,       nullptr,    PrecedenceType::NONE },       // TOKEN_BANG
-        { nullptr,     binary,     PrecedenceType::EQUALITY },   // TOKEN_BANG_EQUAL
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_EQUAL
-        { nullptr,     binary,     PrecedenceType::EQUALITY },   // TOKEN_EQUAL_EQUAL
-        { nullptr,     binary,     PrecedenceType::COMPARISON }, // TOKEN_GREATER
-        { nullptr,     binary,     PrecedenceType::COMPARISON }, // TOKEN_GREATER_EQUAL
-        { nullptr,     binary,     PrecedenceType::COMPARISON }, // TOKEN_LESS
-        { nullptr,     binary,     PrecedenceType::COMPARISON }, // TOKEN_LESS_EQUAL
-        { variable,    nullptr,    PrecedenceType::NONE },       // TOKEN_IDENTIFIER
-        { string,      nullptr,    PrecedenceType::NONE },       // TOKEN_STRING
-        { number,      nullptr,    PrecedenceType::NONE },       // TOKEN_NUMBER
+        { grouping,    call,       PrecedenceType::Call },       // TOKEN_LEFT_PAREN
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_RIGHT_PAREN
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_LEFT_BRACE
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_RIGHT_BRACE
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_COMMA
+        { nullptr,     dot,        PrecedenceType::Call },       // TOKEN_DOT
+        { unary,       binary,     PrecedenceType::Term },       // TOKEN_MINUS
+        { nullptr,     binary,     PrecedenceType::Term },       // TOKEN_PLUS
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_SEMICOLON
+        { nullptr,     binary,     PrecedenceType::Factor },     // TOKEN_SLASH
+        { nullptr,     binary,     PrecedenceType::Factor },     // TOKEN_STAR
+        { unary,       nullptr,    PrecedenceType::None },       // TOKEN_BANG
+        { nullptr,     binary,     PrecedenceType::Equality },   // TOKEN_BANG_EQUAL
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_EQUAL
+        { nullptr,     binary,     PrecedenceType::Equality },   // TOKEN_EQUAL_EQUAL
+        { nullptr,     binary,     PrecedenceType::Comparison }, // TOKEN_GREATER
+        { nullptr,     binary,     PrecedenceType::Comparison }, // TOKEN_GREATER_EQUAL
+        { nullptr,     binary,     PrecedenceType::Comparison }, // TOKEN_LESS
+        { nullptr,     binary,     PrecedenceType::Comparison }, // TOKEN_LESS_EQUAL
+        { variable,    nullptr,    PrecedenceType::None },       // TOKEN_IDENTIFIER
+        { string,      nullptr,    PrecedenceType::None },       // TOKEN_STRING
+        { number,      nullptr,    PrecedenceType::None },       // TOKEN_NUMBER
         { nullptr,     and_,       PrecedenceType::And },        // TOKEN_AND
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_CLASS
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_ELSE
-        { literal,     nullptr,    PrecedenceType::NONE },       // TOKEN_FALSE
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_FUN
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_FOR
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_IF
-        { literal,     nullptr,    PrecedenceType::NONE },       // TOKEN_NIL
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_CLASS
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_ELSE
+        { literal,     nullptr,    PrecedenceType::None },       // TOKEN_FALSE
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_FUN
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_FOR
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_IF
+        { literal,     nullptr,    PrecedenceType::None },       // TOKEN_NIL
         { nullptr,     or_,        PrecedenceType::Or },         // TOKEN_OR
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_PRINT
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_RETURN
-        { super_,      nullptr,    PrecedenceType::NONE },       // TOKEN_SUPER
-        { this_,       nullptr,    PrecedenceType::NONE },       // TOKEN_THIS
-        { literal,     nullptr,    PrecedenceType::NONE },       // TOKEN_TRUE
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_VAR
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_WHILE
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_ERROR
-        { nullptr,     nullptr,    PrecedenceType::NONE },       // TOKEN_EOF
-        { nullptr,     binary,     PrecedenceType::TERM },       // TOKEN_BW_AND
-        { nullptr,     binary,     PrecedenceType::TERM },       // TOKEN_BW_OR
-        { nullptr,     binary,     PrecedenceType::TERM },       // TOKEN_BW_XOR
-        { unary,       nullptr,    PrecedenceType::UNARY},       // TOKEN_BW_NOT
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_PRINT
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_RETURN
+        { super_,      nullptr,    PrecedenceType::None },       // TOKEN_SUPER
+        { this_,       nullptr,    PrecedenceType::None },       // TOKEN_THIS
+        { literal,     nullptr,    PrecedenceType::None },       // TOKEN_TRUE
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_VAR
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_WHILE
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_ERROR
+        { nullptr,     nullptr,    PrecedenceType::None },       // TOKEN_EOF
+        { nullptr,     binary,     PrecedenceType::Term },       // TOKEN_BW_AND
+        { nullptr,     binary,     PrecedenceType::Term },       // TOKEN_BW_OR
+        { nullptr,     binary,     PrecedenceType::Term },       // TOKEN_BW_XOR
+        { unary,       nullptr,    PrecedenceType::Unary},       // TOKEN_BW_NOT
         { array,       array_idx,  PrecedenceType::Or   },       // TOKEN_OPEN_SQUARE
-        { unary,       nullptr,    PrecedenceType::NONE },       // TOKEN_CLOSE_SQUARE
+        { unary,       nullptr,    PrecedenceType::None },       // TOKEN_CLOSE_SQUARE
     } };
 }
 
@@ -568,7 +568,7 @@ void Parser::parse_precedence(PrecedenceType precedence)
         return;
     }
     
-    auto can_assign = precedence <= PrecedenceType::ASSIGNMENT;
+    auto can_assign = precedence <= PrecedenceType::Assignment;
     prefix_rule(can_assign);
     
     while (precedence <= get_rule(current.get_type()).precedence) {
@@ -626,7 +626,7 @@ uint8_t Parser::args_list()
 
 void Parser::expression()
 {
-    parse_precedence(PrecedenceType::ASSIGNMENT);
+    parse_precedence(PrecedenceType::Assignment);
 }
 
 void Parser::block()
@@ -638,7 +638,7 @@ void Parser::block()
     consume(TokenType::CloseCurly, "Expected '}' after block.");
 }
 
-void Parser::function(function_type_t type)
+void Parser::function(FunctionType type)
 {
     compiler = std::make_unique<Compiler>(this, type, std::move(compiler));
     compiler->begin_scope();
@@ -673,7 +673,7 @@ void Parser::method()
 {
     consume(TokenType::Identifier, "Expected method name.");
     const auto constant = identifier_constant(std::string(previous.get_text()));
-    const auto type = previous.get_text() == "init" ? function_type_t::TYPE_INITIALIZER : function_type_t::TYPE_METHOD;
+    const auto type = previous.get_text() == "init" ? FunctionType::Initializer : FunctionType::Method;
     function(type);
     emit(Opcode::Method, static_cast<uint8_t>(constant));
 }
@@ -726,7 +726,7 @@ void Parser::func_declaration()
 {
     auto global = parse_variable("Expected function name.");
     compiler->mark_initialized();
-    function(function_type_t::TYPE_FUNCTION);
+    function(FunctionType::Function);
     define_variable(global);
 }
 
@@ -863,14 +863,14 @@ void Parser::print_statement()
 
 void Parser::return_statement()
 {
-    if (compiler->type == function_type_t::TYPE_SCRIPT) {
+    if (compiler->type == FunctionType::Script) {
         error("Cannot return from top-level code.");
     }
     
     if (match(TokenType::Semicolon)) {
         emit_return();
     } else {
-        if (compiler->type == function_type_t::TYPE_INITIALIZER) {
+        if (compiler->type == FunctionType::Initializer) {
             error("Cannot return a value from an initializer.");
         }
         
