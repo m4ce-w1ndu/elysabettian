@@ -1,10 +1,10 @@
-#include "provider/library.h"
+#include "provider/emath.h"
 
 #include <random>
 #include <cmath>
 
 namespace stdlib {
-	libmath::libmath() : library_t(
+	EMath::EMath() : ELibrary(
 		// Functions
 		{ 
             {"acos", [](int argc, std::vector<Value>::iterator args) -> Value {

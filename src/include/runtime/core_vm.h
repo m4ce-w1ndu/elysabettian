@@ -4,7 +4,9 @@
 #include "runtime/value.h"
 #include "runtime/compiler.h"
 
-#include "provider/library.h"
+#include "provider/earray.h"
+#include "provider/emath.h"
+#include "provider/estdio.h"
 
 #include <unordered_map>
 #include <map>
@@ -13,23 +15,36 @@
 #include <sstream>
 #include <iomanip>
 
-constexpr auto FRAMES_MAX = 64;
-constexpr auto STACK_MAX = (FRAMES_MAX* UINT8_COUNT);
+constexpr size_t FRAMES_MAX = 64;
+constexpr size_t STACK_MAX = (FRAMES_MAX* UINT8_COUNT);
 
+/**
+ * @brief Possible result of the interpretation.
+ * As the code is converted to bytecode, standard checks
+ * are performed, and the general result is described
+ * by this enum.
+*/
 enum class InterpretResult {
     Ok,
     CompileError,
     RuntimeError
 };
 
+/**
+ * @brief Describes a call stack function call frame
+*/
 struct CallFrame {
     Closure closure;
-    unsigned ip;
-    unsigned long stack_offset;
+    unsigned ip = 0;
+    unsigned long stack_offset = 0;
 };
 
 struct CallVisitor;
 
+/**
+ * @brief Runtime Virtual Machine. Executes the code
+ * using the stored bytecode compilation result.
+*/
 class VirtualMachine {
     std::vector<Value> stack;
     std::vector<CallFrame> frames;
@@ -38,7 +53,15 @@ class VirtualMachine {
     std::string init_string = "init";
 
     // Load arrays by default
-    const stdlib::libnativearray array_lib;
+    const stdlib::EArray array_lib;
+
+    /**
+     * @brief Libraries that can be loaded by the runtime on startup
+    */
+    const std::unordered_map<std::string, std::shared_ptr<stdlib::ELibrary>> libraries = {
+        { "math", std::make_shared<stdlib::ELibrary>(stdlib::EMath()) },
+        { "stdio", std::make_shared<stdlib::ELibrary>(stdlib::EStdio()) }
+    };
     
     inline void reset_stack()
     {
@@ -62,7 +85,7 @@ class VirtualMachine {
     
     inline Value pop()
     {
-        auto v = std::move(stack.back());
+        const auto& v = std::move(stack.back());
         stack.pop_back();
         return v;
     }
@@ -95,7 +118,7 @@ public:
             std::string libname;
             try {
                 libname = std::get<std::string>(*args);
-                const auto& lib = stdlib::Libraries.at(libname);
+                const auto& lib = libraries.at(libname);
 
                 // Loading functions
                 for (const auto& f : lib->functions)
@@ -198,4 +221,4 @@ public:
     friend CallVisitor;
 };
 
-#endif /* vm_hpp */
+#endif

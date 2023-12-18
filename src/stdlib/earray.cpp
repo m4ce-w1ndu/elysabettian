@@ -1,8 +1,8 @@
-#include "provider/library.h"
+#include "provider/earray.h"
 
 namespace stdlib {
-    libnativearray::libnativearray()
-    : library_t({
+    EArray::EArray()
+    : ELibrary({
 
         // Functions
         {

@@ -54,11 +54,11 @@ struct CallVisitor {
     bool operator()(const Class& class_value) const
     {
         // increment reference count to avoid premature deletion
-        auto class_val = class_value;
+        const auto& class_val = class_value;
         vm.stack[vm.stack.size() - arg_count - 1] = std::make_shared<InstanceObj>(class_value);
         try {
             auto& funcs = class_val->methods;
-            auto found = funcs.at(vm.init_string);
+            auto& found = funcs.at(vm.init_string);
             return vm.call(found, arg_count);
         }
         catch (std::out_of_range&) {

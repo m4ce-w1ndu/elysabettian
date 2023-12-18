@@ -1,4 +1,4 @@
-#include "provider/library.h"
+#include "provider/estdio.h"
 
 #include <optional>
 #include <cstdio>
@@ -27,8 +27,8 @@ namespace stdlib {
 		return str == "true" || str == "false";
 	}
 
-	libstdio::libstdio()
-	: library_t({
+	EStdio::EStdio()
+	: ELibrary({
 		// Console I/O
 		{ "read", [](int argc, std::vector<Value>::iterator args) -> Value {
 			if (argc > 0 && argc < 2) {
