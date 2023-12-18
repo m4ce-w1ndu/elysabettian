@@ -7,6 +7,7 @@
 #include "provider/earray.h"
 #include "provider/emath.h"
 #include "provider/estdio.h"
+#include "provider/cstdio.h"
 
 #include <unordered_map>
 #include <map>
@@ -39,6 +40,9 @@ struct CallFrame {
     unsigned long stack_offset = 0;
 };
 
+/**
+ * @brief Function call visitor
+*/
 struct CallVisitor;
 
 /**
@@ -60,7 +64,8 @@ class VirtualMachine {
     */
     const std::unordered_map<std::string, std::shared_ptr<stdlib::ELibrary>> libraries = {
         { "math", std::make_shared<stdlib::ELibrary>(stdlib::EMath()) },
-        { "stdio", std::make_shared<stdlib::ELibrary>(stdlib::EStdio()) }
+        { "stdio", std::make_shared<stdlib::ELibrary>(stdlib::EStdio()) },
+        { "cstdio", std::make_shared<stdlib::ELibrary>(stdlib::CStdio()) }
     };
     
     inline void reset_stack()

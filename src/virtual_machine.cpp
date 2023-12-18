@@ -3,15 +3,18 @@
 #include <cstdarg>
 #include <exception>
 
-/// <summary>
-/// Recursively creates a list of overloads for the operator () with
-/// variadic types.
-/// </summary>
+/**
+ * @brief Recursively creates a list of overloads for the operator() using
+ * variadic templates. This is useful to seamlessly implement the visitor
+ * pattern.
+ * @tparam ...Ts List of variadic types (auto-deducted).
+*/
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 
-/// <summary>
-/// Applies the overloaded struct (callable object) to a specific type
-/// </summary>
+/**
+ * @brief Applies the overloaded struct (callable object) to a given
+ * type.
+*/
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 const std::string operator+(const std::string& str, double num)
