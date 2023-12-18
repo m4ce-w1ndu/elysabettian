@@ -44,7 +44,7 @@ namespace stdlib {
             }},
             { "len", [](int argc, std::vector<Value>::iterator args) -> Value {
                 if (argc > 1 || argc < 1) {
-                    fmt::print(stderr, "Error: arrayLen(array) expects 1 paramters. Got {}.\n", argc);
+                    fmt::print(stderr, "Error: len(array) expects 1 paramters. Got {}.\n", argc);
                     return std::monostate();
                 }
 
