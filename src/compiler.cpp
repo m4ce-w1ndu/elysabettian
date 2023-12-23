@@ -112,15 +112,15 @@ bool Compiler::is_local() const
     return scope_depth > 0;
 }
 
-class_compiler_t::class_compiler_t(std::unique_ptr<class_compiler_t> enclosing)
+ClassCompiler::ClassCompiler(std::unique_ptr<ClassCompiler> enclosing)
     : enclosing(std::move(enclosing)), has_superclass{superclass_default} {};
 
 Parser::Parser(const std::string& source) :
     previous(Token(TokenType::Eof, source, 0)),
     current(Token(TokenType::Eof, source, 0)),
     scanner(Tokenizer(source)),
-    class_compiler{null_value},
-    had_error{false_value}, panic_mode{false_value}
+    class_compiler{nullptr},
+    had_error{false}, panic_mode{false}
 {
     compiler = std::make_unique<Compiler>(this, FunctionType::Script, nullptr);
     advance();
@@ -178,12 +178,12 @@ bool Parser::match(TokenType type)
 
 void Parser::emit(uint8_t byte)
 {
-    CurrentChunk().write(byte, previous.get_line());
+    current_chunk().write(byte, previous.get_line());
 }
 
 void Parser::emit(Opcode op)
 {
-    CurrentChunk().write(op, previous.get_line());
+    current_chunk().write(op, previous.get_line());
 }
 
 void Parser::emit(Opcode op, uint8_t byte)
@@ -202,7 +202,7 @@ void Parser::emit_loop(int loopStart)
 {
     emit(Opcode::Loop);
     
-    int offset = CurrentChunk().count() - loopStart + 2;
+    int offset = current_chunk().count() - loopStart + 2;
     if (offset > UINT16_MAX) { error("Loop body too large."); }
     
     emit((offset >> 8) & 0xff);
@@ -214,7 +214,7 @@ int Parser::emit_jump(Opcode op)
     emit(op);
     emit(0xff);
     emit(0xff);
-    return CurrentChunk().count() - 2;
+    return current_chunk().count() - 2;
 }
 
 void Parser::emit_return()
@@ -229,7 +229,7 @@ void Parser::emit_return()
 
 uint8_t Parser::make_constant(const Value& value)
 {
-    size_t constant = CurrentChunk().add_constant(value);
+    size_t constant = current_chunk().add_constant(value);
     if (constant > UINT8_MAX) {
         error("Too many constants in one chunk.");
         return 0;
@@ -246,14 +246,14 @@ void Parser::emit_constant(const Value& value)
 void Parser::patch_jump(int offset)
 {
     // -2 to adjust for the bytecode for the jump offset itself.
-    int jump = CurrentChunk().count() - offset - 2;
+    int jump = current_chunk().count() - offset - 2;
     
     if (jump > UINT16_MAX) {
         error("Too much code to jump over.");
     }
     
-    CurrentChunk().set_code(offset, (jump >> 8) & 0xff);
-    CurrentChunk().set_code(offset + 1, jump & 0xff);
+    current_chunk().set_code(offset, (jump >> 8) & 0xff);
+    current_chunk().set_code(offset + 1, jump & 0xff);
 }
 
 Func Parser::end_compiler()
@@ -265,7 +265,7 @@ Func Parser::end_compiler()
 #ifdef DEBUG_PRINT_CODE
     if (!had_error) {
         auto name = function->get_name().empty() ? "<main>" : function->get_name();
-        CurrentChunk().disassemble(name);
+        current_chunk().disassemble(name);
     }
 #endif
 
@@ -688,7 +688,7 @@ void Parser::class_declaration()
     emit(Opcode::Class, static_cast<uint8_t>(name_constant));
     define_variable(static_cast<uint8_t>(name_constant));
     
-    class_compiler = std::make_unique<class_compiler_t>(std::move(class_compiler));
+    class_compiler = std::make_unique<ClassCompiler>(std::move(class_compiler));
     
     if (match(TokenType::Less)) {
         consume(TokenType::Identifier, "Expected superclass name.");
@@ -764,7 +764,7 @@ void Parser::for_statement()
         expression_statement();
     }
     
-    int loop_start = CurrentChunk().count();
+    int loop_start = current_chunk().count();
     
     int exit_jump = -1;
     if (!match(TokenType::Semicolon)) {
@@ -779,7 +779,7 @@ void Parser::for_statement()
     if (!match(TokenType::CloseParen)) {
         const int body_jump = emit_jump(Opcode::Jump);
         
-        int increment_start = CurrentChunk().count();
+        int increment_start = current_chunk().count();
         expression();
         emit(Opcode::Pop);
         consume(TokenType::CloseParen, "Expected ')' after for clauses.");
@@ -882,7 +882,7 @@ void Parser::return_statement()
 
 void Parser::while_statement()
 {
-    const int loop_start = CurrentChunk().count();
+    const int loop_start = current_chunk().count();
     
     consume(TokenType::OpenParen, "Expected '(' after 'while'.");
     expression();
