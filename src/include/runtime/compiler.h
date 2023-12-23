@@ -56,6 +56,11 @@ enum class FunctionType {
     Function, Initializer, Method, Script
 };
 
+/**
+ * @brief Compiler turns the high-level Elysabettian language into
+ * a more manageable bytecode, which is then executed by the language's
+ * runtime.
+*/
 class Compiler {
     const Func default_function = std::make_shared<FunctionObj>(0, "");
     Parser* parser;
@@ -94,6 +99,11 @@ public:
     friend Parser;
 };
 
+/**
+ * @brief Parser parses the language and converts it into an abstract
+ * syntax representation of statements and expressions, used by the
+ * compiler to emit the correct bytecode.
+*/
 class Parser {
     const std::nullptr_t null_value = nullptr;
     const bool false_value = false;
