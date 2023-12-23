@@ -36,8 +36,8 @@ enum class InterpretResult {
 */
 struct CallFrame {
     Closure closure;
-    unsigned ip = 0;
-    unsigned long stack_offset = 0;
+    size_t ip = 0;
+    size_t stack_offset = 0;
 };
 
 /**
@@ -90,7 +90,7 @@ class VirtualMachine {
     
     inline Value pop()
     {
-        const auto& v = std::move(stack.back());
+        const Value v = std::move(stack.back());
         stack.pop_back();
         return v;
     }
