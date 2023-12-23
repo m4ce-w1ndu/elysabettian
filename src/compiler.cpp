@@ -42,7 +42,7 @@ void Compiler::mark_initialized()
 
 int Compiler::resolve_local(const std::string_view& name)
 {
-    for (auto i = static_cast<long>(locals.size() - 1); i >=0; i--) {
+    for (long i = static_cast<long>(locals.size() - 1); i >=0; i--) {
         if (locals[i].name == name) {
             if (locals[i].depth == -1) {
                 parser->error("Can't read local variable in its own initializer.");
@@ -84,7 +84,7 @@ int Compiler::add_upvalue(uint8_t index, bool is_local)
     }
 
     upvalues.emplace_back(UpvalueVar(index, is_local));
-    auto upvalue_count = static_cast<int>(upvalues.size());
+    int upvalue_count = static_cast<int>(upvalues.size());
     function->upvalue_count = upvalue_count;
     return upvalue_count - 1;
 }
@@ -133,7 +133,7 @@ std::optional<Func> Parser::compile()
     while (!match(TokenType::Eof)) {
         declaration();
     }
-    auto function = end_compiler();
+    Func function = end_compiler();
     
     if (had_error) {
         return std::nullopt;
@@ -229,7 +229,7 @@ void Parser::emit_return()
 
 uint8_t Parser::make_constant(const Value& value)
 {
-    auto constant = CurrentChunk().add_constant(value);
+    size_t constant = CurrentChunk().add_constant(value);
     if (constant > UINT8_MAX) {
         error("Too many constants in one chunk.");
         return 0;
@@ -260,7 +260,7 @@ Func Parser::end_compiler()
 {
     emit_return();
     
-    auto function = compiler->function;
+    Func function = compiler->function;
     
 #ifdef DEBUG_PRINT_CODE
     if (!had_error) {
@@ -311,48 +311,48 @@ void Parser::array_idx([[maybe_unused]] bool can_assign)
 void Parser::binary([[maybe_unused]] bool can_assign)
 {
     // Remember the operator.
-    auto operatorType = previous.get_type();
+    TokenType operator_type = previous.get_type();
     
     // Compile the right operand.
-    auto rule = get_rule(operatorType);
+    ParseRule rule = get_rule(operator_type);
     parse_precedence(PrecedenceType(static_cast<int>(rule.precedence) + 1));
     
     // Emit the operator instruction.
-    switch (operatorType) {
-        case TokenType::ExclEqual:    emit(Opcode::Equal, Opcode::Not); break;
-        case TokenType::EqualEqual:   emit(Opcode::Equal); break;
-        case TokenType::Greater:       emit(Opcode::Greater); break;
-        case TokenType::GreaterEqual: emit(Opcode::Less, Opcode::Not); break;
-        case TokenType::Less:          emit(Opcode::Less); break;
-        case TokenType::LessEqual:    emit(Opcode::Greater, Opcode::Not); break;
-        case TokenType::Plus:          emit(Opcode::Add); break;
-        case TokenType::Minus:         emit(Opcode::Subtract); break;
-        case TokenType::Star:          emit(Opcode::Multiply); break;
-        case TokenType::Slash:         emit(Opcode::Divide); break;
-        case TokenType::BwOr:         emit(Opcode::BwOr); break;
-        case TokenType::BwAnd:        emit(Opcode::BwAnd); break;
-        case TokenType::BwXor:        emit(Opcode::BwXor); break;
+    switch (operator_type) {
+        case TokenType::ExclEqual:      emit(Opcode::Equal, Opcode::Not); break;
+        case TokenType::EqualEqual:     emit(Opcode::Equal); break;
+        case TokenType::Greater:        emit(Opcode::Greater); break;
+        case TokenType::GreaterEqual:   emit(Opcode::Less, Opcode::Not); break;
+        case TokenType::Less:           emit(Opcode::Less); break;
+        case TokenType::LessEqual:      emit(Opcode::Greater, Opcode::Not); break;
+        case TokenType::Plus:           emit(Opcode::Add); break;
+        case TokenType::Minus:          emit(Opcode::Subtract); break;
+        case TokenType::Star:           emit(Opcode::Multiply); break;
+        case TokenType::Slash:          emit(Opcode::Divide); break;
+        case TokenType::BwOr:           emit(Opcode::BwOr); break;
+        case TokenType::BwAnd:          emit(Opcode::BwAnd); break;
+        case TokenType::BwXor:          emit(Opcode::BwXor); break;
         default:
-            return; // Unreachable.
+            return;
     }
 }
 
 void Parser::call([[maybe_unused]] bool can_assign)
 {
-    auto arg_count = args_list();
+    uint8_t arg_count = args_list();
     emit(Opcode::Call, arg_count);
 }
 
 void Parser::dot([[maybe_unused]] bool can_assign)
 {
     consume(TokenType::Identifier, "Expected property name after '.'.");
-    auto name = identifier_constant(std::string(previous.get_text()));
+    int name = identifier_constant(std::string(previous.get_text()));
     
     if (can_assign && match(TokenType::Equal)) {
         expression();
         emit(Opcode::SetProperty, static_cast<uint8_t>(name));
     } else if (match(TokenType::OpenParen)) {
-        auto arg_count = args_list();
+        uint8_t arg_count = args_list();
         emit(Opcode::Invoke, static_cast<uint8_t>(name));
         emit(arg_count);
     } else {
@@ -363,10 +363,10 @@ void Parser::dot([[maybe_unused]] bool can_assign)
 void Parser::literal([[maybe_unused]] bool can_assign)
 {
     switch (previous.get_type()) {
-        case TokenType::False:      emit(Opcode::False); break;
-        case TokenType::Null:    emit(Opcode::Nop); break;
-        case TokenType::True:       emit(Opcode::True); break;
-        default:                    return; // Unreachable.
+        case TokenType::False:  emit(Opcode::False); break;
+        case TokenType::Null:   emit(Opcode::Nop); break;
+        case TokenType::True:   emit(Opcode::True); break;
+        default:                return; // Unreachable.
     }
 }
 
@@ -396,7 +396,7 @@ void Parser::or_([[maybe_unused]] bool can_assign)
 
 void Parser::string_([[maybe_unused]] bool can_assign)
 {
-    auto str = previous.get_text();
+    std::string_view str = previous.get_text();
     str.remove_prefix(1);
     str.remove_suffix(1);
     emit_constant(std::string(str));
@@ -406,7 +406,7 @@ void Parser::named_variable(const std::string& name, bool can_assign)
 {
     Opcode get_op;
     Opcode set_op;
-    auto arg = compiler->resolve_local(name);
+    int arg = compiler->resolve_local(name);
     if (arg != -1) {
         get_op = Opcode::GetLocal;
         set_op = Opcode::SetLocal;
@@ -442,7 +442,7 @@ void Parser::super([[maybe_unused]] bool can_assign)
     
     consume(TokenType::Dot, "Expected '.' after 'super'.");
     consume(TokenType::Identifier, "Expected superclass method name.");
-    auto name = identifier_constant(std::string(previous.get_text()));
+    int name = identifier_constant(std::string(previous.get_text()));
     
     named_variable("this", false);
     named_variable("super", false);
@@ -470,7 +470,7 @@ void Parser::and_([[maybe_unused]] bool can_assign)
 
 void Parser::unary([[maybe_unused]] bool can_assign)
 {
-    auto operator_type = previous.get_type();
+    TokenType operator_type = previous.get_type();
     
     // Compile the operand.
     parse_precedence(PrecedenceType::Unary);
@@ -493,21 +493,21 @@ ParseRule& Parser::get_rule(TokenType type)
 
 void Parser::build_parse_rules()
 {
-    auto grouping = [this](bool can_assign) { this->grouping(can_assign); };
-    auto unary = [this](bool can_assign) { this->unary(can_assign); };
-    auto binary = [this](bool can_assign) { this->binary(can_assign); };
-    auto call = [this](bool can_assign) { this->call(can_assign); };
-    auto dot = [this](bool can_assign) { this->dot(can_assign); };
-    auto number = [this](bool can_assign) { this->number(can_assign); };
-    auto string = [this](bool can_assign) { this->string_(can_assign); };
-    auto literal = [this](bool can_assign) { this->literal(can_assign); };
-    auto variable = [this](bool can_assign) { this->variable(can_assign); };
-    auto super_ = [this](bool can_assign) { this->super(can_assign); };
-    auto this_ = [this](bool can_assign) { this->this_(can_assign); };
-    auto and_ = [this](bool can_assign) { this->and_(can_assign); };
-    auto or_ = [this](bool can_assign) { this->or_(can_assign); };
-    auto array = [this](bool can_assign) { this->array(can_assign); };
-    auto array_idx = [this](bool can_assign) { this->array_idx(can_assign); };
+    std::function<void(bool)> grouping = [this](bool can_assign) { this->grouping(can_assign); };
+    std::function<void(bool)> unary = [this](bool can_assign) { this->unary(can_assign); };
+    std::function<void(bool)> binary = [this](bool can_assign) { this->binary(can_assign); };
+    std::function<void(bool)> call = [this](bool can_assign) { this->call(can_assign); };
+    std::function<void(bool)> dot = [this](bool can_assign) { this->dot(can_assign); };
+    std::function<void(bool)> number = [this](bool can_assign) { this->number(can_assign); };
+    std::function<void(bool)> string = [this](bool can_assign) { this->string_(can_assign); };
+    std::function<void(bool)> literal = [this](bool can_assign) { this->literal(can_assign); };
+    std::function<void(bool)> variable = [this](bool can_assign) { this->variable(can_assign); };
+    std::function<void(bool)> super_ = [this](bool can_assign) { this->super(can_assign); };
+    std::function<void(bool)> this_ = [this](bool can_assign) { this->this_(can_assign); };
+    std::function<void(bool)> and_ = [this](bool can_assign) { this->and_(can_assign); };
+    std::function<void(bool)> or_ = [this](bool can_assign) { this->or_(can_assign); };
+    std::function<void(bool)> array = [this](bool can_assign) { this->array(can_assign); };
+    std::function<void(bool)> array_idx = [this](bool can_assign) { this->array_idx(can_assign); };
 
     rules = { {
         { grouping,    call,       PrecedenceType::Call },       // TOKEN_LEFT_PAREN
@@ -562,18 +562,18 @@ void Parser::build_parse_rules()
 void Parser::parse_precedence(PrecedenceType precedence)
 {
     advance();
-    auto prefix_rule = get_rule(previous.get_type()).prefix;
+    ParseFn prefix_rule = get_rule(previous.get_type()).prefix;
     if (prefix_rule == nullptr) {
         error("Expected expression.");
         return;
     }
     
-    auto can_assign = precedence <= PrecedenceType::Assignment;
+    bool can_assign = precedence <= PrecedenceType::Assignment;
     prefix_rule(can_assign);
     
     while (precedence <= get_rule(current.get_type()).precedence) {
         advance();
-        auto infix_rule = get_rule(previous.get_type()).infix;
+        ParseFn infix_rule = get_rule(previous.get_type()).infix;
         infix_rule(can_assign);
     }
     
@@ -649,7 +649,7 @@ void Parser::function(FunctionType type)
             compiler->function->arity++;
             if (compiler->function->arity > 255)
                 error_at_current("A function cannot have more than 255 parameters.");
-            auto constant = parse_variable("Expected parameter name.");
+            uint8_t constant = parse_variable("Expected parameter name.");
             define_variable(constant);
         } while (match(TokenType::Comma));
     }
@@ -657,13 +657,13 @@ void Parser::function(FunctionType type)
     consume(TokenType::OpenCurly, "Expected '{' before function body.");
     block();
     
-    auto function = end_compiler();
-    auto new_compiler = std::move(compiler);
+    Func function = end_compiler();
+    std::unique_ptr<Compiler> new_compiler = std::move(compiler);
     compiler = std::move(new_compiler->enclosing);
 
     emit(Opcode::Closure, make_constant(function));
     
-    for (const auto& upvalue : new_compiler->upvalues) {
+    for (const UpvalueVar& upvalue : new_compiler->upvalues) {
         emit(upvalue.is_local ? 1 : 0);
         emit(upvalue.index);
     }
@@ -672,8 +672,8 @@ void Parser::function(FunctionType type)
 void Parser::method()
 {
     consume(TokenType::Identifier, "Expected method name.");
-    const auto constant = identifier_constant(std::string(previous.get_text()));
-    const auto type = previous.get_text() == "init" ? FunctionType::Initializer : FunctionType::Method;
+    const int constant = identifier_constant(std::string(previous.get_text()));
+    const FunctionType type = previous.get_text() == "init" ? FunctionType::Initializer : FunctionType::Method;
     function(type);
     emit(Opcode::Method, static_cast<uint8_t>(constant));
 }
@@ -681,8 +681,8 @@ void Parser::method()
 void Parser::class_declaration()
 {
     consume(TokenType::Identifier, "Expected class name.");
-    const auto class_name = std::string(previous.get_text());
-    const auto name_constant = identifier_constant(class_name);
+    const std::string class_name = std::string(previous.get_text());
+    const int name_constant = identifier_constant(class_name);
     compiler->declare_variable(std::string(previous.get_text()));
     
     emit(Opcode::Class, static_cast<uint8_t>(name_constant));
@@ -724,7 +724,7 @@ void Parser::class_declaration()
 
 void Parser::func_declaration()
 {
-    auto global = parse_variable("Expected function name.");
+    uint8_t global = parse_variable("Expected function name.");
     compiler->mark_initialized();
     function(FunctionType::Function);
     define_variable(global);
@@ -732,7 +732,7 @@ void Parser::func_declaration()
 
 void Parser::var_declaration()
 {
-    const auto global = parse_variable("Expected variable name.");
+    const uint8_t global = parse_variable("Expected variable name.");
 
     if (match(TokenType::Equal)) {
         expression();
@@ -915,9 +915,7 @@ void Parser::sync()
             case TokenType::Return:
                 return;
                 
-            default:
-                // Do nothing.
-                ;
+            default: /* do nothing */ ;;
         }
         
         advance();
@@ -935,6 +933,7 @@ void Parser::error_at(const Token& token, const std::string& message)
         fmt::print(stderr, " at end");
     } else if (token.get_type() == TokenType::Error) {
         // Nothing.
+        ;;
     } else {
         fmt::print(stderr, " at '{}'", token.get_text());
     }
