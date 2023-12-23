@@ -11,35 +11,136 @@
 #include <functional>
 #include <cstdio>
 
+/**
+ * @brief Native function object, holds a representation of a
+ * native function.
+*/
 struct NativeFuncObj;
+
+/**
+ * @brief Upvalue object, holds a representationo of an upvalue
+ * (local value inside functions and stack frames)
+*/
 struct UpvalueObj;
+
+/**
+ * @brief Class object, holds the representation of a class
+ * in the Elysabettian language.
+*/
 struct ClassObj;
+
+/**
+ * @brief Instance object, holds the represantion of a class
+ * instance.
+*/
 struct InstanceObj;
+
+/**
+ * @brief Member function (method) object, holds the representation
+ * of a member function in the Elysabettian language.
+*/
 struct MemberFuncObj;
+
+/**
+ * @brief File object, holds the representation of a file object
+ * in the Elysabettian language.
+*/
 struct FileObj;
+
+/**
+ * @brief Array object, holds the representation of an array in
+ * the Elysabettian language.
+*/
 struct ArrayObj;
+
+/**
+ * @brief Function object, holds the representation of a function
+ * in the Elysabettian language.
+*/
 class FunctionObj;
+
+/**
+ * @brief Closure object, holds the representation of a function
+ * closure in the Elysabettian language.
+*/
 class ClosureObj;
+
+/**
+ * @brief Compiler turns the high-level Elysabettian language into
+ * a more manageable bytecode, which is then executed by the language's
+ * runtime.
+*/
 class Compiler;
+
+/**
+ * @brief Parser parses the language and converts it into an abstract
+ * syntax representation of statements and expressions, used by the
+ * compiler to emit the correct bytecode.
+*/
 class Parser;
+
+/**
+ * @brief Executes the bytecode on the target architecture.
+*/
 class VirtualMachine;
+
+/**
+ * @brief Elysabettian language function.
+*/
 using Func = std::shared_ptr<FunctionObj>;
+
+/**
+ * @brief Runtime native function.
+*/
 using NativeFunc = std::shared_ptr<NativeFuncObj>;
+
+/**
+ * @brief Function closure.
+*/
 using Closure = std::shared_ptr<ClosureObj>;
+
+/**
+ * @brief Local upvalue (local variable).
+*/
 using Upvalue = std::shared_ptr<UpvalueObj>;
+
+/**
+ * @brief Elysabettian language class.
+*/
 using Class = std::shared_ptr<ClassObj>;
+
+/**
+ * @brief Elysabettian object instance.
+*/
 using Instance = std::shared_ptr<InstanceObj>;
+
+/**
+ * @brief Elysabettian function encapsulated in class (method).
+*/
 using MemberFunc = std::shared_ptr<MemberFuncObj>;
+
+/**
+ * @brief Elysabettian file object.
+*/
 using File = std::shared_ptr<FileObj>;
+
+/**
+ * @brief Elysabettian array object.
+*/
 using Array = std::shared_ptr<ArrayObj>;
 
-using Value = std::variant<
-    double, bool, std::monostate,
-    std::string, Func, NativeFunc,
-    Closure, Upvalue, Class,
-    Instance, MemberFunc,
-    File, Array, FILE*>;
+/**
+ * @brief Elysabettian language value.
+*/
+using Value = std::variant<double, bool, std::monostate,
+                           std::string, Func, NativeFunc,
+                           Closure, Upvalue, Class, Instance,
+                           MemberFunc, File, Array, FILE*>;
 
+/**
+ * @brief Memory chunk with support for different operation.
+ * This can be perceived as the "RAM" of the VM.
+*/
 class Chunk {
     std::vector<uint8_t> code;
     std::vector<Value> constants;
@@ -51,19 +152,30 @@ public:
     const Value& get_constant(int constant) const { return constants[constant]; };
     void write(uint8_t byte, int line);
     void write(Opcode opcode, int line);
-    unsigned long add_constant(Value value);
+    size_t add_constant(Value value);
     int disas_instruction(int offset);
     void disassemble(const std::string& name);
     int get_line(int instruction) { return lines[instruction]; }
     int count() { return static_cast<int>(code.size()); }
 };
 
+/**
+ * @brief Native Function type.
+*/
 using NativeFn = std::function<Value(int, std::vector<Value>::iterator)>;
 
+/**
+ * @brief Native function object, holds a representation of a
+ * native function.
+*/
 struct NativeFuncObj {
     NativeFn function;
 };
 
+/**
+ * @brief Upvalue object, holds a representationo of an upvalue
+ * (local value inside functions and stack frames)
+*/
 struct UpvalueObj {
     Value* location;
     Value closed;
@@ -71,18 +183,30 @@ struct UpvalueObj {
     UpvalueObj(Value* slot): location(slot), closed(std::monostate()), next(nullptr) {}
 };
 
+/**
+ * @brief Class object, holds the representation of a class
+ * in the Elysabettian language.
+*/
 struct ClassObj {
     std::string name;
     std::unordered_map<std::string, Closure> methods;
     explicit ClassObj(std::string name): name(name) {}
 };
 
+/**
+ * @brief Instance object, holds the represantion of a class
+ * instance.
+*/
 struct InstanceObj {
     Class class_value;
     std::unordered_map<std::string, Value> fields;
     explicit InstanceObj(Class klass): class_value(klass) {}
 };
 
+/**
+ * @brief Member function (method) object, holds the representation
+ * of a member function in the Elysabettian language.
+*/
 struct MemberFuncObj {
     Instance receiver;
     Closure method;
@@ -90,6 +214,10 @@ struct MemberFuncObj {
         : receiver(receiver), method(method) {}
 };
 
+/**
+ * @brief Function object, holds the representation of a function
+ * in the Elysabettian language.
+*/
 class FunctionObj {
 private:
     int arity;
@@ -133,6 +261,10 @@ public:
     friend ClosureObj;
 };
 
+/**
+ * @brief Closure object, holds the representation of a function
+ * closure in the Elysabettian language.
+*/
 class ClosureObj {
 public:
     Func function;
@@ -143,6 +275,10 @@ public:
     };
 };
 
+/**
+ * @brief File object, holds the representation of a file object
+ * in the Elysabettian language.
+*/
 struct FileObj {
     const std::string path;
     std::FILE* file;
@@ -201,6 +337,10 @@ struct FileObj {
     }
 };
 
+/**
+ * @brief Array object, holds the representation of an array in
+ * the Elysabettian language.
+*/
 struct ArrayObj {
     std::vector<Value> values;
 };
@@ -255,7 +395,7 @@ struct OutputVisitor {
     }
 };
 
- std::ostream& operator<<(std::ostream& os, const Value& v)
+inline std::ostream& operator<<(std::ostream& os, const Value& v)
 {
     std::visit(OutputVisitor(), v);
     return os;
