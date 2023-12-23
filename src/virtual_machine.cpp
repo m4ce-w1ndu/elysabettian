@@ -17,15 +17,15 @@ template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 */
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-const std::string operator+(const std::string& str, double num)
+static const std::string operator+(const std::string& str, double num)
 {
-    auto str_num = std::to_string(num);
+    std::string str_num = std::to_string(num);
     return str + str_num;
 }
 
-const std::string operator+(double num, const std::string& str)
+static const std::string operator+(double num, const std::string& str)
 {
-    auto str_num = std::to_string(num);
+    std::string str_num = std::to_string(num);
     return str_num + str;
 }
 
@@ -38,7 +38,7 @@ struct CallVisitor {
     
     bool operator()(const NativeFunc& native) const
     {
-        auto result = native->function(arg_count, vm.stack.end() - arg_count);
+        Value result = native->function(arg_count, vm.stack.end() - arg_count);
         try {
             vm.stack.resize(vm.stack.size() - arg_count - 1);
             vm.stack.reserve(STACK_MAX);
@@ -57,11 +57,12 @@ struct CallVisitor {
     bool operator()(const Class& class_value) const
     {
         // increment reference count to avoid premature deletion
-        const auto& class_val = class_value;
+        Class class_val = class_value;
+
         vm.stack[vm.stack.size() - arg_count - 1] = std::make_shared<InstanceObj>(class_value);
         try {
-            auto& funcs = class_val->methods;
-            auto& found = funcs.at(vm.init_string);
+            std::unordered_map<std::string, Closure>& funcs = class_val->methods;
+            Closure found = funcs.at(vm.init_string);
             return vm.call(found, arg_count);
         }
         catch (std::out_of_range&) {
@@ -93,11 +94,11 @@ bool VirtualMachine::call_value(const Value& callee, int arg_count)
 bool VirtualMachine::invoke(const std::string& name, int arg_count)
 {
     try {
-        auto instance = std::get<Instance>(peek(arg_count));
+        Instance instance = std::get<Instance>(peek(arg_count));
         
         auto found = instance->fields.find(name);
         if (found != instance->fields.end()) {
-            auto value = found->second;
+            Value value = found->second;
             stack[stack.size() - arg_count - 1] = value;
             return call_value(value, arg_count);
         }
@@ -116,7 +117,7 @@ bool VirtualMachine::invoke_from_class(Class class_value, const std::string& nam
         runtime_error("Undefined property '%s'.", name.c_str());
         return false;
     }
-    auto method = found->second;
+    Closure method = found->second;
     return call(method, arg_count);
 }
 
@@ -127,9 +128,9 @@ bool VirtualMachine::bind_method(Class class_value, const std::string& name)
         runtime_error("Undefined property '%s'.", name.c_str());
         return false;
     }
-    auto method = found->second;
-    auto instance = std::get<Instance>(peek(0));
-    auto bound = std::make_shared<MemberFuncObj>(instance, method);
+    Closure method = found->second;
+    Instance instance = std::get<Instance>(peek(0));
+    MemberFunc bound = std::make_shared<MemberFuncObj>(instance, method);
     
     pop();
     push(bound);
@@ -140,7 +141,7 @@ bool VirtualMachine::bind_method(Class class_value, const std::string& name)
 Upvalue VirtualMachine::capture_upvalue(Value* local)
 {
     Upvalue prev_upvalue = nullptr;
-    auto upvalue = open_upvalues;
+    Upvalue upvalue = open_upvalues;
     
     while (upvalue != nullptr && upvalue->location > local) {
         prev_upvalue = upvalue;
@@ -151,7 +152,7 @@ Upvalue VirtualMachine::capture_upvalue(Value* local)
         return upvalue;
     }
     
-    auto new_upvalue = std::make_shared<UpvalueObj>(local);
+    Upvalue new_upvalue = std::make_shared<UpvalueObj>(local);
     new_upvalue->next = upvalue;
     
     if (prev_upvalue == nullptr) {
@@ -166,7 +167,7 @@ Upvalue VirtualMachine::capture_upvalue(Value* local)
 void VirtualMachine::close_upvalues(Value* last)
 {
     while (open_upvalues != nullptr && open_upvalues->location >= last){
-        auto& upvalue = open_upvalues;
+        Upvalue& upvalue = open_upvalues;
         upvalue->closed = *upvalue->location;
         upvalue->location = &upvalue->closed;
         open_upvalues = upvalue->next;
@@ -175,8 +176,8 @@ void VirtualMachine::close_upvalues(Value* last)
 
 void VirtualMachine::define_method(const std::string& name)
 {
-    auto method = std::get<Closure>(peek(0));
-    auto class_value = std::get<Class>(peek(1));
+    Closure method = std::get<Closure>(peek(0));
+    Class class_value = std::get<Class>(peek(1));
     class_value->methods[name] = method;
     pop();
 }
@@ -195,7 +196,7 @@ bool VirtualMachine::call(const Closure& closure, int arg_count)
     }
 
     frames.emplace_back(CallFrame());
-    auto& frame = frames.back();
+    CallFrame& frame = frames.back();
     frame.ip = 0;
     frame.closure = closure;
     frame.stack_offset = static_cast<unsigned long>(stack.size() - arg_count - 1);
@@ -205,12 +206,12 @@ bool VirtualMachine::call(const Closure& closure, int arg_count)
 
 InterpretResult VirtualMachine::interpret(const std::string& source)
 {
-    auto parser = Parser(source);
-    auto opt = parser.compile();
+    Parser parser = Parser(source);
+    std::optional<Func> opt = parser.compile();
     if (!opt) { return InterpretResult::CompileError; }
 
-    auto& function = *opt;
-    auto closure = std::make_shared<ClosureObj>(function);
+    Func& function = *opt;
+    Closure closure = std::make_shared<ClosureObj>(function);
     push(closure);
     call(closure, 0);
 
@@ -226,9 +227,10 @@ void VirtualMachine::runtime_error(const char* format, ...)
     std::cerr << std::endl;
     
     for (auto i = frames.size(); i-- > 0; ) {
-        auto& frame = frames[i];
-        auto function = frame.closure->function;
-        auto line = function->get_chunk().get_line(frame.ip - 1);
+        CallFrame& frame = frames[i];
+        Func function = frame.closure->function;
+        int line = function->get_chunk().get_line(frame.ip - 1);
+
         std::cerr << "[line " << line << "] in ";
         if (function->name.empty()) {
             std::cerr << "script" << std::endl;
@@ -242,7 +244,7 @@ void VirtualMachine::runtime_error(const char* format, ...)
 
 void VirtualMachine::define_native(const std::string& name, NativeFn function)
 {
-    auto obj = std::make_shared<NativeFuncObj>();
+    NativeFunc obj = std::make_shared<NativeFuncObj>();
     obj->function = function;
     globals[name] = obj;
 }
@@ -256,8 +258,8 @@ template <typename F>
 bool VirtualMachine::binary_op(F op)
 {
     try {
-        auto b = std::get<double>(peek(0));
-        auto a = std::get<double>(peek(1));
+        const double& b = std::get<double>(peek(0));
+        const double& a = std::get<double>(peek(1));
         
         double_pop_and_push(op(a, b));
         return true;
@@ -318,17 +320,17 @@ InterpretResult VirtualMachine::run()
         } \
     } while (false)
         
-        auto instruction = Opcode(read_byte());
+        Opcode instruction = Opcode(read_byte());
         switch (instruction) {
             case Opcode::Constant: {
-                auto constant = read_constant();
+                Value constant = read_constant();
                 push(constant);
                 break;
             }
-            case Opcode::Nop: push(std::monostate()); break;
-            case Opcode::True: push(true); break;
+            case Opcode::Nop:   push(std::monostate()); break;
+            case Opcode::True:  push(true); break;
             case Opcode::False: push(false); break;
-            case Opcode::Pop: pop(); break;
+            case Opcode::Pop:   pop(); break;
                 
             case Opcode::GetLocal: {
                 uint8_t slot = read_byte();
@@ -337,19 +339,19 @@ InterpretResult VirtualMachine::run()
             }
                 
             case Opcode::GetGlobal: {
-                auto name = read_string();
+                const std::string& name = read_string();
                 auto found = globals.find(name);
                 if (found == globals.end()) {
                     runtime_error("Undefined variable '%s'.", name.c_str());
                     return InterpretResult::RuntimeError;
                 }
-                auto value = found->second;
+                Value value = found->second;
                 push(value);
                 break;
             }
                 
             case Opcode::DefineGlobal: {
-                auto name = read_string();
+                const std::string& name = read_string();
                 globals[name] = peek(0);
                 pop();
                 break;
@@ -362,7 +364,7 @@ InterpretResult VirtualMachine::run()
             }
                 
             case Opcode::SetGlobal: {
-                auto name = read_string();
+                const std::string& name = read_string();
                 auto found = globals.find(name);
                 if (found == globals.end()) {
                     runtime_error("Undefined variable '%s'.", name.c_str());
@@ -372,12 +374,12 @@ InterpretResult VirtualMachine::run()
                 break;
             }
             case Opcode::GetUpvalue: {
-                auto slot = read_byte();
+                uint8_t slot = read_byte();
                 push(*frames.back().closure->upvalues[slot]->location);
                 break;
             }
             case Opcode::SetUpvalue: {
-                auto slot = read_byte();
+                uint8_t slot = read_byte();
                 *frames.back().closure->upvalues[slot]->location = peek(0);
                 break;
             }
@@ -391,10 +393,11 @@ InterpretResult VirtualMachine::run()
                     return InterpretResult::RuntimeError;
                 }
 
-                auto name = read_string();
+                const std::string& name = read_string();
                 auto found = instance->fields.find(name);
+
                 if (found != instance->fields.end()) {
-                    auto value = found->second;
+                    Value value = found->second;
                     pop(); // Instance.
                     push(value);
                     break;
@@ -407,8 +410,8 @@ InterpretResult VirtualMachine::run()
             }
             case Opcode::SetProperty: {
                 try {
-                    auto instance = std::get<Instance>(peek(1));
-                    auto name = read_string();
+                    Instance instance = std::get<Instance>(peek(1));
+                    const std::string& name = read_string();
                     instance->fields[name] = peek(0);
                     
                     auto value = pop();
@@ -421,8 +424,8 @@ InterpretResult VirtualMachine::run()
                 break;
             }
             case Opcode::GetSuper: {
-                auto name = read_string();
-                auto superclass = std::get<Class>(pop());
+                const std::string& name = read_string();
+                Class superclass = std::get<Class>(pop());
                 
                 if (!bind_method(superclass, name)) {
                     return InterpretResult::RuntimeError;
@@ -483,18 +486,19 @@ InterpretResult VirtualMachine::run()
             
             case Opcode::BwNot: {
                 try {
-                    auto bw_notted = ~static_cast<int>(std::get<double>(peek(0)));
+                    int bw_notted = ~static_cast<int>(std::get<double>(peek(0)));
                     pop();
                     push(static_cast<double>(bw_notted));
                 } catch (std::bad_variant_access&) {
                     runtime_error("Operand must be a number.");
                     return InterpretResult::RuntimeError;
                 }
+                break;
             }
                 
             case Opcode::Negate:
                 try {
-                    auto negated = -std::get<double>(peek(0));
+                    double negated = -std::get<double>(peek(0));
                     pop(); // if we get here it means it was good
                     push(negated);
                 } catch (std::bad_variant_access&) {
@@ -509,19 +513,19 @@ InterpretResult VirtualMachine::run()
             }
             
             case Opcode::Jump: {
-                auto offset = read_short();
+                uint16_t offset = read_short();
                 frames.back().ip += offset;
                 break;
             }
                 
             case Opcode::Loop: {
-                auto offset = read_short();
+                uint16_t offset = read_short();
                 frames.back().ip -= offset;
                 break;
             }
                 
             case Opcode::JumpIfFalse: {
-                auto offset = read_short();
+                uint16_t offset = read_short();
                 if (is_false(peek(0))) {
                     frames.back().ip += offset;
                 }
@@ -529,35 +533,35 @@ InterpretResult VirtualMachine::run()
             }
                 
             case Opcode::Call: {
-                int argCount = read_byte();
-                if (!call_value(peek(argCount), argCount)) {
+                int arg_count = read_byte();
+                if (!call_value(peek(arg_count), arg_count)) {
                     return InterpretResult::RuntimeError;
                 }
                 break;
             }
                 
             case Opcode::Invoke: {
-                auto method = read_string();
-                int argCount = read_byte();
-                if (!invoke(method, argCount)) {
+                const std::string& method = read_string();
+                int arg_count = read_byte();
+                if (!invoke(method, arg_count)) {
                     return InterpretResult::RuntimeError;
                 }
                 break;
             }
                 
             case Opcode::SuperInvoke: {
-                auto method = read_string();
-                int argCount = read_byte();
-                auto superclass = std::get<Class>(pop());
-                if (!invoke_from_class(superclass, method, argCount)) {
+                const std::string& method = read_string();
+                int arg_count = read_byte();
+                Class superclass = std::get<Class>(pop());
+                if (!invoke_from_class(superclass, method, arg_count)) {
                     return InterpretResult::RuntimeError;
                 }
                 break;
             }
                 
             case Opcode::Closure: {
-                auto function = std::get<Func>(read_constant());
-                auto closure = std::make_shared<ClosureObj>(function);
+                Func function = std::get<Func>(read_constant());
+                Closure closure = std::make_shared<ClosureObj>(function);
                 push(closure);
                 for (int i = 0; i < static_cast<int>(closure->upvalues.size()); i++) {
                     auto is_local = read_byte();
@@ -577,17 +581,17 @@ InterpretResult VirtualMachine::run()
                 break;
                 
             case Opcode::Return: {
-                auto result = pop();
+                Value result = pop();
                 close_upvalues(&stack[frames.back().stack_offset]);
                 
-                auto lastOffset = frames.back().stack_offset;
+                size_t last_offset = frames.back().stack_offset;
                 frames.pop_back();
                 if (frames.empty()) {
                     pop();
                     return InterpretResult::Ok;
                 }
 
-                stack.resize(lastOffset);
+                stack.resize(last_offset);
                 stack.reserve(STACK_MAX);
                 push(result);
                 break;
@@ -613,7 +617,7 @@ InterpretResult VirtualMachine::run()
 
             case Opcode::ArrIndex: {
                 try {
-                    auto index = static_cast<size_t>(std::get<double>(pop()));
+                    size_t index = static_cast<size_t>(std::get<double>(pop()));
                     Array list;
 
                     try {
@@ -629,7 +633,7 @@ InterpretResult VirtualMachine::run()
                         return InterpretResult::RuntimeError;
                     }
 
-                    auto& result = list->values[index];
+                    Value& result = list->values[index];
                     push(result);
 
                 } catch (std::bad_variant_access&) {
@@ -642,8 +646,8 @@ InterpretResult VirtualMachine::run()
 
             case Opcode::ArrStore: {
                 try {
-                    auto item = pop();
-                    auto index = static_cast<size_t>(std::get<double>(pop()));
+                    Value item = pop();
+                    size_t index = static_cast<size_t>(std::get<double>(pop()));
                     Array list;
 
                     try {
@@ -677,8 +681,8 @@ InterpretResult VirtualMachine::run()
                 
             case Opcode::Inherit: {
                 try {
-                    auto& superclass = std::get<Class>(peek(1));
-                    auto& subclass = std::get<Class>(peek(0));
+                    const Class& superclass = std::get<Class>(peek(1));
+                    const Class& subclass = std::get<Class>(peek(0));
                     subclass->methods = superclass->methods;
                     pop(); // Subclass.
                     break;
