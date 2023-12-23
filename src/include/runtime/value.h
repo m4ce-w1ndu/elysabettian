@@ -151,7 +151,7 @@ struct FileObj {
         : path(path), file(fopen(path.c_str(), mode.c_str()))
     {}
 
-    inline bool is_open() { return file != nullptr; }
+    inline bool is_open() const { return file != nullptr; }
 
     inline void close()
     { 
@@ -244,18 +244,18 @@ struct OutputVisitor {
     }
     void operator()(const Array& a) const
     {
-        std::cout << "array { ";
+        std::cout << "[ ";
         for (size_t i = 0; i < a->values.size(); ++i) {
             if (i < (a->values.size() - 1))
                 std::cout << a->values[i] << ", ";
             else
                 std::cout << a->values[i];
         }
-        std::cout << " }";
+        std::cout << " ]";
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Value& v)
+ std::ostream& operator<<(std::ostream& os, const Value& v)
 {
     std::visit(OutputVisitor(), v);
     return os;
