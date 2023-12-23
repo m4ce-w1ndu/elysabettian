@@ -1,9 +1,11 @@
 #ifndef ELY_RT_VALUE_HPP
 #define ELY_RT_VALUE_HPP
 
+// Elysabettian language opcodes.
 #include "common.h"
 #include "opcodes.h"
 
+// Standard C++ headers.
 #include <variant>
 #include <memory>
 #include <unordered_map>
