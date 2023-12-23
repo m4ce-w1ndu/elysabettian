@@ -1,8 +1,12 @@
 #ifndef ELY_RT_OPCODE_H
 #define ELY_RT_OPCODE_H
 
+// Elysabettian language headers.
 #include "common.h"
 
+/**
+ * @brief Virtual Machine bytecode opcodes.
+*/
 enum class Opcode : uint8_t {
     Constant,
     Nop,
