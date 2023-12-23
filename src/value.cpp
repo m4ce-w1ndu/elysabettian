@@ -14,17 +14,17 @@ void Chunk::write(Opcode opcode, int line)
     write(static_cast<uint8_t>(opcode), line);
 }
 
-unsigned long Chunk::add_constant(Value value)
+size_t Chunk::add_constant(Value value)
 {
     constants.push_back(value);
-    return static_cast<unsigned long>(constants.size() - 1);
+    return constants.size() - 1;
 }
 
 void Chunk::disassemble(const std::string& name)
 {
     fmt::print("== {} ==\n", name);
     
-    for (auto i = 0; i < static_cast<int>(code.size());)
+    for (int i = 0; i < static_cast<int>(code.size());)
         i = disas_instruction(i);
 }
 
@@ -36,7 +36,7 @@ static int simple_instruction(const std::string& name, int offset)
 
 static int constant_instruction(const std::string& name, const Chunk& chunk, int offset)
 {
-    auto constant = chunk.get_code(offset + 1);
+    uint8_t constant = chunk.get_code(offset + 1);
 	fmt::print("{:<16s} {:4d} '", name, constant);
     std::cout << chunk.get_constant(constant);
     fmt::print("'\n");
@@ -45,8 +45,8 @@ static int constant_instruction(const std::string& name, const Chunk& chunk, int
 
 static int invoke_instruction(const std::string& name, const Chunk& chunk, int offset)
 {
-    auto constant = chunk.get_code(offset + 1);
-    auto arg_count = chunk.get_code(offset + 2);
+    uint8_t constant = chunk.get_code(offset + 1);
+    uint8_t arg_count = chunk.get_code(offset + 2);
 	fmt::print("{:<16s} ({} args) {:4d} '", name, arg_count, constant);
     std::cout << chunk.get_constant(constant) << "'\n";
     return offset + 3;
@@ -54,7 +54,7 @@ static int invoke_instruction(const std::string& name, const Chunk& chunk, int o
 
 static int byte_instruction(const std::string& name, const Chunk& chunk, int offset)
 {
-    auto slot = chunk.get_code(offset + 1);
+    uint8_t slot = chunk.get_code(offset + 1);
     fmt::print("{:<16s} {:4d}\n", name, slot);
     return offset + 2;
 }
@@ -76,7 +76,7 @@ int Chunk::disas_instruction(int offset)
         fmt::print("{:4d} ", lines[offset]);
     }
     
-    auto instruction = Opcode(code[offset]);
+    Opcode instruction = Opcode(code[offset]);
     switch (instruction) {
         case Opcode::Constant:
             return constant_instruction("OP_CONSTANT", *this, offset);
@@ -150,12 +150,12 @@ int Chunk::disas_instruction(int offset)
             return invoke_instruction("OP_SUPER_INVOKE", *this, offset);
         case Opcode::Closure: {
             offset++;
-            auto constant = code[offset++];
+            uint8_t constant = code[offset++];
             fmt::print("{:<16s} {:4d}", "OP_CLOSURE", constant);
             std::cout << constants[constant];
             std::cout << std::endl;
             
-            auto function = std::get<Func>(constants[constant]);
+            Func function = std::get<Func>(constants[constant]);
             for (int j = 0; j < function->upvalue_count; j++) {
                 int is_local = code[offset++];
                 int index = code[offset++];
