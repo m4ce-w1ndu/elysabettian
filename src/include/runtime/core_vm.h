@@ -85,10 +85,10 @@ public:
                 const std::shared_ptr<stdlib::ELibrary>& lib = libraries.at(libname);
 
                 // Loading functions
-                for (const std::pair<std::string, NativeFn>& f : lib->functions)
+                for (const std::pair<std::string, NativeFn> f : lib->functions)
                     define_native(f.first, f.second);
                 // Loading constants
-                for (const std::pair<std::string, Value>& c : lib->constants)
+                for (const std::pair<std::string, Value> c : lib->constants)
                     define_native_const(c.first, c.second);
 
                 return true;
@@ -167,7 +167,7 @@ public:
         };
 
         // Load arrays
-        for (const std::pair<std::string, NativeFn>& func : array_lib.functions)
+        for (const std::pair<std::string, NativeFn> func : array_lib.functions)
             define_native(func.first, func.second);
 
         stack.reserve(STACK_MAX);
