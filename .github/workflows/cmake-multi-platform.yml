@@ -23,17 +23,17 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [linux-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
         include:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
-          - os: linux-latest
+          - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-          - os: linux-latest
+          - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
         exclude:
@@ -41,11 +41,13 @@ jobs:
             c_compiler: gcc
           - os: windows-latest
             c_compiler: clang
-          - os: linux-latest
+          - os: ubuntu-latest
             c_compiler: cl
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
