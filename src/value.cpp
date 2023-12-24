@@ -1,8 +1,5 @@
 #include "runtime/value.h"
 
-/// @brief Writes code into the chunk
-/// @param byte byte of code to write
-/// @param line line bound to this byte
 void Chunk::write(uint8_t byte, int line)
 {
     code.push_back(byte);
