@@ -17,7 +17,7 @@ template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 */
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-[[maybe_unused]] const std::string operator+(const std::string& str, double num)
+[[maybe_unused]] static const std::string operator+(const std::string& str, double num)
 {
     std::string str_num = std::to_string(num);
     return str + str_num;
