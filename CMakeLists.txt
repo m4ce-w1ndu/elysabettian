@@ -16,9 +16,9 @@ else()
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-include_directories(src/include)
-include_directories(dep/fmt/include)
-add_subdirectory(dep/fmt)
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/dep/fmt/include")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/dep/fmt")
 
 file(
     GLOB_RECURSE
