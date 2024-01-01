@@ -43,7 +43,7 @@ struct CallVisitor {
             vm.stack.resize(vm.stack.size() - arg_count - 1);
             vm.stack.reserve(STACK_MAX);
             vm.push(std::move(result));
-        } catch (std::length_error) {
+        } catch (const std::length_error&) {
             return false;
         }
         return true;
@@ -65,7 +65,7 @@ struct CallVisitor {
             Closure found = funcs.at(vm.init_string);
             return vm.call(found, arg_count);
         }
-        catch (std::out_of_range&) {
+        catch (const std::out_of_range&) {
             vm.runtime_error("Expected 0 arguments but got %d.", arg_count);
             return false;
         }
@@ -96,7 +96,7 @@ bool VirtualMachine::invoke(const std::string& name, int arg_count)
     try {
         Instance instance = std::get<Instance>(peek(arg_count));
         
-        auto found = instance->fields.find(name);
+        std::unordered_map<std::string, Value>::iterator found = instance->fields.find(name);
         if (found != instance->fields.end()) {
             Value value = found->second;
             stack[stack.size() - arg_count - 1] = value;
@@ -104,7 +104,7 @@ bool VirtualMachine::invoke(const std::string& name, int arg_count)
         }
         
         return invoke_from_class(instance->class_value, name, arg_count);
-    } catch (std::bad_variant_access&) {
+    } catch (const std::bad_variant_access&) {
         runtime_error("Only instances have methods.");
         return false;
     }
@@ -112,7 +112,7 @@ bool VirtualMachine::invoke(const std::string& name, int arg_count)
 
 bool VirtualMachine::invoke_from_class(Class class_value, const std::string& name, int arg_count)
 {
-    auto found = class_value->methods.find(name);
+    std::unordered_map<std::string, Closure>::iterator found = class_value->methods.find(name);
     if (found == class_value->methods.end()) {
         runtime_error("Undefined property '%s'.", name.c_str());
         return false;
@@ -123,7 +123,7 @@ bool VirtualMachine::invoke_from_class(Class class_value, const std::string& nam
 
 bool VirtualMachine::bind_method(Class class_value, const std::string& name)
 {
-    auto found = class_value->methods.find(name);
+    std::unordered_map<std::string, Closure>::iterator found = class_value->methods.find(name);
     if (found == class_value->methods.end()) {
         runtime_error("Undefined property '%s'.", name.c_str());
         return false;
@@ -226,7 +226,7 @@ void VirtualMachine::runtime_error(const char* format, ...)
     va_end(args);
     std::cerr << std::endl;
     
-    for (auto i = frames.size(); i-- > 0; ) {
+    for (size_t i = frames.size(); i-- > 0; ) {
         CallFrame& frame = frames[i];
         Func function = frame.closure->function;
         int line = function->get_chunk().get_line(frame.ip - 1);
@@ -278,20 +278,20 @@ void VirtualMachine::double_pop_and_push(const Value& v)
 
 InterpretResult VirtualMachine::run()
 {
-    auto read_byte = [this]() -> uint8_t {
+    std::function<uint8_t()> read_byte = [this]() -> uint8_t {
         return this->frames.back().closure->function->get_code(this->frames.back().ip++);
     };
     
-    auto read_constant = [this, read_byte]() -> const Value& {
+    std::function<const Value&()> read_constant = [this, read_byte]() -> const Value& {
         return this->frames.back().closure->function->get_const(read_byte());
     };
     
-    auto read_short = [this]() -> uint16_t {
+    std::function<uint16_t()> read_short = [this]() -> uint16_t {
         this->frames.back().ip += 2;
         return ((this->frames.back().closure->function->get_code(this->frames.back().ip - 2) << 8) | (this->frames.back().closure->function->get_code(this->frames.back().ip - 1)));
     };
     
-    auto read_string = [read_constant]() -> const std::string& {
+    std::function<const std::string&()> read_string = [read_constant]() -> const std::string& {
         return std::get<std::string>(read_constant());
     };
     
@@ -340,7 +340,7 @@ InterpretResult VirtualMachine::run()
                 
             case Opcode::GetGlobal: {
                 const std::string& name = read_string();
-                auto found = globals.find(name);
+                std::unordered_map<std::string, Value>::iterator found = globals.find(name);
                 if (found == globals.end()) {
                     runtime_error("Undefined variable '%s'.", name.c_str());
                     return InterpretResult::RuntimeError;
@@ -365,7 +365,7 @@ InterpretResult VirtualMachine::run()
                 
             case Opcode::SetGlobal: {
                 const std::string& name = read_string();
-                auto found = globals.find(name);
+                std::unordered_map<std::string, Value>::iterator found = globals.find(name);
                 if (found == globals.end()) {
                     runtime_error("Undefined variable '%s'.", name.c_str());
                     return InterpretResult::RuntimeError;
@@ -388,13 +388,13 @@ InterpretResult VirtualMachine::run()
 
                 try {
                     instance = std::get<Instance>(peek(0));
-                } catch (std::bad_variant_access&) {
+                } catch (const std::bad_variant_access&) {
                     runtime_error("Only instances have properties.");
                     return InterpretResult::RuntimeError;
                 }
 
                 const std::string& name = read_string();
-                auto found = instance->fields.find(name);
+                std::unordered_map<std::string, Value>::iterator found = instance->fields.find(name);
 
                 if (found != instance->fields.end()) {
                     Value value = found->second;
@@ -414,10 +414,10 @@ InterpretResult VirtualMachine::run()
                     const std::string& name = read_string();
                     instance->fields[name] = peek(0);
                     
-                    auto value = pop();
+                    Value value = pop();
                     pop();
                     push(value);
-                } catch (std::bad_variant_access&) {
+                } catch (const std::bad_variant_access&) {
                     runtime_error("Only instances have fields.");
                     return InterpretResult::RuntimeError;
                 }
@@ -441,7 +441,7 @@ InterpretResult VirtualMachine::run()
             case Opcode::Less:      BINARY_OP(<); break;
                 
             case Opcode::Add: {
-                auto success = std::visit(overloaded {
+                bool success = std::visit(overloaded {
                     [this](double b, double a) -> bool {
                         this->double_pop_and_push(a + b);
                         return true;
@@ -489,7 +489,7 @@ InterpretResult VirtualMachine::run()
                     int bw_notted = ~static_cast<int>(std::get<double>(peek(0)));
                     pop();
                     push(static_cast<double>(bw_notted));
-                } catch (std::bad_variant_access&) {
+                } catch (const std::bad_variant_access&) {
                     runtime_error("Operand must be a number.");
                     return InterpretResult::RuntimeError;
                 }
@@ -501,7 +501,7 @@ InterpretResult VirtualMachine::run()
                     double negated = -std::get<double>(peek(0));
                     pop(); // if we get here it means it was good
                     push(negated);
-                } catch (std::bad_variant_access&) {
+                } catch (const std::bad_variant_access&) {
                     runtime_error("Operand must be a number.");
                     return InterpretResult::RuntimeError;
                 }
@@ -564,8 +564,8 @@ InterpretResult VirtualMachine::run()
                 Closure closure = std::make_shared<ClosureObj>(function);
                 push(closure);
                 for (int i = 0; i < static_cast<int>(closure->upvalues.size()); i++) {
-                    auto is_local = read_byte();
-                    auto index = read_byte();
+                    uint8_t is_local = read_byte();
+                    uint8_t index = read_byte();
                     if (is_local) {
                         closure->upvalues[i] = capture_upvalue(&stack[frames.back().stack_offset + index]);
                     } else {
@@ -623,7 +623,7 @@ InterpretResult VirtualMachine::run()
                     try {
                         list = std::get<Array>(pop());
                     }
-                    catch (std::bad_variant_access&) {
+                    catch (const std::bad_variant_access&) {
                         runtime_error("Object is not an array");
                         return InterpretResult::RuntimeError;
                     }
@@ -636,7 +636,7 @@ InterpretResult VirtualMachine::run()
                     Value& result = list->values[index];
                     push(result);
 
-                } catch (std::bad_variant_access&) {
+                } catch (const std::bad_variant_access&) {
                     runtime_error("Index is not a number");
                     return InterpretResult::RuntimeError;
                 }
@@ -667,7 +667,7 @@ InterpretResult VirtualMachine::run()
 
                     push(item);
                 }
-                catch (std::bad_variant_access&) {
+                catch (const std::bad_variant_access&) {
                     runtime_error("Index is not a number");
                     return InterpretResult::RuntimeError;
                 }
@@ -686,7 +686,7 @@ InterpretResult VirtualMachine::run()
                     subclass->methods = superclass->methods;
                     pop(); // Subclass.
                     break;
-                } catch (std::bad_variant_access&) {
+                } catch (const std::bad_variant_access&) {
                     runtime_error("Superclass must be a class.");
                     return InterpretResult::RuntimeError;
                 }
