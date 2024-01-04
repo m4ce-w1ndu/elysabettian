@@ -20,16 +20,16 @@
 /**
  * @brief Max number of UINT8 variables.
 */
-constexpr auto UINT8_COUNT = UINT8_MAX + 1;
+constexpr size_t UINT8_COUNT = UINT8_MAX + 1;
 
 /**
  * @brief Current version of the language.
 */
-constexpr auto VERSION = "1.1.3";
+constexpr char* VERSION = "1.1.3";
 
 /**
  * @brief Full name of the language's version.
 */
-constexpr auto VERSION_FULLNAME = "Elysabettian 1.1.3 Jupiter (JIT)";
+constexpr char* VERSION_FULLNAME = "Elysabettian 1.1.3 Jupiter (JIT)";
 
 #endif
