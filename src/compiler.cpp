@@ -198,11 +198,11 @@ void Parser::emit(Opcode op1, Opcode op2)
     emit(op2);
 }
 
-void Parser::emit_loop(int loopStart)
+void Parser::emit_loop(int loop_start)
 {
     emit(Opcode::Loop);
     
-    int offset = current_chunk().count() - loopStart + 2;
+    int offset = current_chunk().count() - loop_start + 2;
     if (offset > UINT16_MAX) { error("Loop body too large."); }
     
     emit((offset >> 8) & 0xff);

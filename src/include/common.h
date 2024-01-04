@@ -25,7 +25,7 @@ constexpr auto UINT8_COUNT = UINT8_MAX + 1;
 /**
  * @brief Current version of the language.
 */
-constexpr auto VERSION = "1.1.2";
+constexpr auto VERSION = "1.1.3";
 
 /**
  * @brief Full name of the language's version.
