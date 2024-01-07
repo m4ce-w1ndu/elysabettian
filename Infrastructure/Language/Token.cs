@@ -30,7 +30,7 @@
         Eof,
 
         // Bitwise operations
-        BwAnd, BwOr, BwXor, BwNot,
+        Ampersand, Pipe, Caret, Tilde,
 
         // Array index notation
         OpenSquare, CloseSquare,
