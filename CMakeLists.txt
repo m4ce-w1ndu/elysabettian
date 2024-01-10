@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(cxxelysabettian CXX)
-
-set(exec ely)
+project(elysabettian)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED 17)
@@ -17,8 +15,6 @@ else()
 endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/include")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/dep/fmt/include")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/dep/fmt")
 
 file(
     GLOB_RECURSE
@@ -30,8 +26,7 @@ file(
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*/*.cpp"
 )
 
-add_executable(${exec} ${header_files} ${source_files})
-target_link_libraries(${exec} fmt)
+add_executable(${CMAKE_PROJECT_NAME} ${header_files} ${source_files})
 
 foreach(source IN LISTS source_list)
     get_filename_component(source_path "${source}" PATH)
