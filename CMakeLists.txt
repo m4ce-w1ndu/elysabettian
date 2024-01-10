@@ -14,6 +14,8 @@ else()
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
+find_package(fmt REQUIRED)
+include_directories(${fmt_INCLUDE_DIR})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 file(
