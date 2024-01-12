@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <string>
 
 // fmt headers.
 #define FMT_HEADER_ONLY
@@ -26,11 +27,11 @@ constexpr size_t UINT8_COUNT = UINT8_MAX + 1;
 /**
  * @brief Current version of the language.
 */
-constexpr char* VERSION = "1.1.3";
+constexpr std::string_view VERSION = "1.1.3";
 
 /**
  * @brief Full name of the language's version.
 */
-constexpr char* VERSION_FULLNAME = "Elysabettian 1.1.3 Jupiter (JIT)";
+constexpr std::string_view VERSION_FULLNAME = "Elysabettian 1.1.3 Jupiter (JIT)";
 
 #endif
