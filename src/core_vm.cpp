@@ -482,6 +482,8 @@ InterpretResult VirtualMachine::run()
             case Opcode::BwAnd:    INTEGER_BINARY_OP(&); break;
             case Opcode::BwOr:     INTEGER_BINARY_OP(|); break;
             case Opcode::BwXor:    INTEGER_BINARY_OP(^); break;
+            case Opcode::ShiftLeft: INTEGER_BINARY_OP(<<); break;
+            case Opcode::ShiftRight: INTEGER_BINARY_OP(>>); break;
             case Opcode::Not: push(is_false(pop())); break;
             
             case Opcode::BwNot: {
