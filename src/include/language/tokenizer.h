@@ -37,6 +37,9 @@ enum class TokenType {
 
     // Array index notation
     OpenSquare, CloseSquare,
+
+    // Bitwise shifts
+    GreaterGreater, LessLess
 };
 
 /**
