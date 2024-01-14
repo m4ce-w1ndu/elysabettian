@@ -14,8 +14,8 @@ else()
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-find_package(fmt REQUIRED)
-include_directories(${fmt_INCLUDE_DIR})
+find_package(fmt CONFIG REQUIRED)
+include_directories(${FMT_INCLUDE_DIR})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 file(
@@ -29,6 +29,7 @@ file(
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${header_files} ${source_files})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE fmt::fmt-header-only)
 
 foreach(source IN LISTS source_list)
     get_filename_component(source_path "${source}" PATH)

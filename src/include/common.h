@@ -8,7 +8,6 @@
 #include <string>
 
 // fmt headers.
-#define FMT_HEADER_ONLY
 #include <fmt/core.h>
 #include <fmt/printf.h>
 #include <fmt/format.h>
