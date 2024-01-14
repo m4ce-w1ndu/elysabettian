@@ -52,6 +52,8 @@ enum class Opcode : uint8_t {
     ArrBuild,
     ArrIndex,
     ArrStore,
+    ShiftLeft,
+    ShiftRight
 };
 
 
