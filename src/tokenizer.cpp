@@ -37,10 +37,11 @@ Token Tokenizer::scan_token()
         case '=':
             return make_token(match('=') ? TokenType::EqualEqual : TokenType::Equal);
         case '<':
-            return make_token(match('=') ? TokenType::LessEqual : TokenType::Less);
+            return make_token(match('=') ? TokenType::LessEqual : match('<') ?
+                              TokenType::LessLess : TokenType::Less);
         case '>':
-            return make_token(match('=') ?
-                             TokenType::GreaterEqual : TokenType::Greater);
+            return make_token(match('=') ? TokenType::GreaterEqual : match('>') ?
+                              TokenType::GreaterGreater : TokenType::Greater);
             
         case '"': return string_();
         case '\'': return string_('\'');
