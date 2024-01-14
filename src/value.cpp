@@ -178,6 +178,10 @@ int Chunk::disas_instruction(int offset)
             return simple_instruction("ARR_INDEX", offset);
         case Opcode::ArrStore:
             return constant_instruction("ARR_STORE", *this, offset);
+        case Opcode::ShiftLeft:
+            return simple_instruction("SHIFT_LEFT", offset);
+        case Opcode::ShiftRight:
+            return simple_instruction("SHIFT_RIGHT", offset);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     }
     
 	fmt::print("Uknown opcode: {}\n", code[offset]);
