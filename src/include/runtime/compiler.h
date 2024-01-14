@@ -246,7 +246,7 @@ private:
     /**
      * @brief Number of parse rules.
     */
-    static constexpr size_t NUM_PARSE_RULES = 46;
+    static constexpr size_t NUM_PARSE_RULES = 48;
 
     /**
      * @brief Previous token.

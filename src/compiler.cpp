@@ -332,6 +332,8 @@ void Parser::binary([[maybe_unused]] bool can_assign)
         case TokenType::BwOr:           emit(Opcode::BwOr); break;
         case TokenType::BwAnd:          emit(Opcode::BwAnd); break;
         case TokenType::BwXor:          emit(Opcode::BwXor); break;
+        case TokenType::LessLess:       emit(Opcode::ShiftLeft); break;
+        case TokenType::GreaterGreater: emit(Opcode::ShiftRight); break;
         default:
             return;
     }
@@ -556,6 +558,8 @@ void Parser::build_parse_rules()
         { unary,       nullptr,    PrecedenceType::Unary},       // TOKEN_BW_NOT
         { array,       array_idx,  PrecedenceType::Or   },       // TOKEN_OPEN_SQUARE
         { unary,       nullptr,    PrecedenceType::None },       // TOKEN_CLOSE_SQUARE
+        { nullptr,     binary,     PrecedenceType::Term },       // TOKEN_LESS_LESS
+        { nullptr,     binary,     PrecedenceType::Term },       // TOKEN_GREATER_GREATER
     } };
 }
 
