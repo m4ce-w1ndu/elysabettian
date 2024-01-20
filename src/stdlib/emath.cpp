@@ -16,7 +16,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::acos(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Error: acos(x) operand must be of numeric type.");
                     return std::monostate();
                 }
@@ -30,7 +30,7 @@ namespace stdlib {
                     auto val = std::get<double>(*args);
                     return std::abs(val);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be of numeric type.");
                     return std::monostate();
                 }
@@ -45,11 +45,11 @@ namespace stdlib {
                     auto ex = std::get<double>(*(args + 1));
                     return std::pow(base, ex);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return std::monostate();
                 }
-                catch (std::length_error) {
+                catch (std::length_error&) {
                     return std::monostate();
                 }
             }},
@@ -62,11 +62,11 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return sqrt(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
-                catch (std::length_error) {
+                catch (std::length_error&) {
                     return "";
                 }
             }},
@@ -79,7 +79,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::acosh(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -93,7 +93,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::asin(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -107,7 +107,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::asinh(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -122,7 +122,7 @@ namespace stdlib {
                     auto value1 = std::get<double>(*(args + 1));
                     return std::atan2(value, value1);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -136,7 +136,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::atanh(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -150,7 +150,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::cbrt(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -164,7 +164,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::ceil(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -178,7 +178,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::cos(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -192,7 +192,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::cosh(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -206,7 +206,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::exp(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -220,7 +220,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::expm1(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -234,7 +234,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::floor(value);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -248,7 +248,7 @@ namespace stdlib {
                     auto value = std::get<double>(*args);
                     return std::roundf(static_cast<float>(value));
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -263,7 +263,7 @@ namespace stdlib {
                     auto b = std::get<double>(*(args + 1));
                     return std::hypot(a, b);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -277,7 +277,7 @@ namespace stdlib {
                     auto a = std::get<double>(*args);
                     return std::log(a);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -291,7 +291,7 @@ namespace stdlib {
                     auto a = std::get<double>(*args);
                     return std::log10(a);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -305,7 +305,7 @@ namespace stdlib {
                     auto a = std::get<double>(*args);
                     return std::log1p(a);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -319,7 +319,7 @@ namespace stdlib {
                     auto a = std::get<double>(*args);
                     return std::log2(a);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -336,7 +336,7 @@ namespace stdlib {
                             max = std::get<double>(*(args + 1));
                     return max;
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -353,7 +353,7 @@ namespace stdlib {
                             min = std::get<double>(*(args + 1));
                     return min;
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -370,7 +370,7 @@ namespace stdlib {
                     std::uniform_real_distribution<double> dist(min, max);
                     return dist(reng);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -384,7 +384,7 @@ namespace stdlib {
                     auto min = std::get<double>(*args);
                     return std::signbit(min);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -398,7 +398,7 @@ namespace stdlib {
                     auto min = std::get<double>(*args);
                     return std::sin(min);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -412,7 +412,7 @@ namespace stdlib {
                     auto min = std::get<double>(*args);
                     return std::sinh(min);
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Operand must be a number.");
                     return "";
                 }
@@ -428,7 +428,7 @@ namespace stdlib {
                         sumVal += std::get<double>(*(args + i));
                     return sumVal;
                 }
-                catch (std::bad_variant_access) {
+                catch (std::bad_variant_access&) {
                     fmt::print(stderr, "Invalid operand detected in sum(). Only numbers are allowed.");
                     return "";
                 }
