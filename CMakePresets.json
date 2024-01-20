@@ -2,14 +2,14 @@
 	"version": 3,
 	"configurePresets": [
 		{
-			"name": "debug",
+			"name": "Debug",
 			"toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Debug"
 			}
 		},
 		{
-			"name": "release",
+			"name": "Release",
 			"toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Release"
