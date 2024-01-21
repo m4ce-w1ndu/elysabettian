@@ -229,7 +229,7 @@ void VirtualMachine::runtime_error(const char* format, ...)
     for (size_t i = frames.size(); i-- > 0; ) {
         CallFrame& frame = frames[i];
         Func function = frame.closure->function;
-        int line = function->get_chunk().get_line(frame.ip - 1);
+        int line = static_cast<int>(function->get_chunk().get_line(frame.ip - 1));
 
         std::cerr << "[line " << line << "] in ";
         if (function->name.empty()) {

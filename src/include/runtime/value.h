@@ -149,7 +149,7 @@ class Chunk {
     std::vector<int> lines;
 
 public:
-    uint8_t get_code(int offset) const { return code[offset]; };
+    uint8_t get_code(size_t offset) const { return code[offset]; };
     void set_code(int offset, uint8_t value) { code[offset] = value; }
     const Value& get_constant(int constant) const { return constants[constant]; };
     void write(uint8_t byte, int line);
@@ -157,7 +157,7 @@ public:
     size_t add_constant(Value value);
     int disas_instruction(int offset);
     void disassemble(const std::string& name);
-    int get_line(int instruction) { return lines[instruction]; }
+    int get_line(size_t instruction) { return lines[instruction]; }
     int count() { return static_cast<int>(code.size()); }
 };
 
@@ -246,7 +246,7 @@ public:
         return chunk;
     }
     
-    uint8_t get_code(int offset)
+    uint8_t get_code(size_t offset)
     {
         return chunk.get_code(offset);
     }
