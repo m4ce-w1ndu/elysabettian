@@ -13,6 +13,7 @@ out/
 CMakeUserPresets.json
 target/
 *.lock
+.idea/
 
 
 # Added by cargo
