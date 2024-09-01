@@ -24,6 +24,8 @@ impl Tokenizer {
         }
     }
 
+    /// Performs the tokenization operation, returning the next
+    /// valid token extracted from the source code
     pub fn get_token(&mut self) -> Token {
         // Skip all whitespaces
         self.skip_whitespaces();
@@ -55,17 +57,42 @@ impl Tokenizer {
             '/' => self.make_token(TokenType::Slash),
             '*' => self.make_token(TokenType::Star),
             '^' => self.make_token(TokenType::BwXor),
-            '&' => self.make_token(if self.match_token('&') { TokenType::And} else { TokenType::BwAnd}),
-            '|' => self.make_token(if self.match_token('|') { TokenType::Or } else { TokenType::BwOr }),
-            '!' => self.make_token(if self.match_token('=') { TokenType::ExclEqual } else { TokenType::Excl }),
-            '<' => self.make_token(
-                if self.match_token('=') 
+            '&' => {
+                let token = if self.match_token('&') { TokenType::And} else { TokenType::BwAnd};
+                self.make_token(token)
+            },
+            '|' => {
+                let token = if self.match_token('|') { TokenType::Or } else { TokenType::BwOr };
+                self.make_token(token)
+            },
+            '!' => {
+                let token = if self.match_token('=') { TokenType::ExclEqual } else { TokenType::Excl };
+                self.make_token(token)
+            },
+            '<' => {
+                let token = if self.match_token('=') 
                 { 
                     TokenType::LessEqual
                 } else if self.match_token('<'){ 
                     TokenType::LessLess
-                })),
-            '>' => self.make_token(if self.match_token('=') { TokenType::GreaterEqual } else {})
+                } else {
+                    TokenType::Less
+                };
+                self.make_token(token)
+            },
+            '>' => {
+                let token = if self.match_token('=') {
+                    TokenType::GreaterEqual
+                } else if self.match_token('>') {
+                    TokenType::GreaterGreater
+                } else {
+                    TokenType::Greater
+                };
+                self.make_token(token)
+            },
+            '"' => self.string('"'),
+            '\'' => self.string('\''),
+            _ => self.error_token("Unexpected character in input string.")
         }
     }
 
