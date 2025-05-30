@@ -4,6 +4,8 @@ project(elysabettian)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED 17)
 
+include(cmake/CPM.cmake)
+
 if (MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "/Od /MTd /Z7")
     set(CMAKE_CXX_FLAGS_RELEASE "/Os")
@@ -14,8 +16,8 @@ else()
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-find_package(fmt CONFIG REQUIRED)
-include_directories(${FMT_INCLUDE_DIR})
+CPMAddPackage("gh:fmtlib/fmt#11.2.0")
+
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src/include")
 
 file(
