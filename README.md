@@ -10,4 +10,4 @@ In order to compile this code, you will need ```vcpkg``` installed on your machi
 
 To build the code, create a ```build``` directory for CMake, ```cd``` into it and run ```cmake .. --preset=<Preset Name>```. Available presets are ```Debug``` and ```Release```.
 ## 3. Goals
-The goals of this programming language are simple: improve C++ proficiency and make the understanding of programming languages simpler to Computer Science novices.
+The goals of this programming language are simple: improve C++ proficiency and make the understanding of programming languages simpler to Computer Science novices. This will be used as a Thesis project for my Bachelor of Science in Computer Science.
