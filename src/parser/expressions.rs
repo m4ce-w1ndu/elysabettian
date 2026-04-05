@@ -50,11 +50,20 @@ impl<'src> Parser<'src> {
             unreachable!()
         };
 
-        let parsed_literal = Literal::Number(value);
-        let kind = ExprKind::Literal(parsed_literal);
+        Expr {
+            kind: ExprKind::Literal(Literal::Number(value)),
+            span: self.lexer.span.clone(),
+        }
+    }
+
+    /// Parses a string literal from the token stream.
+    pub(super) fn parse_string(&mut self) -> Expr {
+        let Token::String(string) = self.previous.clone() else {
+            unreachable!()
+        };
 
         Expr {
-            kind: kind,
+            kind: ExprKind::Literal(Literal::String(string)),
             span: self.lexer.span.clone(),
         }
     }
