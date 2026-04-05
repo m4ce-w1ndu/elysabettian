@@ -1,4 +1,4 @@
-use crate::{error::Span, parser::stmt::Stmt};
+use crate::{error::Span, parser::ast::stmt::Stmt};
 
 /// A declaration - it can be a function declaration,
 /// a class declaration or a simple declaration statement
