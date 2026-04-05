@@ -67,6 +67,11 @@ impl<'src> Parser<'src> {
             span: self.lexer.span.clone(),
         }
     }
+
+    /// Parses a unary expression from the token stream.
+    pub(super) fn parse_unary(&mut self) -> Expr {
+        todo!()
+    }
 }
 
 /// Returns the precedence of the expression associated with a specific token.
