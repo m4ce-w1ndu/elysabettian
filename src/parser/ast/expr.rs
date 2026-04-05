@@ -107,6 +107,6 @@ pub enum ExprKind {
     /// Reference to current object.
     This,
 
-    /// super.method_name() - I just saw a method.
+    /// super.method_name() - calls something on the superclass.
     Super(String),
 }

@@ -1,6 +1,6 @@
 use crate::{
     error::Span,
-    parser::ast::{decl::Decl, expr::Expr},
+    parser::ast::{Decl, Expr},
 };
 
 #[derive(Debug, Clone)]
