@@ -97,31 +97,31 @@ pub enum Token {
     Excl,
     /// `!=` — inequality.
     #[token("!=")]
-    ExclEqual,
+    ExclEq,
     /// `=` — assignment.
     #[token("=")]
-    Equal,
+    Eq,
     /// `==` — equality comparison.
     #[token("==")]
-    EqualEqual,
+    EqEq,
     /// `>` — greater than.
     #[token(">")]
-    Greater,
+    Gt,
     /// `>=` — greater than or equal.
     #[token(">=")]
-    GreaterEqual,
+    GtEq,
     /// `>>` — bitwise right shift.
     #[token(">>")]
-    GreaterGreater,
+    GtGt,
     /// `<` — less than.
     #[token("<")]
-    Less,
+    Lt,
     /// `<=` — less than or equal.
     #[token("<=")]
-    LessEqual,
+    LtEq,
     /// `<<` — bitwise left shift.
     #[token("<<")]
-    LessLess,
+    LtLt,
     /// `&&` — logical and (short-circuit).
     #[token("&&")]
     And,
