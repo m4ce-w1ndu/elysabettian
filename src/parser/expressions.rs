@@ -1,3 +1,5 @@
+use crate::parser::ast::{ExprKind, Literal};
+
 use super::*;
 
 /// Defines how the parser should treat expressions precedence.
@@ -41,6 +43,21 @@ impl<'src> Parser<'src> {
     pub(super) fn infix_rule(&mut self, token: &Token, expr: Expr) -> Expr {
         todo!();
     }
+
+    /// Parses a number literal from the token stream.
+    pub(super) fn parse_number(&mut self) -> Expr {
+        let Token::Number(value) = self.previous.clone() else {
+            unreachable!()
+        };
+
+        let parsed_literal = Literal::Number(value);
+        let kind = ExprKind::Literal(parsed_literal);
+
+        Expr {
+            kind: kind,
+            span: self.lexer.span.clone(),
+        }
+    }
 }
 
 /// Returns the precedence of the expression associated with a specific token.
@@ -53,6 +70,8 @@ pub(super) fn get_precedence(token: &Token) -> Precedence {
         Token::And => Precedence::And,
         Token::Or => Precedence::Or,
         Token::OpenParen | Token::Dot | Token::OpenSquare => Precedence::Call,
+        Token::LtLt | Token::GtGt => Precedence::Term,
+        Token::BwAnd | Token::BwOr | Token::BwXor => Precedence::Term,
         _ => Precedence::None,
     }
 }
