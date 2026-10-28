@@ -1,6 +1,6 @@
-# Cranelift JIT Compiler Architecture & Specification
+# AsmJit Native JIT Compiler Architecture & Specification
 
-The **`ely_jit`** crate provides high-performance native machine code compilation for Elysabettian using [Cranelift](https://cranelift.dev/), the code generator behind WebAssembly runtimes like Wasmtime.
+The **`ely_jit`** library provides native machine code compilation for Elysabettian using [AsmJit](https://asmjit.com/), a lightweight, zero-dependency C++ Just-In-Time code generation library.
 
 ---
 
@@ -9,118 +9,81 @@ The **`ely_jit`** crate provides high-performance native machine code compilatio
 ```mermaid
 flowchart TD
     Bytecode["Elysabettian Bytecode (Chunk)"] --> Compiler["JitCompiler"]
-    Compiler --> IRBuilder["Cranelift FunctionBuilder (SSA IR)"]
-    IRBuilder --> Blocks["CFG Construction (Basic Blocks)"]
-    Blocks --> RuntimeBridges["C-ABI External Symbols Registration"]
-    RuntimeBridges --> CodeGen["Cranelift Codegen & Opt Passes"]
-    CodeGen --> ExecMem["Executable Memory Buffer (mprotect)"]
+    Compiler --> Builder["AsmJit Compiler / Assembler"]
+    Builder --> Registers["Register Allocation (x86_64 / AArch64)"]
+    Registers --> RuntimeBridges["C-ABI Runtime Function Symbols"]
+    RuntimeBridges --> CodeGen["AsmJit Code Emission"]
+    CodeGen --> ExecMem["Executable Memory Buffer (JitRuntime)"]
     ExecMem --> NativeFn["Native Callable Function Pointer"]
 ```
 
 The JIT pipeline consists of:
-1. **Target Machine Configuration**: Detects host architecture (e.g. x86_64, AArch64) using `target_lexicon` and configures Cranelift compilation flags (`opt_level = speed`).
-2. **Intermediate Representation (IR) Translation**: Maps Elysabettian stack bytecode to Cranelift Static Single Assignment (SSA) values and basic blocks.
-3. **Control Flow Graph (CFG) Construction**: Resolves forward jumps, conditional branches, and backward loops to Cranelift blocks and block arguments.
-4. **Runtime ABI Trampolines**: Provides C-compatible symbol trampolines to interact with dynamic global variables and string formatting.
-5. **Machine Code Emission**: Emits binary machine instructions into executable memory pages and produces callable function pointers (`extern "C" fn() -> f64`).
+1. **Target Architecture Detection**: Configured via AsmJit's architecture support targeting host x86_64 (AVX/SSE2) or AArch64 (NEON).
+2. **Bytecode to Machine Lowering**: Iterates over bytecode instructions and emits direct machine instructions into an `asmjit::x86::Compiler` (or Assembler) stream.
+3. **Control Flow Graph (CFG) Construction**: Resolves forward jumps, conditional jumps (`Opcode::JumpZero`), and loops (`Opcode::Loop`) directly to AsmJit `Label` instances.
+4. **Runtime ABI Trampolines**: Directly interfaces with C++ runtime functions without intermediary FFI overhead.
+5. **Memory Management**: Uses `asmjit::JitRuntime` to allocate executable pages with appropriate OS permissions (`mprotect` / `VirtualProtect`).
 
 ---
 
-## 2. Bytecode to Cranelift SSA Lowering
+## 2. Bytecode to Machine Instruction Mapping
 
-Unlike the stack-based virtual machine, Cranelift uses a pure register-based SSA representation.
+Unlike Cranelift's heavy SSA compilation pipeline, AsmJit generates machine instructions directly with near-zero latency, making it ideal for dynamic language JIT compilation.
 
-### Local Variables and SSA Form
-* Local variable slots are mapped directly to Cranelift `Variable` instances (`builder.declare_var`).
-* Reading a local (`Opcode::GetLocal`) executes `builder.use_var`.
-* Writing to a local (`Opcode::SetLocal`) executes `builder.def_var`.
-* Cranelift's register allocator automatically places these variables into hardware CPU registers (e.g., `%xmm0-%xmm15` on x86_64).
+### Local Variables and Hardware Registers
+* Call frame local variables are mapped to hardware registers using AsmJit's virtual registers (`x86::Gp` / `x86::Xmm`).
+* Floating point arithmetic leverages hardware SIMD registers directly.
+* Hot numeric paths eliminate NaN-boxing overhead during loop execution, re-boxing values only when exiting back to the VM.
 
-### Instruction Mapping Table
+### Instruction Mapping Table (x86_64)
 
-| Elysabettian Bytecode | Cranelift SSA Instruction | Machine Equivalent (x86_64) |
+| Elysabettian Bytecode | AsmJit High-Level Operation | Native Instruction (x86_64) |
 | :--- | :--- | :--- |
-| `Opcode::Constant(idx)` | `builder.ins().f64const(n)` | `vmovq %rax, %xmmN` |
-| `Opcode::Add` | `builder.ins().fadd(a, b)` | `vaddsd %xmmB, %xmmA, %xmmDst` |
-| `Opcode::Subtract` | `builder.ins().fsub(a, b)` | `vsubsd %xmmB, %xmmA, %xmmDst` |
-| `Opcode::Multiply` | `builder.ins().fmul(a, b)` | `vmulsd %xmmB, %xmmA, %xmmDst` |
-| `Opcode::Divide` | `builder.ins().fdiv(a, b)` | `vdivsd %xmmB, %xmmA, %xmmDst` |
-| `Opcode::Negate` | `builder.ins().fneg(a)` | `vxorpd %xmmMask, %xmmA, %xmmDst` |
-| `Opcode::Equal` | `fcmp eq` + `select` (1.0 / 0.0) | `vucomisd` + conditional set |
-| `Opcode::Greater` | `fcmp gt` + `select` (1.0 / 0.0) | `vucomisd` + conditional set |
-| `Opcode::Less` | `fcmp lt` + `select` (1.0 / 0.0) | `vucomisd` + conditional set |
-| `Opcode::Not` | `fcmp eq 0.0` + `select` (1.0 / 0.0) | `vucomisd` + conditional set |
+| `Opcode::Constant(idx)` | Load float / double immediate | `movsd %xmmN, [const_pool + disp]` |
+| `Opcode::Add` | Floating point addition | `addsd %xmmA, %xmmB` |
+| `Opcode::Subtract` | Floating point subtraction | `subsd %xmmA, %xmmB` |
+| `Opcode::Multiply` | Floating point multiplication | `mulsd %xmmA, %xmmB` |
+| `Opcode::Divide` | Floating point division | `divsd %xmmA, %xmmB` |
+| `Opcode::Negate` | Float sign flip | `xorpd %xmmA, [sign_mask]` |
+| `Opcode::Equal` | Float comparison | `ucomisd` + `sete` |
+| `Opcode::Greater` | Float comparison | `ucomisd` + `seta` |
+| `Opcode::Less` | Float comparison | `ucomisd` + `setb` |
+| `Opcode::Not` | Check falsy (null / false) | Bitwise check against `NULL_VAL` & `FALSE_VAL` |
 
 ---
 
 ## 3. Control Flow & Loops
 
-Control flow structures (`if`, `while`, `for`) are mapped onto Cranelift basic blocks:
+Control flow structures (`if`, `while`, `for`) are mapped onto AsmJit labels:
 
-### Conditional Branches (`JumpIfFalse`)
-1. The condition value is popped and compared with `0.0` (`false`/`nil` representation).
-2. The compiler emits `builder.ins().brif(cond, then_block, else_block)`.
-3. If the current basic block already ended with a terminator (`jump`, `brif`, or `return_`), subsequent instructions start cleanly in the destination block.
+### Conditional Branches (`Opcode::JumpZero`)
+1. Evaluates truthiness of the condition.
+2. Emits conditional jump to an AsmJit label:
+   ```cpp
+   cc.test(cond_reg, cond_reg);
+   cc.jz(else_label);
+   ```
 
 ### Loops (`Opcode::Loop`)
-1. Loops generate a backward jump target block `header_block`.
-2. Variables modified across loop iterations are carried as Cranelift block arguments or SSA variables.
-3. The end of the loop emits an unconditional `builder.ins().jump(header_block, &[])`.
+1. Loop headers bind an `asmjit::Label loop_start = cc.newLabel();`.
+2. Body executes natively without bytecode interpreter dispatch loop overhead.
+3. The loop tail emits an unconditional branch:
+   ```cpp
+   cc.jmp(loop_start);
+   ```
 
 ---
 
-## 4. Runtime Trampolines & External Symbols
+## 4. Multi-Tier Execution Strategy
 
-Because Elysabettian features dynamic global variables and string pools, the JIT engine provides C-ABI external symbols registered on Cranelift's `JITBuilder`:
-
-```rust
-pub extern "C" fn ely_jit_set_global(name_idx: u32, value_bits: u64) { ... }
-pub extern "C" fn ely_jit_get_global(name_idx: u32) -> u64 { ... }
-pub extern "C" fn ely_jit_print_value(value_bits: u64) { ... }
+```mermaid
+flowchart LR
+    Script["Source Script"] --> Bytecode["Bytecode Chunk"]
+    Bytecode --> Interp["Stack Interpreter (Tier 0)"]
+    Interp -.->|"Call counter >= 50"| HotPath{"Threshold Met?"}
+    HotPath -->|"Yes"| AsmJit["AsmJit Compiler (Tier 1)"]
+    AsmJit --> Native["Native Machine Code"]
 ```
 
-When JIT encounters `Opcode::DefineGlobal`, `Opcode::SetGlobal`, `Opcode::GetGlobal`, or `Opcode::Print`, it emits a direct function call (`builder.ins().call(fn_ref, &[...])`) linking into these thread-safe trampolines.
-
----
-
-## 5. Inspecting IR and Machine Code
-
-The CLI provides built-in inspection flags to observe the compilation pipeline:
-
-### Cranelift SSA IR (`--dump-ir`)
-Prints the textual SSA intermediate representation generated by the compiler before native lowering:
-
-```shell
-cargo run -p ely_cli -- --jit --dump-ir examples/bench_loop.ely
-```
-
-```text
-=== Cranelift IR [main_jit] ===
-function u0:0() -> f64 system_v {
-block0:
-    v0 = f64const 0.0
-    ...
-block1(v7: f64):
-    ...
-    brif v21, block5, block2
-}
-```
-
-### Native Disassembly (`--dump-asm`)
-Prints the generated native assembly (Cranelift VCode disassembly) for the host architecture:
-
-```shell
-cargo run -p ely_cli -- --jit --dump-asm examples/bench_loop.ely
-```
-
-```text
-=== Machine Code Disassembly [main_jit] ===
-  pushq   %rbp
-  movq    %rsp, %rbp
-  subq    %rsp, $32, %rsp
-block0:
-  vxorpd  %xmm3, %xmm3, %xmm1
-  ...
-  vaddsd  %xmm5, %xmm1, %xmm5
-  ret
-```
+1. **Tier 0 (Interpreter)**: Quick start-up execution via stack VM. Each function call tracks an invocation counter.
+2. **Tier 1 (AsmJit JIT)**: When invocation threshold (e.g. 50 calls) is reached, `ely_jit` compiles the target `Chunk` into executable memory and hot-swaps the function pointer in the VM.
