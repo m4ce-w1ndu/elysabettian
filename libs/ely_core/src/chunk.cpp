@@ -23,7 +23,7 @@ size_t Chunk::add_constant(Value value) {
     return m_constants.size() - 1;
 }
 
-int Chunk::get_line(size_t offset) const noexcept {
+int32_t Chunk::get_line(size_t offset) const noexcept {
     if (m_lines.empty()) return 0;
 
     uint32_t target = static_cast<uint32_t>(offset);

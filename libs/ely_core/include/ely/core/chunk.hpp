@@ -81,7 +81,7 @@ public:
      * Resolves the source line number for a given bytecode instruction offset
      * using binary search over the compact `LineInfo` table.
      */
-    [[nodiscard]] int get_line(size_t offset) const noexcept;
+    [[nodiscard]] int32_t get_line(size_t offset) const noexcept;
 
     /**
      * Accesses the underlying bytecode stream buffer with read-only access.
