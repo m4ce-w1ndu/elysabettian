@@ -5,7 +5,7 @@
 namespace ely::core {
 
 void Chunk::write_byte(uint8_t byte, uint32_t line) {
-    uint32_t offset = static_cast<uint32_t>(m_code.size());
+    const auto offset = static_cast<uint32_t>(m_code.size());
     m_code.push_back(byte);
 
     if (!m_lines.empty() && m_lines.back().line == line) return;
@@ -14,7 +14,7 @@ void Chunk::write_byte(uint8_t byte, uint32_t line) {
 }
 
 void Chunk::write_opcode(Opcode opcode, uint32_t line) {
-    uint8_t byte = static_cast<uint8_t>(opcode);
+    const auto byte = static_cast<uint8_t>(opcode);
     write_byte(byte, line);
 }
 
@@ -26,9 +26,9 @@ size_t Chunk::add_constant(Value value) {
 int32_t Chunk::get_line(size_t offset) const noexcept {
     if (m_lines.empty()) return 0;
 
-    uint32_t target = static_cast<uint32_t>(offset);
+    const auto target = static_cast<uint32_t>(offset);
 
-    auto it = std::ranges::lower_bound(
+    const auto it = std::ranges::lower_bound(
         m_lines,
         target,
         {},
@@ -36,7 +36,7 @@ int32_t Chunk::get_line(size_t offset) const noexcept {
     );
 
     if (it == m_lines.begin()) return it->line;
-    if (it == m_lines.end() || it->offset > target) --it;
+    if (it == m_lines.end() || it->offset > target) return std::prev(it)->line;
 
     return it->line;
 }
