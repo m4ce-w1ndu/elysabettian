@@ -8,8 +8,10 @@ namespace ely::core {
 
 class Value {
 public:
-    /// Default constructor has no purpose except constructing containers
-    /// and collections.
+    /**
+     * Default constructor has no purpose except constructing containers
+     * and collections.
+     */
     constexpr Value() noexcept : m_bits(NULL_VAL) {}
 
     /**
@@ -44,7 +46,9 @@ public:
 private:
     uint64_t m_bits{0};
 
-    /// Private constructor to handle value conversions.
+    /**
+     * Private constructor to handle value conversions.
+     */
     constexpr Value(uint64_t value) noexcept : m_bits(value) {}
 
     /// Sign bit (bit 63)
