@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cstdint>
 #include <bit>
+#include <string>
+#include <format>
 
 namespace ely::core {
 
@@ -102,6 +104,18 @@ public:
     [[nodiscard]] constexpr uint64_t as_obj() const noexcept {
         assert(is_obj() && "Value is not a heap object.");
         return m_bits & PAYLOAD_MASK;
+    }
+
+    /**
+     * Converts a value to its string representation.
+     */
+    [[nodiscard]] std::string to_string() const {
+        if (is_number()) return std::format("{}", as_number());
+        if (is_null()) return "null";
+        if (is_boolean()) return as_boolean() ? "true" : "false";
+        if (is_obj()) return std::format("<object {:#014x}>", as_obj());
+
+        return "<unknown>";
     }
 
     /**
