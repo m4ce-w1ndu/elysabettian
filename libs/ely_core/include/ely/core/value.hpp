@@ -43,6 +43,66 @@ public:
         assert((payload & ~PAYLOAD_MASK) == 0 && "Payload exceeds 48 bits.");
         return Value { OBJ_TAG | (payload & PAYLOAD_MASK) };
     }
+
+    /**
+     * Checks if the current value is a number.
+     */
+    [[nodiscard]] constexpr bool is_number() const noexcept {
+        return (m_bits & QNAN) != QNAN;
+    }
+
+    /**
+     * Checks if the current value is null.
+     */
+    [[nodiscard]] constexpr bool is_null() const noexcept {
+        return m_bits == NULL_VAL;
+    }
+
+    /**
+     * Checks if the current value is a boolean value.
+     */
+    [[nodiscard]] constexpr bool is_boolean() const noexcept {
+        return (m_bits | 1) == TRUE_VAL;
+    }
+
+    /**
+     * Checks if the current value is a heap object.
+     */
+    [[nodiscard]] constexpr bool is_obj() const noexcept {
+        return (m_bits & (SIGN_BIT | QNAN)) == OBJ_TAG;
+    }
+
+    /**
+     * Checks if the current value is "truthy".
+     * All values that are NOT "false" and "null" are considered "truthy".
+     */
+    [[nodiscard]] constexpr bool is_truthy() const noexcept {
+        return !(is_null() || (is_boolean() && !as_boolean()));
+    }
+
+    /**
+     * Converts the current NaN-boxed value to a number.
+     */
+    [[nodiscard]] constexpr double as_number() const noexcept {
+        assert(is_number() && "Value is not a number.");
+        return std::bit_cast<double>(m_bits);
+    }
+
+    /**
+     * Converts the current NaN-boxed value to a boolean.
+     */
+    [[nodiscard]] constexpr bool as_boolean() const noexcept {
+        assert(is_boolean() && "Value is not a boolean.");
+        return m_bits == TRUE_VAL;
+    }
+
+    /**
+     * Retrieves the payload of a NaN-boxed memory heap object.
+     */
+    [[nodiscard]] constexpr uint64_t as_obj() const noexcept {
+        assert(is_obj() && "Value is not a heap object.");
+        return m_bits & PAYLOAD_MASK;
+    }
 private:
     uint64_t m_bits{0};
 
