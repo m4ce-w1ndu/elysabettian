@@ -11,7 +11,7 @@ target_include_directories(ely_core
 
 target_sources(ely_core
     PRIVATE
-        # Add your .cpp files here (e.g. src/value.cpp, src/chunk.cpp)
+        src/chunk.cpp
 )
 
 ely_enable_warnings(ely_core)
