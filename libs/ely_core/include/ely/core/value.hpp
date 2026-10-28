@@ -103,6 +103,15 @@ public:
         assert(is_obj() && "Value is not a heap object.");
         return m_bits & PAYLOAD_MASK;
     }
+
+    /**
+     * Compares two values to check for equality.
+     */
+    [[nodiscard]] constexpr bool operator==(const Value& other) const noexcept {
+        return (is_number() && other.is_number())
+            ? as_number() == other.as_number()
+            : m_bits == other.m_bits;
+    }
 private:
     uint64_t m_bits{0};
 
