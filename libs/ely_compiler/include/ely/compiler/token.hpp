@@ -91,8 +91,8 @@ struct Token {
     /**
      * Constructs a new lexical token.
      */
-    constexpr Token(TokenType token_type, std::string_view lexeme, uint32_t line) noexcept
-        : token_type(token_type), lexeme(lexeme), line(line) {}
+    constexpr Token(TokenType tok_type, std::string_view text, uint32_t line_number) noexcept
+        : token_type(tok_type), lexeme(text), line(line_number) {}
 
     /**
      * Default constructor.
