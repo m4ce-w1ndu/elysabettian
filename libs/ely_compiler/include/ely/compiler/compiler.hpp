@@ -240,6 +240,93 @@ private:
      */
     [[nodiscard]] uint8_t identifier_constant(Token name);
 
+    /**
+     * Dispatches and compiles a single statement.
+     */
+    void statement();
+
+    /**
+     * Dispatches top-level declarations (variable bindings, functions, or fallthrough statements).
+     */
+    void declaration();
+
+    /**
+     * Compiles a print statement (`print <expr>;`).
+     */
+    void print_statement();
+
+    /**
+     * Compiles an expression evaluated for side effects, discarding its value from the stack.
+     */
+    void expression_statement();
+
+    /**
+     * Parses a variable declaration statement (`var <name> [= <expr>];`).
+     */
+    void var_declaration();
+
+    /**
+     * Compiles a conditional branching statement (`if (<cond>) <then> [else <else>]`).
+     */
+    void if_statement();
+
+    /**
+     * Compiles a while loop statement (`while (<cond>) <body>`).
+     */
+    void while_statement();
+
+    /**
+     * Compiles a C-style for loop (`for (<init>; <cond>; <inc>) <body>`).
+     */
+    void for_statement();
+
+    /**
+     * Compiles a function return statement (`return [<expr>];`).
+     */
+    void return_statement();
+
+    /**
+     * Compiles an import statement loading dynamic or standard modules.
+     */
+    void import_statement();
+
+    /**
+     * Compiles a function definition declaration (`func <name>(...) { ... }`).
+     */
+    void function_declaration();
+
+    /**
+     * Compiles a function body, parameter list, and creates a nested compiled chunk.
+     *
+     * @param type Kind of function being compiled.
+     */
+    void function(FunctionType type);
+
+    /**
+     * Parses a sequence of declarations enclosed in a block (`{ ... }`).
+     */
+    void block();
+
+    /**
+     * Recovers parser state to the next statement boundary after a syntax error.
+     */
+    void synchronize();
+
+    /**
+     * Consumes an identifier token and returns its constant pool index for globals, or 0 for locals.
+     *
+     * @param error_message Error message to emit if an identifier is missing.
+     * @return Constant pool index if a global variable, or 0 if local.
+     */
+    [[nodiscard]] uint8_t parse_variable(std::string_view error_message);
+
+    /**
+     * Emits instructions to bind a variable in global or local scope.
+     *
+     * @param global Constant pool index for global variables.
+     */
+    void define_variable(uint8_t global);
+
     /// Parser that extracts and tracks the token stream.
     Parser m_parser;
     /// Bytecode chunk currently being constructed.

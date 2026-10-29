@@ -13,7 +13,7 @@ std::optional<core::Chunk> Compiler::compile() {
     m_parser.advance();
 
     while (!m_parser.match_token(TokenType::Eof)) {
-        throw std::runtime_error("Not implemented");
+        declaration();
     }
 
     emit_return();
