@@ -16,7 +16,7 @@ target_link_libraries(ely_compiler
 
 target_sources(ely_compiler
     PRIVATE
-        # Add your .cpp files here (e.g. src/scanner.cpp, src/parser.cpp)
+        src/scanner.cpp
 )
 
 ely_enable_warnings(ely_compiler)
