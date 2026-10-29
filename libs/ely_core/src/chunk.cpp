@@ -1,3 +1,4 @@
+#include <cassert>
 #include <ely/core/chunk.hpp>
 
 #include <algorithm>
@@ -39,6 +40,11 @@ int32_t Chunk::get_line(size_t offset) const noexcept {
     if (it == m_lines.end() || it->offset > target) return std::prev(it)->line;
 
     return it->line;
+}
+
+void Chunk::patch_byte(size_t offset, uint8_t byte) noexcept {
+    assert(offset < m_code.size() && "Patch offset out of bounds.");
+    m_code[offset] = byte;
 }
 
 }

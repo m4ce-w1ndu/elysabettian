@@ -155,6 +155,14 @@ public:
         m_function_constants.push_back(std::move(fd));
         return m_function_constants.size() - 1;
     }
+
+    /**
+     * Overwrites a byte at an existing bytecode stream offset (used for jump patching).
+     *
+     * @param offset Index in the bytecode stream to overwrite.
+     * @param byte New byte value to store.
+     */
+    void patch_byte(size_t offset, uint8_t byte) noexcept;
 private:
     /// Raw bytecode instruction stream and inline operands.
     std::vector<uint8_t> m_code;
