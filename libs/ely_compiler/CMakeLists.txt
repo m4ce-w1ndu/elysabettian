@@ -22,6 +22,7 @@ target_sources(ely_compiler
         src/compiler.cpp
         src/compiler_scope.cpp
         src/compiler_expr.cpp
+        src/compiler_stmt.cpp
 )
 
 ely_enable_warnings(ely_compiler)

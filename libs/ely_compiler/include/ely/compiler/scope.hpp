@@ -114,11 +114,25 @@ public:
     [[nodiscard]] constexpr FunctionType function_type() const noexcept { return m_function_type; }
 
     /**
+     * Sets a new function kind for this context.
+     *
+     * @param type New function kind to set.
+     */
+    constexpr void set_function_type(FunctionType type) noexcept { m_function_type = type; }
+
+    /**
      * Returns the current lexical scope nesting depth.
      *
      * @return 0 for top-level, >0 for block scopes.
      */
     [[nodiscard]] constexpr uint32_t scope_depth() const noexcept { return m_scope_depth; }
+
+    /**
+     * Sets a new scope depth for this context.
+     *
+     * @param scope_depth The new scope depth for this param.
+     */
+    constexpr void set_scope_depth(uint32_t scope_depth) noexcept { m_scope_depth = scope_depth; }
 private:
     /// Tracks all local variables in the current call frame.
     std::vector<Local> m_locals{};

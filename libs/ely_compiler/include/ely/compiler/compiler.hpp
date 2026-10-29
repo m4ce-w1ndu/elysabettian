@@ -298,9 +298,9 @@ private:
     /**
      * Compiles a function body, parameter list, and creates a nested compiled chunk.
      *
-     * @param type Kind of function being compiled.
+     * @return Number of compiled parameters (arity).
      */
-    void function(FunctionType type);
+    size_t function();
 
     /**
      * Parses a sequence of declarations enclosed in a block (`{ ... }`).

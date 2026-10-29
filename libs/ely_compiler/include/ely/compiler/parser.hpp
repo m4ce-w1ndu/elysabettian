@@ -120,6 +120,11 @@ public:
     [[nodiscard]] constexpr bool panic_mode() const noexcept { return m_panic_mode; }
 
     /**
+     * Resets the panic mode to false, resuming parser operation.
+     */
+    constexpr void reset_panic_mode() noexcept { m_panic_mode = false; }
+
+    /**
      * Returns the most recently consumed token.
      *
      * @return Previous token.
