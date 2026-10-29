@@ -127,9 +127,118 @@ private:
      * Resolves an identifier token to its stack slot index in the current frame.
      *
      * @param name Identifier token to look up.
-     * @return 0-based stack slot index, or -1 if the variable is not in local scope.
+     * @return 0-based stack slot index, or std::nullopt if the variable is not in local scope.
      */
     [[nodiscard]] std::optional<uint8_t> resolve_local(Token name);
+
+    /**
+     * Compiles an expression at the assignment precedence level.
+     */
+    void expression();
+
+    /**
+     * Parses an expression with precedence equal to or greater than the specified level.
+     *
+     * @param precedence Minimum precedence boundary to parse.
+     */
+    void parse_precedence(Precedence precedence);
+
+    /**
+     * Resolves the infix precedence level associated with a token type.
+     *
+     * @param token_type Token type to inspect.
+     * @return Corresponding Precedence level.
+     */
+    [[nodiscard]] static constexpr Precedence get_precedence(TokenType token_type) noexcept;
+
+    /**
+     * Compiles a numeric constant literal.
+     */
+    void number();
+
+    /**
+     * Parses an expression wrapped in grouping parentheses.
+     */
+    void grouping();
+
+    /**
+     * Parses an expression starting with a unary prefix operator.
+     */
+    void unary();
+
+    /**
+     * Parses an infix binary operator expression and emits the corresponding opcode.
+     */
+    void binary();
+
+    /**
+     * Parses a literal keyword expression (true, false, null).
+     */
+    void literal();
+
+    /**
+     * Parses a string literal and loads it into the string constant pool.
+     */
+    void string();
+
+    /**
+     * Compiles a short-circuiting logical AND expression.
+     */
+    void and_op();
+
+    /**
+     * Compiles a short-circuiting logical OR expression.
+     */
+    void or_op();
+
+    /**
+     * Parses a function invocation argument list and call instruction.
+     */
+    void call();
+
+    /**
+     * Parses comma-separated arguments enclosed in parentheses.
+     *
+     * @return Total count of arguments parsed.
+     */
+    [[nodiscard]] uint8_t argument_list();
+
+    /**
+     * Compiles a variable identifier expression (read or assignment).
+     *
+     * @param can_assign True if the variable is in an assignable context.
+     */
+    void variable(bool can_assign);
+
+    /**
+     * Emits bytecode to resolve or assign a named identifier.
+     *
+     * @param name Identifier token.
+     * @param can_assign True if assignment is permitted.
+     */
+    void named_variable(Token name, bool can_assign);
+
+    /**
+     * Parses a prefix increment or decrement expression (++x or --x).
+     */
+    void prefix_inc_dec();
+
+    /**
+     * Parses a postfix increment or decrement expression (x++ or x--).
+     *
+     * @param get_op Opcode used to read variable (GetLocal or GetGlobal).
+     * @param set_op Opcode used to write variable (SetLocal or SetGlobal).
+     * @param arg Stack slot index or constant pool name index.
+     */
+    void postfix_inc_dec(core::Opcode get_op, core::Opcode set_op, uint8_t arg);
+
+    /**
+     * Stores an identifier string in the constant pool and returns its index.
+     *
+     * @param name Token containing the identifier string.
+     * @return 8-bit index in the constant pool.
+     */
+    [[nodiscard]] uint8_t identifier_constant(Token name);
 
     /// Parser that extracts and tracks the token stream.
     Parser m_parser;
