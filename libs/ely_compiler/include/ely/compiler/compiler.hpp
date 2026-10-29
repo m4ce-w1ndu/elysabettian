@@ -42,16 +42,23 @@ private:
 
     /**
      * Appends a raw byte to the bytecode stream at the current source line.
+     *
+     * @param byte 8-bit value to write.
      */
     void emit_byte(uint8_t byte) noexcept;
 
     /**
      * Appends an opcode instruction to the bytecode stream at the current source line.
+     *
+     * @param op Opcode to emit.
      */
     void emit_opcode(core::Opcode op) noexcept;
 
     /**
      * Appends two consecutive bytes to the bytecode stream.
+     *
+     * @param byte1 First byte to emit.
+     * @param byte2 Second byte to emit.
      */
     void emit_bytes(uint8_t byte1, uint8_t byte2) noexcept;
 
@@ -62,6 +69,8 @@ private:
 
     /**
      * Adds a value to the constant pool and emits a Constant opcode instruction.
+     *
+     * @param value Value literal to store and load.
      */
     void emit_constant(core::Value value) noexcept;
 
@@ -87,12 +96,50 @@ private:
      */
     void emit_loop(size_t loop_start) noexcept;
 
+    /**
+     * Enters a new nested lexical scope block.
+     */
+    void begin_scope() noexcept;
+
+    /**
+     * Exits the current lexical scope block and emits Opcode::Pop for all discarded locals.
+     */
+    void end_scope() noexcept;
+
+    /**
+     * Registers a new local variable on the current call frame stack.
+     *
+     * @param name Identifier token of the local variable.
+     */
+    void add_local(Token name);
+
+    /**
+     * Declares a variable in the current scope, checking for duplicate definitions at the same depth.
+     */
+    void declare_variable();
+
+    /**
+     * Marks the most recently declared local variable as initialized and usable.
+     */
+    void mark_initialized() noexcept;
+
+    /**
+     * Resolves an identifier token to its stack slot index in the current frame.
+     *
+     * @param name Identifier token to look up.
+     * @return 0-based stack slot index, or -1 if the variable is not in local scope.
+     */
+    [[nodiscard]] std::optional<uint8_t> resolve_local(Token name);
+
     /// Parser that extracts and tracks the token stream.
     Parser m_parser;
     /// Bytecode chunk currently being constructed.
     core::Chunk m_chunk;
     /// Lexical scoping and local variable context.
     CompilerContext m_context;
+
+    /// Max number of local variables in a function or scope.
+    static constexpr size_t MAX_LOCALS = 256;
 };
 
 } // namespace ely::compiler
