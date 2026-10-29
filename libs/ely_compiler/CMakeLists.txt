@@ -18,6 +18,7 @@ target_sources(ely_compiler
     PRIVATE
         src/scanner.cpp
         src/parser.cpp
+        src/scope.cpp
 )
 
 ely_enable_warnings(ely_compiler)
