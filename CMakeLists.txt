@@ -32,13 +32,15 @@ endfunction()
 # Subdirectories for libraries
 add_subdirectory(libs/ely_core)
 add_subdirectory(libs/ely_compiler)
-add_subdirectory(libs/ely_stdlib)
-add_subdirectory(libs/ely_vm)
+
+# Stub libraries temporarily commented out until implementation
+# add_subdirectory(libs/ely_stdlib)
+# add_subdirectory(libs/ely_vm)
 
 # Tools (CLI, REPL)
-if(ELY_BUILD_TOOLS)
-    add_subdirectory(tools/ely_cli)
-endif()
+# if(ELY_BUILD_TOOLS)
+#     add_subdirectory(tools/ely_cli)
+# endif()
 
 # Tests
 if(ELY_BUILD_TESTS)

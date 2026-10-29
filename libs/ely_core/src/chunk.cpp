@@ -36,10 +36,10 @@ int32_t Chunk::get_line(size_t offset) const noexcept {
         &LineInfo::offset
     );
 
-    if (it == m_lines.begin()) return it->line;
-    if (it == m_lines.end() || it->offset > target) return std::prev(it)->line;
+    if (it == m_lines.begin()) return static_cast<int32_t>(it->line);
+    if (it == m_lines.end() || it->offset > target) return static_cast<int32_t>(std::prev(it)->line);
 
-    return it->line;
+    return static_cast<int32_t>(it->line);
 }
 
 void Chunk::patch_byte(size_t offset, uint8_t byte) noexcept {

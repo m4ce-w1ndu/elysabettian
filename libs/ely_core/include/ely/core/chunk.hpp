@@ -157,6 +157,15 @@ public:
     }
 
     /**
+     * Returns a read-only span covering the function constants declared in this chunk.
+     *
+     * @return Read-only span of FunctionDescriptors.
+     */
+    [[nodiscard]] std::span<const FunctionDescriptor> function_constants() const noexcept {
+        return m_function_constants;
+    }
+
+    /**
      * Overwrites a byte at an existing bytecode stream offset (used for jump patching).
      *
      * @param offset Index in the bytecode stream to overwrite.

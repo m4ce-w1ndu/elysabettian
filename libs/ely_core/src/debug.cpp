@@ -42,7 +42,7 @@ namespace ely::core {
 [[nodiscard]] size_t jump_instruction(std::string_view name, int32_t sign, const Chunk& chunk, size_t offset) {
     const auto hi = static_cast<uint16_t>(chunk.code()[offset + 1]);
     const auto low = static_cast<uint16_t>(chunk.code()[offset + 2]);
-    const uint16_t jump = (hi << 8) | low;
+    const auto jump = static_cast<uint16_t>((static_cast<uint16_t>(hi) << 8) | low);
 
     const auto target = static_cast<size_t>(
         static_cast<ptrdiff_t>(offset + 3) + static_cast<ptrdiff_t>(sign) * jump

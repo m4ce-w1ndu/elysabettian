@@ -27,6 +27,8 @@ constexpr Precedence Compiler::get_precedence(TokenType token_type) noexcept {
     switch (token_type) {
         case TokenType::Multiply:
         case TokenType::Divide: return Precedence::Factor;
+        case TokenType::Plus:
+        case TokenType::Minus: return Precedence::Term;
         case TokenType::LessThan:
         case TokenType::LessThanEqual:
         case TokenType::GreaterThan:
