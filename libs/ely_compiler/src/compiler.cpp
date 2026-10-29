@@ -77,8 +77,8 @@ void Compiler::emit_loop(size_t loop_start) noexcept {
         m_parser.error("Loop body too large.");
     }
 
-    emit_byte((offset >> 8) & 0xFF);
-    emit_byte(offset & 0xFF);
+    emit_byte(static_cast<uint8_t>((offset >> 8) & 0xFF));
+    emit_byte(static_cast<uint8_t>(offset & 0xFF));
 }
 
 }
