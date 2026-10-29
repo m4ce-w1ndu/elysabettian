@@ -1,55 +1,59 @@
 #pragma once
 
 #include "token.hpp"
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
 namespace ely::compiler {
 
 /**
- * Local variable (or object) representation.
+ * Local variable representation tracked on the virtual machine stack frame.
  */
 struct Local {
-    /// Name (identifier) of this variable.
+    /// Identifier token of this local variable.
     Token name;
-    /// Associated scope depth.
+    /// Scope depth where this variable was declared (-1 if uninitialized).
     int32_t depth{-1};
-    /// Whether this variable is part of a closure.
+    /// Whether this local variable has been closed over as an upvalue.
     bool is_captured{false};
 };
 
 /**
- * Upvalue representation on the compiler stack.
+ * Upvalue descriptor tracking closed-over variables across scopes.
  */
 struct Upvalue {
-    /// Index of this upvalue in the Chunk's values.
-    uint8_t index;
-    /// Whether this upvalue is local to this scope.
-    bool is_local;
+    /// Stack slot index (if is_local) or enclosing upvalue index.
+    uint8_t index{0};
+    /// True if capturing a local in the immediately enclosing scope, false if transitive.
+    bool is_local{false};
 };
 
 /**
- * FunctionType identifies the subtype of a specific function.
+ * Classifies the type of function or script currently being compiled.
  */
 enum class FunctionType : uint8_t {
-    /// The function is a top-level code statement.
+    /// Top-level script block.
     Script,
-    /// The function is a standard function declared and defined in the code.
+    /// Standard named or anonymous function.
     Function,
-    /// The function is a member function of a specific class.
+    /// Class member method (binds slot 0 to 'this').
     Method,
-    /// The function is a constructor of a specific class.
+    /// Class constructor/initializer (returns 'this').
     Initializer
 };
 
 /**
- * Holds the current context (state) of the compiler in regards to the
- * language's lexical scoping.
+ * Manages lexical scope depth, local variable allocation, and upvalue tracking.
  */
 class CompilerContext {
 public:
     /**
-     * Constructs a new CompilerContext with ano optional function type.
+     * Constructs a new CompilerContext for the given function type.
+     *
+     * Automatically claims slot 0 for 'this' (methods/initializers) or function name.
+     *
+     * @param type Function category being compiled.
      */
     explicit CompilerContext(FunctionType type = FunctionType::Script) noexcept
         : m_function_type(type) {
@@ -63,53 +67,67 @@ public:
     }
 
     /**
-     * Begins a new (inner) scoper.
+     * Increments lexical block nesting depth.
      */
     void begin_scope() noexcept { m_scope_depth++; }
 
     /**
-     * Ends (returns and cleans) an inner scope.
+     * Decrements scope depth and pops all out-of-scope locals from tracking.
+     *
+     * @return Number of local variables removed from the frame.
      */
     [[nodiscard]] size_t pop_scope() noexcept;
 
     /**
-     * Returns all local variables (non-const).
+     * Returns mutable reference to local variables list.
+     *
+     * @return Vector of active and declared Local descriptors.
      */
     [[nodiscard]] std::vector<Local>& locals() noexcept { return m_locals; }
 
     /**
-     * Returns all upvalues (non-const).
+     * Returns mutable reference to upvalues list.
+     *
+     * @return Vector of captured Upvalue descriptors.
      */
     [[nodiscard]] std::vector<Upvalue>& upvalues() noexcept { return m_upvalues; }
 
     /**
-     * Returns all local variables (const).
+     * Returns read-only reference to local variables list.
+     *
+     * @return Vector of active and declared Local descriptors.
      */
     [[nodiscard]] const std::vector<Local>& locals() const noexcept { return m_locals; }
 
     /**
-     * Returns all upvalues (const).
+     * Returns read-only reference to upvalues list.
+     *
+     * @return Vector of captured Upvalue descriptors.
      */
     [[nodiscard]] const std::vector<Upvalue>& upvalues() const noexcept { return m_upvalues; }
 
     /**
-     * Returns the current function type.
+     * Returns the kind of function managed by this context.
+     *
+     * @return FunctionType enum value.
      */
     [[nodiscard]] constexpr FunctionType function_type() const noexcept { return m_function_type; }
 
     /**
-     * Returns the current scope depth.
+     * Returns the current lexical scope nesting depth.
+     *
+     * @return 0 for top-level, >0 for block scopes.
      */
     [[nodiscard]] constexpr uint32_t scope_depth() const noexcept { return m_scope_depth; }
 private:
-    /// Holds all variables local to this scope.
+    /// Tracks all local variables in the current call frame.
     std::vector<Local> m_locals{};
-    /// Holds all upvalues related with this scope.
+    /// Tracks upvalues captured from enclosing scopes.
     std::vector<Upvalue> m_upvalues{};
-    /// Holds the current scope depth.
+    /// Current block scope nesting level.
     uint32_t m_scope_depth{0};
-    /// Holds the current function type.
-    FunctionType m_function_type{};
+    /// Current function kind.
+    FunctionType m_function_type{FunctionType::Script};
 };
 
-}
+} // namespace ely::compiler

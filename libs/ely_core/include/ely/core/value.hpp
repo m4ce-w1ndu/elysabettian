@@ -8,16 +8,23 @@
 
 namespace ely::core {
 
+/**
+ * 64-bit IEEE-754 NaN-boxed value representation.
+ *
+ * Encodes numbers (f64), booleans, null, and 48-bit heap pointers directly
+ * within a single 8-byte value without heap allocation overhead.
+ */
 class Value {
 public:
     /**
-     * Default constructor has no purpose except constructing containers
-     * and collections.
+     * Default constructor initializing to the null value representation.
      */
     constexpr Value() noexcept : m_bits(NULL_VAL) {}
 
     /**
-     * Creates a new, "null" value using NaN-boxing.
+     * Creates a new null value using NaN-boxing.
+     *
+     * @return Value representing the null literal.
      */
     [[nodiscard]] static constexpr Value null() noexcept {
         return Value { NULL_VAL };
@@ -25,21 +32,29 @@ public:
 
     /**
      * Creates a new boolean value using NaN-boxing.
+     *
+     * @param value Boolean true or false value to wrap.
+     * @return Value representing the given boolean.
      */
     [[nodiscard]] static constexpr Value boolean(bool value) noexcept {
         return Value { value ? TRUE_VAL : FALSE_VAL };
     }
 
     /**
-     * Creates a new numeric value using NaN-boxing and number
-     * canonicalisation to avoid NaN collisions.
+     * Creates a new numeric value using NaN-boxing.
+     *
+     * @param value Double-precision floating point number to wrap.
+     * @return Value representing the given number.
      */
     [[nodiscard]] static constexpr Value number(double value) noexcept {
         return Value { std::bit_cast<uint64_t>(value) };
     }
 
     /**
-     * Creates a heap object reference from an identifier or a 48-bit pointer.
+     * Creates a heap object reference from a 48-bit pointer or identifier.
+     *
+     * @param payload 48-bit address or object handle.
+     * @return Value representing the boxed heap object.
      */
     [[nodiscard]] static constexpr Value obj(uint64_t payload) noexcept {
         assert((payload & ~PAYLOAD_MASK) == 0 && "Payload exceeds 48 bits.");
@@ -47,7 +62,9 @@ public:
     }
 
     /**
-     * Checks if the current value is a number.
+     * Checks if the current value is a standard floating point number.
+     *
+     * @return True if the value is a number, false otherwise.
      */
     [[nodiscard]] constexpr bool is_number() const noexcept {
         return (m_bits & QNAN) != QNAN;
@@ -55,35 +72,46 @@ public:
 
     /**
      * Checks if the current value is null.
+     *
+     * @return True if null, false otherwise.
      */
     [[nodiscard]] constexpr bool is_null() const noexcept {
         return m_bits == NULL_VAL;
     }
 
     /**
-     * Checks if the current value is a boolean value.
+     * Checks if the current value is a boolean value (true or false).
+     *
+     * @return True if boolean, false otherwise.
      */
     [[nodiscard]] constexpr bool is_boolean() const noexcept {
         return (m_bits | 1) == TRUE_VAL;
     }
 
     /**
-     * Checks if the current value is a heap object.
+     * Checks if the current value is a boxed heap object pointer.
+     *
+     * @return True if a heap object, false otherwise.
      */
     [[nodiscard]] constexpr bool is_obj() const noexcept {
         return (m_bits & (SIGN_BIT | QNAN)) == OBJ_TAG;
     }
 
     /**
-     * Checks if the current value is "truthy".
-     * All values that are NOT "false" and "null" are considered "truthy".
+     * Checks if the current value is considered truthy.
+     *
+     * All values except null and false are truthy.
+     *
+     * @return True if truthy, false if falsy.
      */
     [[nodiscard]] constexpr bool is_truthy() const noexcept {
         return !(is_null() || (is_boolean() && !as_boolean()));
     }
 
     /**
-     * Converts the current NaN-boxed value to a number.
+     * Converts the current NaN-boxed value to a native double.
+     *
+     * @return Extracted double precision value.
      */
     [[nodiscard]] constexpr double as_number() const noexcept {
         assert(is_number() && "Value is not a number.");
@@ -91,7 +119,9 @@ public:
     }
 
     /**
-     * Converts the current NaN-boxed value to a boolean.
+     * Converts the current NaN-boxed value to a native boolean.
+     *
+     * @return Extracted boolean value.
      */
     [[nodiscard]] constexpr bool as_boolean() const noexcept {
         assert(is_boolean() && "Value is not a boolean.");
@@ -99,7 +129,9 @@ public:
     }
 
     /**
-     * Retrieves the payload of a NaN-boxed memory heap object.
+     * Retrieves the 48-bit address payload of a boxed heap object.
+     *
+     * @return 48-bit address or handle.
      */
     [[nodiscard]] constexpr uint64_t as_obj() const noexcept {
         assert(is_obj() && "Value is not a heap object.");
@@ -107,7 +139,9 @@ public:
     }
 
     /**
-     * Converts a value to its string representation.
+     * Converts the value to its string representation.
+     *
+     * @return Formatted string describing the value.
      */
     [[nodiscard]] std::string to_string() const {
         if (is_number()) return std::format("{}", as_number());
@@ -119,7 +153,10 @@ public:
     }
 
     /**
-     * Compares two values to check for equality.
+     * Compares two values for semantic equality.
+     *
+     * @param other Value to compare against.
+     * @return True if equal, false otherwise.
      */
     [[nodiscard]] constexpr bool operator==(const Value& other) const noexcept {
         return (is_number() && other.is_number())
@@ -130,7 +167,9 @@ private:
     uint64_t m_bits{0};
 
     /**
-     * Private constructor to handle value conversions.
+     * Private raw bits constructor.
+     *
+     * @param value Raw 64-bit unsigned representation.
      */
     constexpr Value(uint64_t value) noexcept : m_bits(value) {}
 
@@ -154,8 +193,8 @@ private:
 
     /// Heap objects, pointers and handles tag.
     static constexpr uint64_t OBJ_TAG = SIGN_BIT | QNAN;
-    /// Bitmask to extract payload form NaN-boxed values.
+    /// Bitmask to extract payload from NaN-boxed values.
     static constexpr uint64_t PAYLOAD_MASK = 0x0000FFFFFFFFFFFF;
 };
 
-}
+} // namespace ely::core
