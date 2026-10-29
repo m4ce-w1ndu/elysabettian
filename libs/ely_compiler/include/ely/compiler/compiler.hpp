@@ -248,7 +248,10 @@ private:
     CompilerContext m_context;
 
     /// Max number of local variables in a function or scope.
-    static constexpr size_t MAX_LOCALS = 256;
+    static constexpr size_t kMaxLocals = 256;
+
+    /// Max number of function arguments / parameters.
+    static constexpr uint8_t kMaxArgs = 255;
 };
 
 } // namespace ely::compiler

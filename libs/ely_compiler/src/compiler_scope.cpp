@@ -18,11 +18,11 @@ void Compiler::end_scope() noexcept {
 }
 
 void Compiler::add_local(Token name) {
-    if (m_context.locals().size() >= MAX_LOCALS) {
+    if (m_context.locals().size() >= kMaxLocals) {
         m_parser.error(std::format(
             "Number of local variables ({}) exceeds max: {}",
             m_context.locals().size(),
-            MAX_LOCALS)
+            kMaxLocals)
         );
     }
 

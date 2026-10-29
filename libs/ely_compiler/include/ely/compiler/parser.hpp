@@ -14,6 +14,7 @@ enum class Precedence : uint8_t {
     None = 0,
     Assignment,
     Or,
+    And,
     Equality,
     Comparison,
     Term,

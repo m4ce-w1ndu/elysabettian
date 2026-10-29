@@ -19,7 +19,7 @@ public:
     /**
      * Default constructor initializing to the null value representation.
      */
-    constexpr Value() noexcept : m_bits(NULL_VAL) {}
+    constexpr Value() noexcept : m_bits(kNullVal) {}
 
     /**
      * Creates a new null value using NaN-boxing.
@@ -27,7 +27,7 @@ public:
      * @return Value representing the null literal.
      */
     [[nodiscard]] static constexpr Value null() noexcept {
-        return Value { NULL_VAL };
+        return Value { kNullVal };
     }
 
     /**
@@ -37,7 +37,7 @@ public:
      * @return Value representing the given boolean.
      */
     [[nodiscard]] static constexpr Value boolean(bool value) noexcept {
-        return Value { value ? TRUE_VAL : FALSE_VAL };
+        return Value { value ? kTrueVal : kFalseVal };
     }
 
     /**
@@ -57,8 +57,8 @@ public:
      * @return Value representing the boxed heap object.
      */
     [[nodiscard]] static constexpr Value obj(uint64_t payload) noexcept {
-        assert((payload & ~PAYLOAD_MASK) == 0 && "Payload exceeds 48 bits.");
-        return Value { OBJ_TAG | (payload & PAYLOAD_MASK) };
+        assert((payload & ~kPayloadMask) == 0 && "Payload exceeds 48 bits.");
+        return Value { kObjTag | (payload & kPayloadMask) };
     }
 
     /**
@@ -67,7 +67,7 @@ public:
      * @return True if the value is a number, false otherwise.
      */
     [[nodiscard]] constexpr bool is_number() const noexcept {
-        return (m_bits & QNAN) != QNAN;
+        return (m_bits & kQNaN) != kQNaN;
     }
 
     /**
@@ -76,7 +76,7 @@ public:
      * @return True if null, false otherwise.
      */
     [[nodiscard]] constexpr bool is_null() const noexcept {
-        return m_bits == NULL_VAL;
+        return m_bits == kNullVal;
     }
 
     /**
@@ -85,7 +85,7 @@ public:
      * @return True if boolean, false otherwise.
      */
     [[nodiscard]] constexpr bool is_boolean() const noexcept {
-        return (m_bits | 1) == TRUE_VAL;
+        return (m_bits | 1) == kTrueVal;
     }
 
     /**
@@ -94,7 +94,7 @@ public:
      * @return True if a heap object, false otherwise.
      */
     [[nodiscard]] constexpr bool is_obj() const noexcept {
-        return (m_bits & (SIGN_BIT | QNAN)) == OBJ_TAG;
+        return (m_bits & (kSignBit | kQNaN)) == kObjTag;
     }
 
     /**
@@ -125,7 +125,7 @@ public:
      */
     [[nodiscard]] constexpr bool as_boolean() const noexcept {
         assert(is_boolean() && "Value is not a boolean.");
-        return m_bits == TRUE_VAL;
+        return m_bits == kTrueVal;
     }
 
     /**
@@ -135,7 +135,7 @@ public:
      */
     [[nodiscard]] constexpr uint64_t as_obj() const noexcept {
         assert(is_obj() && "Value is not a heap object.");
-        return m_bits & PAYLOAD_MASK;
+        return m_bits & kPayloadMask;
     }
 
     /**
@@ -174,27 +174,27 @@ private:
     constexpr Value(uint64_t value) noexcept : m_bits(value) {}
 
     /// Sign bit (bit 63)
-    static constexpr uint64_t SIGN_BIT = 0x8000000000000000;
+    static constexpr uint64_t kSignBit = 0x8000000000000000;
     /// Exponent with all bits set to 1 + Quiet NaN bit (51)
-    static constexpr uint64_t QNAN = 0x7FFC000000000000;
+    static constexpr uint64_t kQNaN = 0x7FFC000000000000;
     /// NULL type tag.
-    static constexpr uint64_t TAG_NULL = 0x1;
+    static constexpr uint64_t kTagNull = 0x1;
     /// Boolean "false" tag.
-    static constexpr uint64_t TAG_FALSE = 0x2;
+    static constexpr uint64_t kTagFalse = 0x2;
     /// Boolean "true" tag.
-    static constexpr uint64_t TAG_TRUE = 0x3;
+    static constexpr uint64_t kTagTrue = 0x3;
 
     /// Full null value representation with NaN-boxing.
-    static constexpr uint64_t NULL_VAL = QNAN | TAG_NULL;
+    static constexpr uint64_t kNullVal = kQNaN | kTagNull;
     /// Full "true" value representation with NaN-boxing.
-    static constexpr uint64_t TRUE_VAL = QNAN | TAG_TRUE;
+    static constexpr uint64_t kTrueVal = kQNaN | kTagTrue;
     /// Full "false" value representation with NaN-boxing.
-    static constexpr uint64_t FALSE_VAL = QNAN | TAG_FALSE;
+    static constexpr uint64_t kFalseVal = kQNaN | kTagFalse;
 
     /// Heap objects, pointers and handles tag.
-    static constexpr uint64_t OBJ_TAG = SIGN_BIT | QNAN;
+    static constexpr uint64_t kObjTag = kSignBit | kQNaN;
     /// Bitmask to extract payload from NaN-boxed values.
-    static constexpr uint64_t PAYLOAD_MASK = 0x0000FFFFFFFFFFFF;
+    static constexpr uint64_t kPayloadMask = 0x0000FFFFFFFFFFFF;
 };
 
 } // namespace ely::core
