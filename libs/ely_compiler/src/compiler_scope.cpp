@@ -1,5 +1,4 @@
 #include "ely/core/opcode.hpp"
-#include <algorithm>
 #include <cstdint>
 #include <ely/compiler/compiler.hpp>
 #include <format>
