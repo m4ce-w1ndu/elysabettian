@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ely/vm/heap_object.hpp>
+#include "heap_object.hpp"
 #include <cassert>
 #include <cstddef>
 #include <utility>
@@ -113,4 +113,3 @@ private:
 };
 
 } // namespace ely::vm
-
