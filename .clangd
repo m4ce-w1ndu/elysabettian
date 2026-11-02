@@ -1,8 +1,0 @@
-CompileFlags:
-  CompilationDatabase: build/default
-  Add:
-    - -std=c++20
-    - -Ilibs/ely_core/include
-    - -Ilibs/ely_compiler/include
-    - -Ilibs/ely_stdlib/include
-    - -Ilibs/ely_vm/include

@@ -19,6 +19,13 @@ file(CREATE_LINK
     SYMBOLIC COPY_ON_ERROR
 )
 
+# Configure portable .clangd for local development
+configure_file(
+    "${CMAKE_SOURCE_DIR}/.clangd.in"
+    "${CMAKE_SOURCE_DIR}/.clangd"
+    @ONLY
+)
+
 # Global options
 option(ELY_BUILD_TESTS "Build test suite" ON)
 option(ELY_BUILD_TOOLS "Build CLI and developer tools" ON)
