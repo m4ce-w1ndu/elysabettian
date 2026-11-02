@@ -18,7 +18,7 @@ target_link_libraries(ely_vm
 
 target_sources(ely_vm
     PRIVATE
-        # Add your .cpp files here (e.g. src/vm.cpp, src/gc.cpp)
+        src/vm.cpp
 )
 
 ely_enable_warnings(ely_vm)

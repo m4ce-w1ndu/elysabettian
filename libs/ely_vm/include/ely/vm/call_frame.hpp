@@ -31,18 +31,18 @@ struct CallFrame {
      * @param chunk Non-owning pointer to the bytecode chunk.
      * @param slots Base index offset into the VM stack for locals.
      */
-    explicit CallFrame(const core::Chunk* chunk, size_t slots) noexcept
-        : chunk(chunk), slots(slots) {}
+    explicit CallFrame(const core::Chunk* c, size_t initial_slots) noexcept
+        : chunk(c), slots(initial_slots) {}
 
     /**
      * Constructs a call frame associated with a specific closure instance.
      *
-     * @param chunk Non-owning pointer to the bytecode chunk.
-     * @param slots Base index offset into the VM stack for locals.
-     * @param closure_id Identifier of the closure in the VM heap.
+     * @param c Non-owning pointer to the bytecode chunk.
+     * @param initial_slots Base index offset into the VM stack for locals.
+     * @param cid Identifier of the closure in the VM heap.
      */
-    explicit CallFrame(const core::Chunk* chunk, size_t slots, size_t closure_id) noexcept
-        : chunk(chunk), slots(slots), closure_id(closure_id) {}
+    explicit CallFrame(const core::Chunk* c, size_t initial_slots, size_t cid) noexcept
+        : chunk(c), slots(initial_slots), closure_id(cid) {}
 
     /**
      * Reads the next byte from the instruction stream and advances the instruction pointer.

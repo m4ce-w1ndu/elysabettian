@@ -29,8 +29,8 @@ struct ObjBoundMethod {
      * @param recv Receiver instance Value.
      * @param method_id Heap index of the target method.
      */
-    explicit ObjBoundMethod(core::Value recv, size_t method_id) noexcept
-        : receiver(recv), method_id(method_id) {}
+    explicit ObjBoundMethod(core::Value recv, size_t m_id) noexcept
+        : receiver(recv), method_id(m_id) {}
 };
 
 /**
@@ -45,10 +45,10 @@ struct ObjClass {
     /**
      * Constructs a class definition with the given name.
      *
-     * @param name Name of the class.
+     * @param cls_name Name of the class.
      */
-    explicit ObjClass(std::string name)
-        : name(std::move(name)) {}
+    explicit ObjClass(std::string cls_name)
+        : name(std::move(cls_name)) {}
 };
 
 /**
@@ -63,10 +63,10 @@ struct ObjInstance {
     /**
      * Constructs a new instance of the specified class.
      *
-     * @param class_id Identifier of the originating ObjClass.
+     * @param c_id Identifier of the originating ObjClass.
      */
-    explicit ObjInstance(size_t class_id) noexcept
-        : class_id(class_id) {}
+    explicit ObjInstance(size_t c_id) noexcept
+        : class_id(c_id) {}
 };
 
 /**
@@ -92,11 +92,11 @@ struct ObjFunction {
     /**
      * Constructs a function object.
      *
-     * @param arity Parameter count.
-     * @param name Optional function identifier.
+     * @param fn_arity Parameter count.
+     * @param fn_name Optional function identifier.
      */
-    explicit ObjFunction(size_t arity = 0, std::optional<std::string> name = std::nullopt)
-        : arity(arity), chunk(std::make_shared<core::Chunk>()), name(std::move(name)) {}
+    explicit ObjFunction(size_t fn_arity = 0, std::optional<std::string> fn_name = std::nullopt)
+        : arity(fn_arity), chunk(std::make_shared<core::Chunk>()), name(std::move(fn_name)) {}
 };
 
 /**
@@ -115,10 +115,10 @@ struct ObjUpvalue {
     /**
      * Constructs an open upvalue pointing to a VM stack location.
      *
-     * @param location Stack slot offset of the captured variable.
+     * @param loc Stack slot offset of the captured variable.
      */
-    explicit ObjUpvalue(size_t location) noexcept
-        : location(location) {}
+    explicit ObjUpvalue(size_t loc) noexcept
+        : location(loc) {}
 
     /**
      * Checks if this upvalue is still pointing to the active VM stack.

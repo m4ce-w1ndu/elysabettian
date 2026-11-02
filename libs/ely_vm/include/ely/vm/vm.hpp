@@ -109,7 +109,7 @@ public:
      * @param value NaN-boxed Value referencing a heap object.
      * @return Mutable reference to the managed HeapObject.
      */
-    [[nodiscard]] HeapObject& get_object_mut(core::Value value);
+    [[nodiscard]] HeapObject& get_object(core::Value value);
 
     /**
      * Binds a native callable function to a global identifier.
