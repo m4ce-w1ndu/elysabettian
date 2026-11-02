@@ -43,13 +43,26 @@ struct FunctionDescriptor {
     FunctionDescriptor() = default;
     ~FunctionDescriptor() = default;
 
+    FunctionDescriptor(const FunctionDescriptor& other)
+        : arity(other.arity),
+          chunk(other.chunk ? std::make_unique<Chunk>(*other.chunk) : nullptr),
+          name(other.name) {}
+
+    FunctionDescriptor& operator=(const FunctionDescriptor& other) {
+        if (this != &other) {
+            arity = other.arity;
+            chunk = other.chunk ? std::make_unique<Chunk>(*other.chunk) : nullptr;
+            name = other.name;
+        }
+
+        return *this;
+    }
+
     /**
      * Only move semantics are allowed.
      */
     FunctionDescriptor(FunctionDescriptor&&) noexcept = default;
     FunctionDescriptor& operator=(FunctionDescriptor&&) noexcept = default;
-    FunctionDescriptor(const FunctionDescriptor&) = delete;
-    FunctionDescriptor& operator=(const FunctionDescriptor&) = delete;
 };
 
 /**

@@ -162,6 +162,8 @@ size_t disassemble_instruction(const Chunk& chunk, size_t offset) {
         case Opcode::ArrayIndex: return simple_instruction("arridx", offset);
         case Opcode::Import: return byte_instruction("import", chunk, offset);
     }
+
+    return offset + 1;
 }
 
 void disassemble_chunk(const Chunk& chunk, std::string_view name) {
