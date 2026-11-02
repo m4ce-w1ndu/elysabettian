@@ -13,6 +13,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Export compile_commands.json for LSP (clangd, ccls, IDEs)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+file(CREATE_LINK
+    "${CMAKE_BINARY_DIR}/compile_commands.json"
+    "${CMAKE_SOURCE_DIR}/compile_commands.json"
+    SYMBOLIC COPY_ON_ERROR
+)
 
 # Global options
 option(ELY_BUILD_TESTS "Build test suite" ON)
