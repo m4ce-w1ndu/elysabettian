@@ -2,6 +2,7 @@
 
 #include "opcode.hpp"
 #include "value.hpp"
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -108,6 +109,31 @@ public:
      * @return Read-only span covering the constant pool.
      */
     [[nodiscard]] std::span<const Value> constants() const noexcept { return m_constants; }
+
+    /**
+     * Accesses the string literals declared in this chunk.
+     *
+     * @return Read-only span covering the string constants table.
+     */
+    [[nodiscard]] std::span<const std::string> string_constants() const noexcept { return m_string_constants; }
+
+    /**
+     * Accesses mutable function descriptors declared in this chunk for heap loading.
+     *
+     * @return Mutable span of FunctionDescriptors.
+     */
+    [[nodiscard]] std::span<FunctionDescriptor> function_constants() noexcept { return m_function_constants; }
+
+    /**
+     * Overwrites an existing constant in the pool (used during chunk object loading).
+     *
+     * @param index 0-based index of the constant to patch.
+     * @param value New Value to store.
+     */
+    void patch_constant(size_t index, Value value) noexcept {
+        assert(index < m_constants.size() && "Constant index out of bounds.");
+        m_constants[index] = value;
+    }
 
     /**
      * Returns the size of the bytecode stream (number of instructions and operands).
