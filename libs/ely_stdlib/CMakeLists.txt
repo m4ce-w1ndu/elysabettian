@@ -16,7 +16,7 @@ target_link_libraries(ely_stdlib
 
 target_sources(ely_stdlib
     PRIVATE
-        # Add your .cpp files here (e.g. src/math.cpp, src/io.cpp)
+        src/stdlib.cpp
 )
 
 ely_enable_warnings(ely_stdlib)
