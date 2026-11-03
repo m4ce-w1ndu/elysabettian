@@ -18,6 +18,7 @@ target_sources(ely_stdlib
     PRIVATE
         src/stdlib.cpp
         src/math.cpp
+        src/system.cpp
 )
 
 ely_enable_warnings(ely_stdlib)
