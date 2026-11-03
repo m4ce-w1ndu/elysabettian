@@ -1,4 +1,5 @@
 #include <ely/cli/repl.hpp>
+#include <ely/cli/runner.hpp>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -18,8 +19,9 @@ namespace {
 
 namespace ely::cli {
 
-void run_repl(vm::VM& vm) {
-    std::cout << "Elysabettian REPL (v0.1.0) [VM Interpreter Mode]\n";
+void run_repl(vm::VM& vm, bool jit_only, bool dump_ir, bool dump_asm) {
+    const std::string_view mode = jit_only ? "JIT Native Mode" : "VM Tier-up Mode";
+    std::cout << "Elysabettian REPL (v0.1.0) [" << mode << "]\n";
     std::cout << "Type 'exit' or press Ctrl+D to exit.\n\n";
 
     std::string line;
@@ -39,7 +41,7 @@ void run_repl(vm::VM& vm) {
             continue;
         }
 
-        static_cast<void>(vm.interpret(line));
+        static_cast<void>(run_source(line, vm, jit_only, dump_ir, dump_asm));
     }
 }
 

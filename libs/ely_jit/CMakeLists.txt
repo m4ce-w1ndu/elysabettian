@@ -17,7 +17,7 @@ target_link_libraries(ely_jit
 
 get_target_property(ASMJIT_INCLUDE_DIRS asmjit INTERFACE_INCLUDE_DIRECTORIES)
 if(ASMJIT_INCLUDE_DIRS)
-    target_include_directories(ely_jit SYSTEM PRIVATE ${ASMJIT_INCLUDE_DIRS})
+    target_include_directories(ely_jit SYSTEM PUBLIC ${ASMJIT_INCLUDE_DIRS})
 endif()
 
 target_sources(ely_jit
@@ -25,6 +25,8 @@ target_sources(ely_jit
         src/runtime.cpp
         src/engine.cpp
         src/compiler.cpp
+        src/compiler_x86.cpp
+        src/compiler_a64.cpp
 )
 
 ely_enable_warnings(ely_jit)

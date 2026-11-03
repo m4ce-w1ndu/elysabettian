@@ -6,6 +6,8 @@
 #include <ely/jit/compiler.hpp>
 #include <ely/jit/engine.hpp>
 #include <ely/jit/runtime.hpp>
+#include <iostream>
+#include <sstream>
 
 using ely::core::Chunk;
 using ely::core::Opcode;
@@ -303,4 +305,72 @@ TEST_CASE("JIT globals and runtime integration", "[jit][globals]") {
     const auto global_val = Value::from_raw(global_bits);
     REQUIRE(global_val.is_number());
     REQUIRE_THAT(global_val.as_number(), Catch::Matchers::WithinRel(123.456, 1e-9));
+}
+
+TEST_CASE("JIT dump_ir and dump_asm output", "[jit][dump]") {
+    JitEngine engine;
+    Chunk chunk;
+
+    const auto c1 = chunk.add_constant(Value::number(10.0));
+    const auto c2 = chunk.add_constant(Value::number(20.0));
+    chunk.write_opcode(Opcode::Constant, 1);
+    chunk.write_byte(static_cast<uint8_t>(c1), 1);
+    chunk.write_opcode(Opcode::Constant, 1);
+    chunk.write_byte(static_cast<uint8_t>(c2), 1);
+    chunk.write_opcode(Opcode::Add, 1);
+    chunk.write_opcode(Opcode::Return, 1);
+
+    JitCompiler compiler(engine);
+    compiler.dump_ir = true;
+    compiler.dump_asm = true;
+
+    // Redirect stdout to inspect dumped IR and ASM
+    std::stringstream buffer;
+    std::streambuf* old_cout = std::cout.rdbuf(buffer.rdbuf());
+
+    const auto res = compiler.compile_arithmetic(chunk, "inspect_dump");
+
+    std::cout.rdbuf(old_cout);
+
+    REQUIRE(res);
+    REQUIRE(res.code_ptr != nullptr);
+
+    const std::string output = buffer.str();
+    CHECK(output.find("=== AsmJit IR [inspect_dump] ===") != std::string::npos);
+    CHECK(output.find("=== Machine Code Disassembly [inspect_dump] ===") != std::string::npos);
+}
+
+TEST_CASE("JIT ARM64 (AArch64) code emission and disassembly", "[jit][a64]") {
+    JitEngine engine;
+    Chunk chunk;
+
+    const auto c1 = chunk.add_constant(Value::number(40.0));
+    const auto c2 = chunk.add_constant(Value::number(2.0));
+    chunk.write_opcode(Opcode::Constant, 1);
+    chunk.write_byte(static_cast<uint8_t>(c1), 1);
+    chunk.write_opcode(Opcode::Constant, 1);
+    chunk.write_byte(static_cast<uint8_t>(c2), 1);
+    chunk.write_opcode(Opcode::Add, 1);
+    chunk.write_opcode(Opcode::Return, 1);
+
+    JitCompiler compiler(engine);
+    compiler.dump_ir = true;
+    compiler.dump_asm = true;
+
+    std::stringstream buffer;
+    std::streambuf* old_cout = std::cout.rdbuf(buffer.rdbuf());
+
+    const auto res = compiler.compile_function_a64(chunk, 0, "arm64_test");
+
+    std::cout.rdbuf(old_cout);
+
+    if (!res.error.empty()) {
+        std::cerr << "compile_function_a64 error: " << res.error << "\n";
+    }
+
+    const std::string output = buffer.str();
+    CHECK(output.find("=== AsmJit IR [arm64_test] ===") != std::string::npos);
+    CHECK(output.find("=== Machine Code Disassembly [arm64_test] ===") != std::string::npos);
+    // Verifies ARM64 instruction (fadd) was emitted
+    CHECK(output.find("fadd") != std::string::npos);
 }

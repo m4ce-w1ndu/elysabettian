@@ -4,6 +4,7 @@
 #include <ely/core/value.hpp>
 #include <ely/stdlib/native.hpp>
 #include <ely/stdlib/registry.hpp>
+#include <ely/jit/engine.hpp>
 #include "call_frame.hpp"
 #include "heap.hpp"
 #include "heap_object.hpp"
@@ -60,6 +61,20 @@ public:
      * @return Execution outcome.
      */
     [[nodiscard]] InterpretResult interpret(std::string_view source);
+
+    /**
+     * Controls whether dynamic JIT tier-up optimization is active.
+     */
+    void enable_jit(bool enable = true) noexcept { m_jit_enabled = enable; }
+    [[nodiscard]] bool is_jit_enabled() const noexcept { return m_jit_enabled; }
+
+    void set_dump_ir(bool dump) noexcept { m_dump_ir = dump; }
+    [[nodiscard]] bool dump_ir() const noexcept { return m_dump_ir; }
+
+    void set_dump_asm(bool dump) noexcept { m_dump_asm = dump; }
+    [[nodiscard]] bool dump_asm() const noexcept { return m_dump_asm; }
+
+    [[nodiscard]] jit::JitEngine* jit_engine() noexcept { return m_jit_engine.get(); }
 
     /**
      * Pushes a NaN-boxed Value onto the evaluation stack.
@@ -198,6 +213,21 @@ private:
 
     /// Module registry managing standard built-ins and dynamic plugins.
     stdlib::ModuleRegistry m_registry{};
+
+    /// JIT engine for hot-path function execution and tier-up compilation.
+    std::unique_ptr<jit::JitEngine> m_jit_engine{std::make_unique<jit::JitEngine>()};
+
+    /// Whether dynamic JIT tier-up is enabled.
+    bool m_jit_enabled{true};
+
+    /// Whether to dump intermediate representation during JIT compilation.
+    bool m_dump_ir{false};
+
+    /// Whether to dump machine code disassembly during JIT compilation.
+    bool m_dump_asm{false};
+
+    /// Invocations threshold before an interpreted function is tiered up to JIT.
+    static constexpr size_t kJitHotThreshold = 50;
 
     /// Maximum call stack depth before triggering a stack overflow runtime error.
     static constexpr size_t kMaxFrames = 64;

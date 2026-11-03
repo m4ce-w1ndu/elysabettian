@@ -1,6 +1,7 @@
 #include <ely/compiler/compiler.hpp>
 #include <ely/core/opcode.hpp>
 #include <ely/core/value.hpp>
+#include <ely/jit/compiler.hpp>
 #include <ely/vm/heap_object.hpp>
 #include <ely/vm/vm.hpp>
 #include <algorithm>
@@ -526,11 +527,53 @@ InterpretResult VM::run() {
                     }
 
                     const auto obj_id = static_cast<size_t>(callee.as_obj());
+                    auto try_call_jit = [&](ObjFunction* target_fn) -> bool {
+                        if (!m_jit_enabled || !m_jit_engine || !target_fn || !target_fn->chunk) {
+                            return false;
+                        }
+                        if (target_fn->invocation_count >= kJitHotThreshold && !target_fn->jit_entry) {
+                            jit::JitCompiler compiler(*m_jit_engine);
+                            compiler.dump_ir = m_dump_ir;
+                            compiler.dump_asm = m_dump_asm;
+                            const std::string name = target_fn->name.value_or("hot_func");
+                            const auto res = compiler.compile_function(*target_fn->chunk, target_fn->arity, name);
+                            if (res) {
+                                target_fn->jit_entry = res.code_ptr;
+                            }
+                        }
+                        if (target_fn->jit_entry && target_fn->arity <= 2) {
+                            double result_val = 0.0;
+                            if (target_fn->arity == 0) {
+                                using NativeFn = double (*)();
+                                auto native_call = reinterpret_cast<NativeFn>(const_cast<uint8_t*>(target_fn->jit_entry));
+                                result_val = native_call();
+                            } else if (target_fn->arity == 1) {
+                                using NativeFn = double (*)(double);
+                                auto native_call = reinterpret_cast<NativeFn>(const_cast<uint8_t*>(target_fn->jit_entry));
+                                const double a0 = m_stack.back().as_number();
+                                result_val = native_call(a0);
+                            } else if (target_fn->arity == 2) {
+                                using NativeFn = double (*)(double, double);
+                                auto native_call = reinterpret_cast<NativeFn>(const_cast<uint8_t*>(target_fn->jit_entry));
+                                const double a0 = m_stack[m_stack.size() - 2].as_number();
+                                const double a1 = m_stack[m_stack.size() - 1].as_number();
+                                result_val = native_call(a0, a1);
+                            }
+                            m_stack.resize(m_stack.size() - target_fn->arity - 1);
+                            push(core::Value::number(result_val));
+                            return true;
+                        }
+                        return false;
+                    };
+
                     if (auto* fn = m_heap.get_if<ObjFunction>(obj_id)) {
                         if (arg_count != fn->arity || m_frames.size() == kMaxFrames) {
                             return InterpretResult::RuntimeError;
                         }
                         fn->invocation_count++;
+                        if (try_call_jit(fn)) {
+                            break;
+                        }
                         const size_t slots = m_stack.size() - arg_count - 1;
                         m_frames.emplace_back(fn->chunk.get(), slots);
                     } else if (auto* closure = m_heap.get_if<ObjClosure>(obj_id)) {
@@ -539,6 +582,9 @@ InterpretResult VM::run() {
                             return InterpretResult::RuntimeError;
                         }
                         cfn->invocation_count++;
+                        if (try_call_jit(cfn)) {
+                            break;
+                        }
                         const size_t slots = m_stack.size() - arg_count - 1;
                         m_frames.emplace_back(cfn->chunk.get(), slots, obj_id);
                     } else if (m_heap.get_if<ObjClass>(obj_id)) {

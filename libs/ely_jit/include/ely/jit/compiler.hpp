@@ -22,22 +22,36 @@ struct JitCompileResult {
 };
 
 /**
- * Compiles Elysabettian bytecode chunks into native machine code using AsmJit.
+ * Compiles Elysabettian bytecode chunks into native machine code.
+ *
+ * Provides cross-architecture JIT compilation supporting both x86-64 and
+ * ARM64 (AArch64 for Linux and macOS Apple Silicon).
  */
 class JitCompiler {
 public:
     explicit JitCompiler(JitEngine& engine) : m_engine(engine) {}
 
     /**
-     * Compiles an arithmetic/expression chunk into a native `extern "C" double fn()` pointer.
+     * Compiles an arithmetic/expression chunk into native code for the host CPU.
      */
     [[nodiscard]] JitCompileResult compile_arithmetic(const core::Chunk& chunk, std::string_view name = "anon_arithmetic");
 
     /**
-     * Compiles a function chunk with `arity` parameters and local variables into a native function.
+     * Compiles a function chunk with `arity` parameters for the host CPU.
      */
     [[nodiscard]] JitCompileResult compile_function(const core::Chunk& chunk, size_t arity, std::string_view name = "anon_fn");
 
+    /**
+     * Explicit x86-64 code generation backend.
+     */
+    [[nodiscard]] JitCompileResult compile_function_x86(const core::Chunk& chunk, size_t arity, std::string_view name = "x86_fn");
+
+    /**
+     * Explicit ARM64 (AArch64) code generation backend (Linux and macOS Apple Silicon).
+     */
+    [[nodiscard]] JitCompileResult compile_function_a64(const core::Chunk& chunk, size_t arity, std::string_view name = "a64_fn");
+
+    bool dump_ir{false};
     bool dump_asm{false};
 
 private:

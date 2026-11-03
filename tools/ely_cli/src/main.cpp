@@ -1,23 +1,25 @@
 #include <ely/cli/repl.hpp>
+#include <ely/cli/runner.hpp>
 #include <ely/vm/vm.hpp>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <optional>
-#include <sstream>
-#include <string>
 #include <string_view>
 #include <vector>
 
 namespace {
 
 void print_help(std::string_view program_name) {
-    std::cout << "Elysabettian programming language runtime and REPL\n\n"
+    std::cout << "Elysabettian programming language runtime, JIT compiler, and REPL\n\n"
               << "Usage: " << program_name << " [OPTIONS] [SCRIPT]\n\n"
               << "Arguments:\n"
               << "  [SCRIPT]  Path to the .ely script to run\n\n"
               << "Options:\n"
               << "  -c, --command <CODE>  One-liner command script to execute\n"
+              << "      --jit             Execute script directly via native JIT (bypassing VM interpreter)\n"
+              << "      --no-jit          Disable dynamic JIT tier-up in VM interpreter\n"
+              << "      --dump-ir         Print generated JIT intermediate representation (IR)\n"
+              << "      --dump-asm        Print generated machine code disassembly (ASM)\n"
               << "  -h, --help            Print help\n"
               << "  -v, --version         Print version\n";
 }
@@ -38,19 +40,6 @@ int handle_result(ely::vm::InterpretResult result) {
     return 0;
 }
 
-int run_file(ely::vm::VM& vm, const std::filesystem::path& path) {
-    std::ifstream file(path);
-    if (!file.is_open()) {
-        std::cerr << "Error reading file '" << path.string() << "': failed to open file.\n";
-        return 74;
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    const auto result = vm.interpret(buffer.str());
-    return handle_result(result);
-}
-
 } // namespace
 
 int main(int argc, char* argv[]) {
@@ -62,6 +51,10 @@ int main(int argc, char* argv[]) {
 
     std::optional<std::string_view> command;
     std::optional<std::filesystem::path> script_path;
+    bool jit_only = false;
+    bool no_jit = false;
+    bool dump_ir = false;
+    bool dump_asm = false;
 
     for (size_t i = 1; i < args.size(); ++i) {
         const auto arg = args[i];
@@ -73,7 +66,15 @@ int main(int argc, char* argv[]) {
             print_version();
             return 0;
         }
-        if (arg == "-c" || arg == "--command") {
+        if (arg == "--jit") {
+            jit_only = true;
+        } else if (arg == "--no-jit") {
+            no_jit = true;
+        } else if (arg == "--dump-ir") {
+            dump_ir = true;
+        } else if (arg == "--dump-asm") {
+            dump_asm = true;
+        } else if (arg == "-c" || arg == "--command") {
             if (i + 1 >= args.size()) {
                 std::cerr << "Error: flag '" << arg << "' requires an argument.\n";
                 return 64;
@@ -93,16 +94,25 @@ int main(int argc, char* argv[]) {
     }
 
     ely::vm::VM vm;
+    if (no_jit) {
+        vm.enable_jit(false);
+    }
+    if (dump_ir) {
+        vm.set_dump_ir(true);
+    }
+    if (dump_asm) {
+        vm.set_dump_asm(true);
+    }
 
     if (command.has_value()) {
-        const auto result = vm.interpret(*command);
+        const auto result = ely::cli::run_source(*command, vm, jit_only, dump_ir, dump_asm);
         return handle_result(result);
     }
 
     if (script_path.has_value()) {
-        return run_file(vm, *script_path);
+        return ely::cli::run_file(*script_path, vm, jit_only, dump_ir, dump_asm);
     }
 
-    ely::cli::run_repl(vm);
+    ely::cli::run_repl(vm, jit_only, dump_ir, dump_asm);
     return 0;
 }

@@ -12,12 +12,14 @@ target_link_libraries(ely_cli
         ely::compiler
         ely::stdlib
         ely::vm
+        ely::jit
 )
 
 target_sources(ely_cli
     PRIVATE
         src/main.cpp
         src/repl.cpp
+        src/runner.cpp
 )
 
 ely_enable_warnings(ely_cli)

@@ -14,6 +14,7 @@ target_link_libraries(ely_vm
         ely::core
         ely::compiler
         ely::stdlib
+        ely::jit
 )
 
 target_sources(ely_vm
