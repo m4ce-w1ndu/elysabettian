@@ -14,6 +14,7 @@ add_executable(ely_tests
     src/test_scanner.cpp
     src/test_compiler.cpp
     src/test_vm.cpp
+    src/test_stdlib.cpp
 )
 
 target_link_libraries(ely_tests
@@ -22,6 +23,7 @@ target_link_libraries(ely_tests
         ely::core
         ely::compiler
         ely::vm
+        ely::stdlib
 )
 
 ely_enable_warnings(ely_tests)
