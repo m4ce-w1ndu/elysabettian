@@ -17,6 +17,25 @@ namespace ely::core {
 class Value {
 public:
     /**
+     * Creates a Value directly from raw 64-bit NaN-boxed bit representation.
+     *
+     * @param bits Raw IEEE-754 bit pattern.
+     * @return Constructed Value.
+     */
+    [[nodiscard]] static constexpr Value from_raw(uint64_t bits) noexcept {
+        return Value { bits };
+    }
+
+    /**
+     * Retrieves the raw 64-bit NaN-boxed bit representation.
+     *
+     * @return Underlying 64-bit unsigned integer.
+     */
+    [[nodiscard]] constexpr uint64_t raw() const noexcept {
+        return m_bits;
+    }
+
+    /**
      * Default constructor initializing to the null value representation.
      */
     constexpr Value() noexcept : m_bits(kNullVal) {}

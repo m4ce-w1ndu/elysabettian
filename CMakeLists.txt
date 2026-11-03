@@ -41,8 +41,22 @@ function(ely_enable_warnings target_name)
     endif()
 endfunction()
 
+# Third-party dependencies
+include(FetchContent)
+
+set(ASMJIT_STATIC ON CACHE BOOL "" FORCE)
+set(ASMJIT_TEST OFF CACHE BOOL "" FORCE)
+set(ASMJIT_NO_CUSTOM_FLAGS ON CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    asmjit
+    GIT_REPOSITORY https://github.com/asmjit/asmjit.git
+    GIT_TAG        master
+)
+FetchContent_MakeAvailable(asmjit)
+
 # Subdirectories for libraries
 add_subdirectory(libs/ely_core)
+add_subdirectory(libs/ely_jit)
 add_subdirectory(libs/ely_compiler)
 add_subdirectory(libs/ely_stdlib)
 add_subdirectory(libs/ely_vm)

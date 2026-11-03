@@ -15,6 +15,7 @@ add_executable(ely_tests
     src/test_compiler.cpp
     src/test_vm.cpp
     src/test_stdlib.cpp
+    src/test_jit.cpp
 )
 
 target_link_libraries(ely_tests
@@ -24,7 +25,13 @@ target_link_libraries(ely_tests
         ely::compiler
         ely::vm
         ely::stdlib
+        ely::jit
 )
+
+get_target_property(ASMJIT_INCLUDE_DIRS asmjit INTERFACE_INCLUDE_DIRECTORIES)
+if(ASMJIT_INCLUDE_DIRS)
+    target_include_directories(ely_tests SYSTEM PRIVATE ${ASMJIT_INCLUDE_DIRS})
+endif()
 
 ely_enable_warnings(ely_tests)
 
