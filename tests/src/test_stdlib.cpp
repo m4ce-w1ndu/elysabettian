@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <ely/stdlib/math.hpp>
+#include <ely/stdlib/system.hpp>
 #include <numbers>
 #include <cmath>
 
@@ -139,4 +140,44 @@ TEST_CASE("Stdlib math invalid arguments return null", "[stdlib][math]") {
     // Second arg non-numeric in pow
     const ely::core::Value mixed_args[] = { ely::core::Value::number(2.0), ely::core::Value::null() };
     REQUIRE(call("pow", mixed_args).is_null());
+}
+
+TEST_CASE("Stdlib system and io module functions", "[stdlib][system]") {
+    const auto sys = ely::stdlib::make_system_module();
+    REQUIRE(sys.name() == "system");
+
+    const auto io = ely::stdlib::make_io_module();
+    REQUIRE(io.name() == "io");
+
+    auto call = [&](const ely::stdlib::NativeModule& mod, std::string_view name, std::span<const ely::core::Value> args) -> ely::core::Value {
+        for (const auto& [fn_name, fn] : mod.functions()) {
+            if (fn_name == name) {
+                return fn(args);
+            }
+        }
+        return ely::core::Value::null();
+    };
+
+    // clock() and time() should return a valid epoch timestamp > 0
+    const auto t1 = call(sys, "clock", {});
+    REQUIRE(t1.is_number());
+    REQUIRE(t1.as_number() > 1700000000.0);
+
+    const auto t2 = call(sys, "time", {});
+    REQUIRE(t2.is_number());
+    REQUIRE(t2.as_number() >= t1.as_number());
+
+    // io module alias contains the same functions
+    const auto t_io = call(io, "clock", {});
+    REQUIRE(t_io.is_number());
+    REQUIRE(t_io.as_number() > 0.0);
+
+    // sleep(0.001) should sleep and return null
+    const ely::core::Value sleep_arg[] = { ely::core::Value::number(0.001) };
+    const auto sleep_res = call(sys, "sleep", sleep_arg);
+    REQUIRE(sleep_res.is_null());
+
+    // flush() should return null
+    const auto flush_res = call(sys, "flush", {});
+    REQUIRE(flush_res.is_null());
 }
