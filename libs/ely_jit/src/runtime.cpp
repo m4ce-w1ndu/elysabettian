@@ -1,4 +1,5 @@
 #include <ely/jit/runtime.hpp>
+#include <format>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
@@ -61,7 +62,7 @@ uint64_t ely_jit_get_global(uint32_t id) {
 void ely_jit_print_value(uint64_t val_bits) {
     const auto value = ely::core::Value::from_raw(val_bits);
     if (value.is_number()) {
-        std::cout << value.as_number() << '\n';
+        std::cout << std::format("{}", value.as_number()) << '\n';
     } else if (value.is_null()) {
         std::cout << "null\n";
     } else if (value.is_boolean()) {
