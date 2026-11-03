@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <ely/stdlib/math.hpp>
+#include <ely/stdlib/registry.hpp>
 #include <ely/stdlib/system.hpp>
 #include <numbers>
 #include <cmath>
@@ -180,4 +181,66 @@ TEST_CASE("Stdlib system and io module functions", "[stdlib][system]") {
     // flush() should return null
     const auto flush_res = call(sys, "flush", {});
     REQUIRE(flush_res.is_null());
+}
+
+TEST_CASE("Stdlib module registry builtin loading and custom modules", "[stdlib][registry]") {
+    ely::stdlib::ModuleRegistry registry;
+    std::unordered_map<uint32_t, ely::stdlib::CallableNative> natives;
+    std::unordered_map<uint32_t, ely::core::Value> globals;
+
+    // Load built-in modules
+    REQUIRE(registry.load("math", natives, globals));
+    REQUIRE(registry.load("system", natives, globals));
+    REQUIRE(registry.load("sys", natives, globals));
+    REQUIRE(registry.load("io", natives, globals));
+    REQUIRE(registry.load("stdio", natives, globals));
+    REQUIRE_FALSE(registry.load("nonexistent_module", natives, globals));
+
+    // Verify symbol hashing consistency
+    auto hash_string = [](std::string_view str) noexcept -> uint32_t {
+        uint32_t hash = 2166136261u;
+        for (char c : str) {
+            hash ^= static_cast<uint8_t>(c);
+            hash *= 16777619u;
+        }
+        return hash;
+    };
+
+    const auto sqrt_id = hash_string("sqrt");
+    REQUIRE(natives.contains(sqrt_id));
+    REQUIRE(globals.contains(sqrt_id));
+
+    // Invoke sqrt through the loaded native callable
+    const ely::core::Value sqrt_arg[] = { ely::core::Value::number(81.0) };
+    const auto sqrt_res = natives.at(sqrt_id).invoke(sqrt_arg);
+    REQUIRE(sqrt_res.is_number());
+    REQUIRE(sqrt_res.as_number() == 9.0);
+
+    // Verify constants in globals
+    const auto pi_id = hash_string("PI");
+    REQUIRE(globals.contains(pi_id));
+    REQUIRE(globals.at(pi_id).is_number());
+    REQUIRE_THAT(globals.at(pi_id).as_number(), Catch::Matchers::WithinRel(std::numbers::pi, 1e-9));
+
+    // Register and load a custom builtin module
+    auto custom = ely::stdlib::NativeModule("custom");
+    custom.add_fn("double_it", [](std::span<const ely::core::Value> args) {
+        if (!args.empty() && args[0].is_number()) {
+            return ely::core::Value::number(args[0].as_number() * 2.0);
+        }
+        return ely::core::Value::null();
+    });
+    custom.add_const("MAGIC", ely::core::Value::number(42.0));
+
+    registry.register_builtin(std::move(custom));
+    REQUIRE(registry.load("custom", natives, globals));
+
+    const auto double_id = hash_string("double_it");
+    REQUIRE(natives.contains(double_id));
+    const ely::core::Value double_arg[] = { ely::core::Value::number(21.0) };
+    REQUIRE(natives.at(double_id).invoke(double_arg).as_number() == 42.0);
+
+    const auto magic_id = hash_string("MAGIC");
+    REQUIRE(globals.contains(magic_id));
+    REQUIRE(globals.at(magic_id).as_number() == 42.0);
 }

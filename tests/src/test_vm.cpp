@@ -282,3 +282,17 @@ TEST_CASE("VM interpret closure and upvalues", "[vm]") {
     REQUIRE(vm.peek(0) == ely::core::Value::number(99.0));
 }
 
+TEST_CASE("VM interpret import statement", "[vm]") {
+    ely::vm::VM vm;
+    const std::string_view source = R"(
+        import('math');
+        import("io");
+        var a = sqrt(144);
+        var b = pow(2, 5);
+        var t = clock();
+    )";
+
+    const auto result = vm.interpret(source);
+    REQUIRE(result == ely::vm::InterpretResult::Ok);
+}
+
