@@ -900,6 +900,11 @@ InterpretResult VM::run() {
                 if (const_idx >= frame.chunk->string_constants().size()) {
                     return InterpretResult::RuntimeError;
                 }
+                const auto& module_name = frame.chunk->string_constants()[const_idx];
+                if (!m_registry.load(module_name, m_natives, m_globals)) {
+                    std::cerr << "Runtime Error: Failed to import module '" << module_name << "'.\n";
+                    return InterpretResult::RuntimeError;
+                }
                 break;
             }
 

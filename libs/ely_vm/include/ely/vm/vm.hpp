@@ -3,6 +3,7 @@
 #include <ely/core/chunk.hpp>
 #include <ely/core/value.hpp>
 #include <ely/stdlib/native.hpp>
+#include <ely/stdlib/registry.hpp>
 #include "call_frame.hpp"
 #include "heap.hpp"
 #include "heap_object.hpp"
@@ -194,6 +195,9 @@ private:
 
     /// Native functions table mapping name identifiers to native callables.
     std::unordered_map<uint32_t, stdlib::CallableNative> m_natives{};
+
+    /// Module registry managing standard built-ins and dynamic plugins.
+    stdlib::ModuleRegistry m_registry{};
 
     /// Maximum call stack depth before triggering a stack overflow runtime error.
     static constexpr size_t kMaxFrames = 64;
