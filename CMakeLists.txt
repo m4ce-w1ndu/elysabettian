@@ -35,7 +35,7 @@ function(ely_enable_warnings target_name)
     if(MSVC)
         target_compile_options(${target_name} PRIVATE /W4 /permissive-)
     else()
-        target_compile_options(${target_name} PRIVATE 
+        target_compile_options(${target_name} PRIVATE
             -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wnon-virtual-dtor
         )
     endif()
@@ -48,9 +48,9 @@ add_subdirectory(libs/ely_stdlib)
 add_subdirectory(libs/ely_vm)
 
 # Tools (CLI, REPL)
-# if(ELY_BUILD_TOOLS)
-#     add_subdirectory(tools/ely_cli)
-# endif()
+if(ELY_BUILD_TOOLS)
+    add_subdirectory(tools/ely_cli)
+endif()
 
 # Tests
 if(ELY_BUILD_TESTS)
