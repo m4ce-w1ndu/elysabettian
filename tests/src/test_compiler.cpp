@@ -100,6 +100,7 @@ TEST_CASE("Compiler local scope and variables", "[compiler]") {
         ely::core::Opcode::Constant,
         ely::core::Opcode::DefineGlobal,
         ely::core::Opcode::Constant,
+        ely::core::Opcode::SetLocal,
         ely::core::Opcode::GetGlobal,
         ely::core::Opcode::GetLocal,
         ely::core::Opcode::Add,
@@ -192,6 +193,7 @@ TEST_CASE("Compiler for loop statement", "[compiler]") {
     const auto ops = extract_opcodes(*chunk);
     const std::vector<ely::core::Opcode> expected = {
         ely::core::Opcode::Constant,
+        ely::core::Opcode::SetLocal,
         ely::core::Opcode::GetLocal,
         ely::core::Opcode::Constant,
         ely::core::Opcode::Less,

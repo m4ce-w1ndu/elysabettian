@@ -6,6 +6,7 @@
 #include <ely/jit/compiler.hpp>
 #include <ely/jit/engine.hpp>
 #include <ely/jit/runtime.hpp>
+#include <ely/compiler/compiler.hpp>
 #include <iostream>
 #include <sstream>
 
@@ -373,4 +374,27 @@ TEST_CASE("JIT ARM64 (AArch64) code emission and disassembly", "[jit][a64]") {
     CHECK(output.find("=== Machine Code Disassembly [arm64_test] ===") != std::string::npos);
     // Verifies ARM64 instruction (fadd) was emitted
     CHECK(output.find("fadd") != std::string::npos);
+}
+
+TEST_CASE("JIT compiled factorial with for-loop and local variables", "[jit][factorial]") {
+    ely::compiler::Compiler comp("func factorial(x) { var f = 1; for (var i = 1; i <= x; ++i) { f *= i; } return f; }");
+    auto chunk = comp.compile();
+    REQUIRE(chunk.has_value());
+    REQUIRE(!chunk->function_constants().empty());
+
+    const auto& func_desc = chunk->function_constants()[0];
+    REQUIRE(func_desc.name == "factorial");
+    REQUIRE(func_desc.arity == 1);
+    REQUIRE(func_desc.chunk != nullptr);
+
+    JitEngine engine;
+    JitCompiler compiler(engine);
+    const auto res = compiler.compile_function(*func_desc.chunk, func_desc.arity, "factorial");
+    REQUIRE(res);
+    REQUIRE(res.code_ptr != nullptr);
+
+    using Fn = double (*)(double);
+    auto fn = reinterpret_cast<Fn>(const_cast<uint8_t*>(res.code_ptr));
+    REQUIRE_THAT(fn(5.0), Catch::Matchers::WithinRel(120.0, 1e-9));
+    REQUIRE_THAT(fn(6.0), Catch::Matchers::WithinRel(720.0, 1e-9));
 }

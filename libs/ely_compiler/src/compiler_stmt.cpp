@@ -224,8 +224,8 @@ size_t Compiler::function() {
                 return arity;
             }
 
-            const auto constant = parse_variable("Expected parameter name.");
-            define_variable(constant);
+            (void)parse_variable("Expected parameter name.");
+            mark_initialized();
 
             if (!m_parser.match_token(TokenType::Comma)) break;
         }
@@ -309,6 +309,9 @@ uint8_t Compiler::parse_variable(std::string_view error_message) {
 void Compiler::define_variable(uint8_t global) {
     if (m_context.scope_depth() > 0) {
         mark_initialized();
+        const auto slot = static_cast<uint8_t>(m_context.locals().size() - 1);
+        emit_opcode(core::Opcode::SetLocal);
+        emit_byte(slot);
         return;
     }
 
