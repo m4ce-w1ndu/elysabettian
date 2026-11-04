@@ -13,6 +13,7 @@ target_link_libraries(ely_cli
         ely::stdlib
         ely::vm
         ely::jit
+        replxx
 )
 
 target_sources(ely_cli

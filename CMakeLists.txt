@@ -54,6 +54,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(asmjit)
 
+if(ELY_BUILD_TOOLS)
+    set(REPLXX_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        replxx
+        GIT_REPOSITORY https://github.com/AmokHuginnsson/replxx.git
+        GIT_TAG        release-0.0.4
+    )
+    FetchContent_MakeAvailable(replxx)
+endif()
+
 # Subdirectories for libraries
 add_subdirectory(libs/ely_core)
 add_subdirectory(libs/ely_jit)
