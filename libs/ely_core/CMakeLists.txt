@@ -12,6 +12,7 @@ target_include_directories(ely_core
 target_sources(ely_core
     PRIVATE
         src/chunk.c
+        src/debug.c
 )
 
 ely_enable_warnings(ely_core)
