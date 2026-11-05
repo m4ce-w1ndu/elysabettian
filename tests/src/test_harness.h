@@ -19,6 +19,7 @@ extern ElyTestContext g_ely_test_ctx;
 
 // Prototipi delle suite di test
 void run_core_tests(void);
+void run_scanner_tests(void);
 
 /**
  * Checks condition and records failure with file, line, and expression.
