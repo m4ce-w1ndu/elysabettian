@@ -14,4 +14,9 @@ target_link_libraries(ely_compiler
         ely::core
 )
 
+target_sources(ely_compiler
+    PRIVATE
+        src/scanner.c
+)
+
 ely_enable_warnings(ely_compiler)

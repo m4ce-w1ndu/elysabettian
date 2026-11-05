@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <math.h>
 
 /**
  * Global test execution context tracking runs and failures.
