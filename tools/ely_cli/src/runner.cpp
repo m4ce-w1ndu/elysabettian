@@ -76,6 +76,12 @@ bool prepare_jit_chunk(core::Chunk& chunk, jit::JitCompiler& compiler) {
                 }
                 break;
             }
+            case core::Opcode::Import: {
+                const auto const_idx = static_cast<size_t>(code[ip]);
+                chunk.patch_byte(ip, static_cast<uint8_t>(base_string_idx + const_idx));
+                ip += 1;
+                break;
+            }
             case core::Opcode::GetLocal:
             case core::Opcode::SetLocal:
             case core::Opcode::GetGlobal:
@@ -88,7 +94,6 @@ bool prepare_jit_chunk(core::Chunk& chunk, jit::JitCompiler& compiler) {
             case core::Opcode::Method:
             case core::Opcode::Invoke:
             case core::Opcode::SuperInvoke:
-            case core::Opcode::Import:
                 ip += 1;
                 break;
             case core::Opcode::Jump:
