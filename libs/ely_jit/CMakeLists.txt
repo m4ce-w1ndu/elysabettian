@@ -11,6 +11,8 @@ target_include_directories(ely_jit
 
 target_link_libraries(ely_jit
     PUBLIC
+        ely::stdlib
+    PUBLIC
         ely::core
         asmjit::asmjit
 )

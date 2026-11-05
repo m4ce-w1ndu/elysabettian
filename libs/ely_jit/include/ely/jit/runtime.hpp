@@ -30,7 +30,7 @@ void register_jit_strings(std::span<const std::string> strings);
 size_t append_jit_strings(std::span<const std::string> strings);
 
 /**
- * Clears the JIT runtime state (globals, strings, function handles).
+ * Clears the JIT runtime state (globals, strings, function handles, natives).
  */
 void reset_jit_runtime();
 
@@ -67,5 +67,10 @@ double ely_jit_call_1(uint64_t callee_bits, double arg0);
  * Dynamic call trampoline for 2-argument JIT functions.
  */
 double ely_jit_call_2(uint64_t callee_bits, double arg0, double arg1);
+
+/**
+ * Dynamically loads and binds a module into JIT runtime globals and native tables.
+ */
+void ely_jit_import_module(uint32_t string_idx);
 
 }

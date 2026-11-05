@@ -588,7 +588,10 @@ JitCompileResult JitCompiler::compile_function_x86(const core::Chunk& chunk, siz
             }
 
             case core::Opcode::Import: {
-                ip += 1; // skip constant index
+                const auto const_idx = static_cast<uint32_t>(code[ip++]);
+                asmjit::InvokeNode* invoke = nullptr;
+                cc.invoke(asmjit::Out(invoke), reinterpret_cast<uint64_t>(&ely_jit_import_module), asmjit::FuncSignature::build<void, uint32_t>());
+                invoke->set_arg(0, asmjit::Imm(const_idx));
                 break;
             }
 
