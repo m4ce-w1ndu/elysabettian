@@ -1,0 +1,10 @@
+CompileFlags:
+  CompilationDatabase: build/default
+  Add:
+    - -std=c11
+    - -I@CMAKE_SOURCE_DIR@/libs/ely_core/include
+    - -I@CMAKE_SOURCE_DIR@/libs/ely_compiler/include
+    - -I@CMAKE_SOURCE_DIR@/libs/ely_stdlib/include
+    - -I@CMAKE_SOURCE_DIR@/libs/ely_vm/include
+    - -I@CMAKE_SOURCE_DIR@/libs/ely_jit/include
+    - -I@CMAKE_SOURCE_DIR@/tools/ely_cli/include

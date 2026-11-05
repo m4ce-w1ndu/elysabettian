@@ -72,7 +72,7 @@ typedef uint64_t ElyValue;
 /**
  * Bitmask to extract payload from NaN-boxed values
  */
-#define ELY_PAYLOAD_MASK 0x0000FFFFFFFFFFFF
+#define ELY_PAYLOAD_MASK 0x0000FFFFFFFFFFFFULL
 
 /**
  * Creates a new null value using NaN-boxing.

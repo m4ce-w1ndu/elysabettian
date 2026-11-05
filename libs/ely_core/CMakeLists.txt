@@ -9,4 +9,9 @@ target_include_directories(ely_core
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+target_sources(ely_core
+    PRIVATE
+        src/chunk.c
+)
+
 ely_enable_warnings(ely_core)

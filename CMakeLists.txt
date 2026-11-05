@@ -19,6 +19,13 @@ file(CREATE_LINK
     SYMBOLIC COPY_ON_ERROR
 )
 
+# Configure portable .clangd for local development
+configure_file(
+    "${CMAKE_SOURCE_DIR}/.clangd.in"
+    "${CMAKE_SOURCE_DIR}/.clangd"
+    @ONLY
+)
+
 # Global options
 option(ELY_BUILD_TESTS "Build test suite" ON)
 option(ELY_BUILD_TOOLS "Build CLI and developer tools" ON)
@@ -36,18 +43,18 @@ endfunction()
 
 # Subdirectories for libraries
 add_subdirectory(libs/ely_core)
-add_subdirectory(libs/ely_jit)
-add_subdirectory(libs/ely_compiler)
-add_subdirectory(libs/ely_stdlib)
-add_subdirectory(libs/ely_vm)
+# add_subdirectory(libs/ely_jit)
+# add_subdirectory(libs/ely_compiler)
+# add_subdirectory(libs/ely_stdlib)
+# add_subdirectory(libs/ely_vm)
 
 # Tools (CLI, REPL)
-if(ELY_BUILD_TOOLS)
-    add_subdirectory(tools/ely_cli)
-endif()
+# if(ELY_BUILD_TOOLS)
+#     add_subdirectory(tools/ely_cli)
+# endif()
 
 # Tests
-if(ELY_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
+# if(ELY_BUILD_TESTS)
+#     enable_testing()
+#     add_subdirectory(tests)
+# endif()
