@@ -1,0 +1,14 @@
+*.sln
+*.vcxproj
+*.vcproj.filters
+*.vxproj.user
+*.xcodeproj/
+.vscode/
+.cache/
+.vs/
+build/
+cmake-build-debug/
+cmake-build-release/
+out/
+.DS_Store
+CMakeUserPresets.json
