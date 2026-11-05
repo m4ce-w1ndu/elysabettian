@@ -1,15 +1,18 @@
-add_executable(ely_tests)
+add_executable(ely_tests
+    src/test_main.c
+    src/test_core.c
+)
+
+target_include_directories(ely_tests
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 
 target_link_libraries(ely_tests
     PRIVATE
         ely::core
-        ely::compiler
-        ely::vm
-        ely::stdlib
-        ely::jit
 )
 
 ely_enable_warnings(ely_tests)
 
-include(CTest)
 add_test(NAME ely_tests COMMAND ely_tests)

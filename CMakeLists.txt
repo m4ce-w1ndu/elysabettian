@@ -54,7 +54,7 @@ add_subdirectory(libs/ely_core)
 # endif()
 
 # Tests
-# if(ELY_BUILD_TESTS)
-#     enable_testing()
-#     add_subdirectory(tests)
-# endif()
+if(ELY_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
