@@ -29,7 +29,7 @@ void ely_compiler_begin_scope(ElyCompiler* compiler);
 void ely_compiler_end_scope(ElyCompiler* compiler);
 void ely_compiler_declare_variable(ElyCompiler* compiler);
 void ely_compiler_mark_initialized(ElyCompiler* compiler);
-ELY_NODISCARD int32_t ely_compiler_resolve_local(ElyCompiler* compiler, const ElyToken* name);
+ELY_NODISCARD bool ely_compiler_resolve_local(ElyCompiler* compiler, const ElyToken* name, uint8_t* out_slot);
 ELY_NODISCARD uint8_t ely_compiler_identifier_constant(ElyCompiler* compiler, const ElyToken* name);
 
 // Expression parsing and Pratt rules (compiler_expr.c)

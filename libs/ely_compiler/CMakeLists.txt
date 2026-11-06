@@ -20,6 +20,7 @@ target_sources(ely_compiler
         src/parser.c
         src/scope.c
         src/compiler.c
+        src/compiler_scope.c
 )
 
 ely_enable_warnings(ely_compiler)
