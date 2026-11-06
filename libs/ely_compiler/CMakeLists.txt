@@ -19,6 +19,7 @@ target_sources(ely_compiler
         src/scanner.c
         src/parser.c
         src/scope.c
+        src/compiler.c
 )
 
 ely_enable_warnings(ely_compiler)
