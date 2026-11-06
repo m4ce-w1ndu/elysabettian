@@ -13,11 +13,14 @@ void ely_chunk_init(ElyChunk* chunk) {
     chunk->constants_count = 0;
     chunk->lines_capacity = 0;
     chunk->lines_count = 0;
+    chunk->string_constants_capacity = 0;
+    chunk->string_constants_count = 0;
 
     // Set all pointers to NULL
     chunk->code = NULL;
     chunk->constants = NULL;
     chunk->lines = NULL;
+    chunk->string_constants = NULL;
 }
 
 void ely_chunk_free(ElyChunk* chunk) {
@@ -27,6 +30,11 @@ void ely_chunk_free(ElyChunk* chunk) {
     free(chunk->code);
     free(chunk->constants);
     free(chunk->lines);
+
+    for (size_t i = 0; i < chunk->string_constants_count; ++i) {
+        free(chunk->string_constants[i]);
+    }
+    free(chunk->string_constants);
 
     // Init clean up
     ely_chunk_init(chunk);
@@ -77,6 +85,26 @@ ELY_NODISCARD size_t ely_chunk_add_constant(ElyChunk* chunk, ElyValue value) {
 
     size_t index = chunk->constants_count++;
     chunk->constants[index] = value;
+    return index;
+}
+
+ELY_NODISCARD size_t ely_chunk_add_string_constant(ElyChunk* chunk, const char* str, size_t len) {
+    assert(chunk != NULL && "Chunk pointer is NULL.");
+
+    if (chunk->string_constants_count + 1 > chunk->string_constants_capacity) {
+        size_t new_capacity = chunk->string_constants_capacity < 8 ? 8 : chunk->string_constants_capacity * 2;
+        char** new_str_const = (char**)realloc(chunk->string_constants, sizeof(char*) * new_capacity);
+        assert(new_str_const != NULL && "Out of memory, cannot reallocate strings buffer.");
+        chunk->string_constants = new_str_const;
+        chunk->string_constants_capacity = new_capacity;
+    }
+
+    size_t index = chunk->string_constants_count++;
+    chunk->string_constants[index] = (char*)malloc(sizeof(char) * (len + 1));
+    assert(chunk->string_constants[index] != NULL && "Out of memory, cannot allocate new string constant.");
+    memcpy(chunk->string_constants[index], str, len * sizeof(char));
+    chunk->string_constants[index][len] = '\0';
+
     return index;
 }
 

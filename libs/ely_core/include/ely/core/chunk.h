@@ -21,17 +21,35 @@ typedef struct ElyLineInfo {
  * and directly consumed by the virtual machine interpreter or lowered to native machine code.
  */
 typedef struct ElyChunk {
+    /// Number of bytes in the instruction stream.
     size_t code_count;
+    /// Maximum capacity of the instruction stream buffer.
     size_t code_capacity;
+    /// Pointer to instruction stream buffer.
     uint8_t* code;
 
+    /// Number of constants in this code chunk.
     size_t constants_count;
+    /// Maximum capacity of this chunk's constant pool.
     size_t constants_capacity;
+    /// Pointer to constants pool.
     ElyValue* constants;
 
+    /// Number of lines in this chunk.
     size_t lines_count;
+    /// Maximum capacity of this chunk's line tracking pool.
     size_t lines_capacity;
+    /// Pointer to RLE line trucking pool.
     ElyLineInfo* lines;
+
+    /// Number of string constants in this chunk.
+    size_t string_constants_count;
+    /// Maximum capacity of string constants pool.
+    size_t string_constants_capacity;
+    /// Pointer to string constants pool.
+    char** string_constants;
+
+
 } ElyChunk;
 
 /**
@@ -69,6 +87,18 @@ void ely_chunk_write(ElyChunk* chunk, uint8_t byte, size_t line);
  * @return 0-based index of the newly added constant.
  */
 ELY_NODISCARD size_t ely_chunk_add_constant(ElyChunk* chunk, ElyValue value);
+
+/**
+ * Appends a string literal constant to the chunk's string pool and returns its index.
+ *
+ * Duplicates the string slice in dynamic heap memory.
+ *
+ * @param chunk Pointer to the target chunk.
+ * @param str Pointer to the beginning of the string buffer.
+ * @param len Length of the string in bytes.
+ * @return 0-based index of the newly added string constant.
+ */
+ELY_NODISCARD size_t ely_chunk_add_string_constant(ElyChunk* chunk, const char* str, size_t len);
 
 /**
  * Resolves the source line number for a given bytecode instruction offset
