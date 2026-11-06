@@ -99,7 +99,7 @@ ELY_NODISCARD size_t ely_compiler_context_pop_scope(ElyCompilerContext* ctx);
  * @param ctx Compiler context.
  * @param name Identifier token of the local variable.
  */
-void ely_compiler_context_add_local(ElyCompilerContext* ctx, ElyToken name);
+void ely_compiler_context_add_local(ElyCompilerContext* ctx, const ElyToken* name);
 
 /**
  * Resolves the stack slot index of a local variable matching the given identifier.
