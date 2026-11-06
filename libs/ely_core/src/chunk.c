@@ -15,12 +15,15 @@ void ely_chunk_init(ElyChunk* chunk) {
     chunk->lines_count = 0;
     chunk->string_constants_capacity = 0;
     chunk->string_constants_count = 0;
+    chunk->function_constants_capacity = 0;
+    chunk->function_constants_count = 0;
 
     // Set all pointers to NULL
     chunk->code = NULL;
     chunk->constants = NULL;
     chunk->lines = NULL;
     chunk->string_constants = NULL;
+    chunk->function_constants = NULL;
 }
 
 void ely_chunk_free(ElyChunk* chunk) {
@@ -35,6 +38,15 @@ void ely_chunk_free(ElyChunk* chunk) {
         free(chunk->string_constants[i]);
     }
     free(chunk->string_constants);
+
+    for (size_t i = 0; i < chunk->function_constants_count; ++i) {
+        if (chunk->function_constants[i].chunk != NULL) {
+            ely_chunk_free(chunk->function_constants[i].chunk);
+            free(chunk->function_constants[i].chunk);
+        }
+        free(chunk->function_constants[i].name);
+    }
+    free(chunk->function_constants);
 
     // Init clean up
     ely_chunk_init(chunk);
@@ -85,6 +97,23 @@ ELY_NODISCARD size_t ely_chunk_add_constant(ElyChunk* chunk, ElyValue value) {
 
     size_t index = chunk->constants_count++;
     chunk->constants[index] = value;
+    return index;
+}
+
+ELY_NODISCARD size_t ely_chunk_add_function_constant(ElyChunk* chunk, ElyFunctionDescriptor fd) {
+    assert(chunk != NULL && "Chunk pointer is NULL.");
+
+    if (chunk->function_constants_count + 1 > chunk->function_constants_capacity) {
+        size_t new_capacity = chunk->function_constants_capacity < 8 ? 8 : chunk->function_constants_capacity * 2;
+        ElyFunctionDescriptor* new_fd = (ElyFunctionDescriptor*)realloc(chunk->function_constants, sizeof(ElyFunctionDescriptor) * new_capacity);
+        assert(new_fd != NULL && "Out of memory, cannot reallocate function constants buffer.");
+        chunk->function_constants = new_fd;
+        chunk->function_constants_capacity = new_capacity;
+    }
+
+    size_t index = chunk->function_constants_count++;
+    chunk->function_constants[index] = fd;
+
     return index;
 }
 

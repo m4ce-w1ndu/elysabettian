@@ -14,6 +14,21 @@ typedef struct ElyLineInfo {
     uint32_t line;
 } ElyLineInfo;
 
+struct ElyChunk;
+
+/**
+ * Describes a compiled function, its parameter arity, isolated bytecode stream,
+ * and optional identifier name.
+ */
+typedef struct ElyFunctionDescriptor {
+    /// Number of parameters accepted by the function.
+    size_t arity;
+    /// Pointer to the function's isolated bytecode chunk.
+    struct ElyChunk* chunk;
+    /// Optional function name string in dynamic heap memory.
+    char* name;
+} ElyFunctionDescriptor;
+
 /**
  * A contiguous chunk of compiled bytecode, constant pool values, and debug line mappings.
  *
@@ -49,7 +64,12 @@ typedef struct ElyChunk {
     /// Pointer to string constants pool.
     char** string_constants;
 
-
+    /// Number of function constants in this chunk.
+    size_t function_constants_count;
+    /// Maximum capacity of function constants pool.
+    size_t function_constants_capacity;
+    /// Pointer to function constants pool.
+    ElyFunctionDescriptor* function_constants;
 } ElyChunk;
 
 /**
@@ -99,6 +119,15 @@ ELY_NODISCARD size_t ely_chunk_add_constant(ElyChunk* chunk, ElyValue value);
  * @return 0-based index of the newly added string constant.
  */
 ELY_NODISCARD size_t ely_chunk_add_string_constant(ElyChunk* chunk, const char* str, size_t len);
+
+/**
+ * Appends a function descriptor to the chunk's function pool and returns its index.
+ *
+ * @param chunk Pointer to the target chunk.
+ * @param fd Function descriptor to store in the pool.
+ * @return 0-based index of the newly added function descriptor.
+ */
+ELY_NODISCARD size_t ely_chunk_add_function_constant(ElyChunk* chunk, ElyFunctionDescriptor fd);
 
 /**
  * Resolves the source line number for a given bytecode instruction offset
