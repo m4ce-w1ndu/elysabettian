@@ -17,4 +17,9 @@ target_link_libraries(ely_vm
         ely::jit
 )
 
+target_sources(ely_vm
+    PRIVATE
+        src/heap.c
+)
+
 ely_enable_warnings(ely_vm)
