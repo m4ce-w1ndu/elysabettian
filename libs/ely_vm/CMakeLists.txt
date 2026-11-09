@@ -14,12 +14,13 @@ target_link_libraries(ely_vm
         ely::core
         ely::compiler
         ely::stdlib
-        ely::jit
+        # ely::jit
 )
 
 target_sources(ely_vm
     PRIVATE
         src/heap.c
+        src/vm.c
 )
 
 ely_enable_warnings(ely_vm)
