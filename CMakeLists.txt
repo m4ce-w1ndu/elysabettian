@@ -45,7 +45,7 @@ endfunction()
 add_subdirectory(libs/ely_core)
 # add_subdirectory(libs/ely_jit)
 add_subdirectory(libs/ely_compiler)
-# add_subdirectory(libs/ely_stdlib)
+add_subdirectory(libs/ely_stdlib)
 # add_subdirectory(libs/ely_vm)
 
 # Tools (CLI, REPL)

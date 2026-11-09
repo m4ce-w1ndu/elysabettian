@@ -14,4 +14,9 @@ target_link_libraries(ely_stdlib
         ely::core
 )
 
+target_sources(ely_stdlib
+    PRIVATE
+        src/table.c
+)
+
 ely_enable_warnings(ely_stdlib)
