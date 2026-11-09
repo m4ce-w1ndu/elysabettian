@@ -17,6 +17,7 @@ int main(void) {
 
     run_core_tests();
     run_scanner_tests();
+    run_table_tests();
 
     printf("========================================\n");
     printf(" Results: %zu run, %zu failed, %zu assertion failures\n",

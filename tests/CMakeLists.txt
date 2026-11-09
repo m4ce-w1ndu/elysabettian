@@ -2,6 +2,7 @@ add_executable(ely_tests
     src/test_main.c
     src/test_core.c
     src/test_scanner.c
+    src/test_table.c
 )
 
 target_include_directories(ely_tests
@@ -13,6 +14,7 @@ target_link_libraries(ely_tests
     PRIVATE
         ely::core
         ely::compiler
+        ely::stdlib
 )
 
 ely_enable_warnings(ely_tests)
