@@ -59,7 +59,7 @@ void ely_heap_free(ElyHeap* heap) {
     ely_heap_init(heap);
 }
 
-ELY_NODISCARD size_t ely_heap_allocate(ElyHeap* heap, ElyHeapObject object) {
+ELY_NODISCARD size_t ely_heap_allocate(ElyHeap* heap, const ElyHeapObject* object) {
     assert(heap != NULL && "Heap pointer is NULL.");
 
     if (heap->object_count + 1 > heap->object_capacity) {
@@ -70,7 +70,7 @@ ELY_NODISCARD size_t ely_heap_allocate(ElyHeap* heap, ElyHeapObject object) {
         heap->object_capacity = new_capacity;
     }
 
-    heap->objects[heap->object_count++] = object;
+    memcpy(&heap->objects[heap->object_count++], object, sizeof(struct ElyHeapObject));
     return heap->object_count - 1;
 }
 

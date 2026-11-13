@@ -43,10 +43,10 @@ void ely_heap_free(ElyHeap* heap);
  * Dynamically resizes the underlying objects array if capacity is exceeded.
  *
  * @param heap Pointer to the active object heap.
- * @param object Value copy of the tagged union object to store.
+ * @param object Pointer of the tagged union object to store.
  * @return 0-based index identifying the allocated object in the heap.
  */
-ELY_NODISCARD size_t ely_heap_allocate(ElyHeap* heap, ElyHeapObject object);
+ELY_NODISCARD size_t ely_heap_allocate(ElyHeap* heap, const ElyHeapObject* object);
 
 /**
  * Retrieves a mutable pointer to the heap object with the given identifier index.
