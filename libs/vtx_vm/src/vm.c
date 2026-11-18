@@ -4,6 +4,39 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
+
+// Includes intrin.h for compiler intrinsics on Windows.
+#if defined(_MSC_VER)
+#include <intrin.h>
+#endif
+
+/**
+ * Computes the smallest power of two greater than or equal to `n`, clamped to at least 8.
+ *
+ * @param n Minimum required size.
+ * @return Power-of-two capacity >= `n` (minimum 8).
+ */
+static inline size_t next_pow2(size_t n) {
+    if (n <= 8) return 8;
+#if defined(__GNUC__) || defined(__clang__)
+    return (size_t)(1ULL << (64 - __builtin_clzll((unsigned long long)(n - 1))));
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    unsigned long idx;
+    _BitScanReverse64(&idx, n - 1);
+    return (size_t)(1ULL << (idx + 1));
+#else
+    uint64_t v = (uint64_t)(n - 1);
+    v |= v >> 1;            // Propagate position by 1 (2 bits)
+    v |= v >> 2;            // Propagate position by 2 (4 bits)
+    v |= v >> 4;            // Propagate position by 4 (8 bits)
+    v |= v >> 8;            // Propagate position by 8 (16 bits)
+    v |= v >> 16;           // Propagate position by 16 (32 bits)
+    v |= v >> 32;           // Propagate position by 32 (64 bits)
+    return (size_t)(v + 1);
+#endif
+}
 
 /**
  * Captures a local variable at the given stack slot into an open upvalue.
@@ -261,7 +294,35 @@ static void load_chunk_objects(VtxVM* vm, VtxChunk* chunk) {
  * @param fmt Printf-style format string.
  * @return Newly heap-allocated, null-terminated formatted string.
  */
-static char* format_allocf(size_t* out_len, const char* fmt, ...);
+static char* format_allocf(size_t* out_len, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+
+    // Determine required size
+    int result = vsnprintf(NULL, 0, fmt, ap);
+    va_end(ap);
+
+    // Something failed
+    if (result < 0) return NULL;
+
+    // Add space for '\0' and allocate
+    result += 1;
+    char* buf = malloc(sizeof(char) * (size_t)result);
+    if (buf == NULL) return NULL;
+
+    // Print the formatted string
+    va_start(ap, fmt);
+    int bytes = vsnprintf(buf, (size_t)result, fmt, ap);
+    va_end(ap);
+
+    if (bytes < 0) {
+        free(buf);
+        return NULL;
+    }
+
+    if (out_len != NULL) *out_len = (size_t)bytes;
+    return buf;
+}
 
 /**
  * Appends a byte sequence to a dynamically growing string buffer, NUL-terminating the result.
@@ -272,7 +333,32 @@ static char* format_allocf(size_t* out_len, const char* fmt, ...);
  * @param data Pointer to the bytes to append.
  * @param data_len Number of bytes to append from `data`.
  */
-static void append_bytes(char** buf, size_t* len, size_t* cap, const char* data, size_t data_len);
+static void append_bytes(char** buf, size_t* len, size_t* cap, const char* data, size_t data_len) {
+    assert(buf != NULL && "Character buffer pointer is NULL.");
+    assert(len != NULL && "Character buffer length tracking pointer is NULL.");
+    assert(cap != NULL && "Character buffer capacity tracking pointer is NULL.");
+    assert(data != NULL && "Data pointer is NULL.");
+
+    // If there is no data to append, just quit.
+    if (data_len == 0) return;
+
+    // Find the new size and reallocate.
+    const size_t needed = *len + data_len + 1;
+    if (needed > *cap) {
+        size_t new_cap = next_pow2(needed);
+        char* new_buf = realloc(*buf, sizeof(char) * new_cap);
+        assert(new_buf != NULL && "Out of memory, cannot reallocate bytes buffer.");
+        *buf = new_buf;
+        *cap = new_cap;
+    }
+
+    // Copy the new data to the end of the buffer and terminate.
+    memcpy(*buf + *len, data, data_len);
+    *len += data_len;
+    (*buf)[*len] = '\0';
+}
+
+static char* format_value(const VtxVM* vm, VtxValue value, size_t* out_len);
 
 /**
  * Formats an array heap object into a newly allocated "[elem1, elem2, ...]" string.
@@ -284,7 +370,34 @@ static void append_bytes(char** buf, size_t* len, size_t* cap, const char* data,
  * @param out_len Optional output pointer receiving the resulting string length (excluding NUL).
  * @return Newly heap-allocated, null-terminated string representation of the array.
  */
-static char* format_array(const VtxVM* vm, const VtxObjArray* arr, size_t* out_len);
+static char* format_array(const VtxVM* vm, const VtxObjArray* arr, size_t* out_len) {
+    assert(vm != NULL && "VM pointer is NULL.");
+    assert(arr != NULL && "Array pointer is NULL.");
+
+    char* buf = NULL;
+    size_t len = 0, cap = 0;
+
+    // Start by creating the array formatted string
+    append_bytes(&buf, &len, &cap, "[", 1);
+
+    // Loop over the array
+    for (size_t i = 0; i < arr->length; ++i) {
+        if (i > 0) append_bytes(&buf, &len, &cap, ", ", 2);
+
+        // Get the element format
+        size_t elem_len = 0;
+        char* elem = format_value(vm, arr->values[i], &elem_len);
+
+        // Append the element if it's not NULL.
+        if (elem == NULL) continue;
+        append_bytes(&buf, &len, &cap, elem, elem_len);
+        free(elem);
+    }
+
+    append_bytes(&buf, &len, &cap, "]", 1);
+    if (out_len != NULL) *out_len = len;
+    return buf;
+}
 
 /**
  * Formats a Value into a newly heap-allocated human-readable display string.
@@ -296,7 +409,51 @@ static char* format_array(const VtxVM* vm, const VtxObjArray* arr, size_t* out_l
  * @param out_len Optional output pointer receiving the resulting string length (excluding NUL).
  * @return Newly heap-allocated, null-terminated string representation of the value.
  */
-static char* format_value(const VtxVM* vm, VtxValue value, size_t* out_len);
+static char* format_value(const VtxVM* vm, VtxValue value, size_t* out_len) {
+    assert(vm != NULL && "VM pointer is NULL.");
+    
+    // Check the type of the value
+    if (vtx_value_is_number(value)) {
+        double number = vtx_value_as_number(value);
+        return format_allocf(out_len, "%g", number);
+    } else if (vtx_value_is_null(value)) {
+        return format_allocf(out_len, "null");
+    } else if (vtx_value_is_bool(value)) {
+        bool boolean = vtx_value_as_bool(value);
+        return format_allocf(out_len, "%s", boolean ? "true" : "false");
+    } else if (vtx_value_is_obj(value)) {
+        const VtxHeapObject* obj = vtx_vm_get_object_const(vm, value);
+        if (obj == NULL) return format_allocf(out_len, "<unknown>");
+
+        switch (obj->type) {
+            case VTX_HEAP_OBJECT_STRING:
+                return format_allocf(out_len, "%s", obj->string.chars);
+            case VTX_HEAP_OBJECT_ARRAY:
+                return format_array(vm, &obj->array, out_len);
+            case VTX_HEAP_OBJECT_FUNCTION: {
+                const char* name = obj->function.name
+                    ? obj->function.name
+                    : "script";
+                
+                return format_allocf(out_len, "<fn %s>", name);
+            }
+            case VTX_HEAP_OBJECT_CLOSURE:
+                return format_allocf(out_len, "<closure>");
+            case VTX_HEAP_OBJECT_CLASS:
+                return format_allocf(out_len, "<class %s>", obj->class_obj.name
+                    ? obj->class_obj.name
+                    : "anonymous");
+            case VTX_HEAP_OBJECT_INSTANCE:
+                return format_allocf(out_len, "<instance of class %zu>", obj->instance.class_id);
+            case VTX_HEAP_OBJECT_BOUND_METHOD:
+                return format_allocf(out_len, "<bound method>");
+            case VTX_HEAP_OBJECT_UPVALUE:
+                return format_allocf(out_len, "<upvalue>");
+        }
+    }
+
+    return format_allocf(out_len, "<unknown>");
+}
 
 /**
  * Reports a formatted runtime error with stack trace and resets the VM stack.
@@ -304,7 +461,44 @@ static char* format_value(const VtxVM* vm, VtxValue value, size_t* out_len);
  * @param vm Pointer to the active virtual machine.
  * @param fmt Printf-style format string.
  */
-static inline void runtime_error(VtxVM* vm, const char* fmt, ...);
+static void runtime_error(VtxVM* vm, const char* fmt, ...) {
+    assert(vm != NULL && "VM pointer is NULL.");
+
+    // Handle variadic args
+    va_list ap;
+    va_start(ap, fmt);
+
+    // Print error with format
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    fprintf(stderr, "\n");
+
+    // Print stack trace from innermost frame to top-level script
+    for (uint8_t i = vm->frame_count; i-- > 0;) {
+        const VtxCallFrame* frame = &vm->frames[i];
+        const size_t idx = frame->ip > 0 ? frame->ip - 1 : 0;
+        const size_t line = frame->chunk != NULL ? vtx_chunk_get_line(frame->chunk, idx) : 0;
+
+        const char* fn_name = "script";
+        if (frame->closure_id != VTX_INVALID_CLOSURE_ID) {
+            const VtxObjClosure* closure = vtx_heap_get_if_const(
+                &vm->heap, frame->closure_id, VTX_HEAP_OBJECT_CLOSURE
+            );
+            if (closure != NULL) {
+                const VtxObjFunction* fn = vtx_heap_get_if_const(
+                    &vm->heap, closure->function_id, VTX_HEAP_OBJECT_FUNCTION
+                );
+                if (fn != NULL && fn->name != NULL) {
+                    fn_name = fn->name;
+                }
+            }
+        }
+
+        fprintf(stderr, "[line %zu] in %s\n", line, fn_name);
+    }
+
+    vtx_vm_reset_stack(vm);
+}
 
 /**
  * Core bytecode execution and instruction dispatch loop.

@@ -9,7 +9,7 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "ELY_BUILD_TESTS": "ON"
+                "VTX_BUILD_TESTS": "ON"
             }
         },
         {
@@ -20,7 +20,7 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "ELY_BUILD_TESTS": "OFF"
+                "VTX_BUILD_TESTS": "OFF"
             }
         }
     ],
