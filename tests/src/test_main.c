@@ -1,7 +1,7 @@
 #include "test_harness.h"
 #include <stdlib.h>
 
-ElyTestContext g_ely_test_ctx = {
+VtxTestContext g_ely_test_ctx = {
     .tests_run = 0,
     .tests_failed = 0,
     .failed_assertions = 0

@@ -27,11 +27,11 @@ configure_file(
 )
 
 # Global options
-option(ELY_BUILD_TESTS "Build test suite" ON)
-option(ELY_BUILD_TOOLS "Build CLI and developer tools" ON)
+option(VTX_BUILD_TESTS "Build test suite" ON)
+option(VTX_BUILD_TOOLS "Build CLI and developer tools" ON)
 
 # Strict warnings helper function
-function(ely_enable_warnings target_name)
+function(vtx_enable_warnings target_name)
     if(MSVC)
         target_compile_options(${target_name} PRIVATE /W4)
     else()
@@ -42,19 +42,19 @@ function(ely_enable_warnings target_name)
 endfunction()
 
 # Subdirectories for libraries
-add_subdirectory(libs/ely_core)
-# add_subdirectory(libs/ely_jit)
-add_subdirectory(libs/ely_compiler)
-add_subdirectory(libs/ely_stdlib)
-add_subdirectory(libs/ely_vm)
+add_subdirectory(libs/vtx_core)
+# add_subdirectory(libs/vtx_jit)
+add_subdirectory(libs/vtx_compiler)
+add_subdirectory(libs/vtx_stdlib)
+add_subdirectory(libs/vtx_vm)
 
 # Tools (CLI, REPL)
-# if(ELY_BUILD_TOOLS)
-#     add_subdirectory(tools/ely_cli)
+# if(VTX_BUILD_TOOLS)
+#     add_subdirectory(tools/vtx_cli)
 # endif()
 
 # Tests
-if(ELY_BUILD_TESTS)
+if(VTX_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()

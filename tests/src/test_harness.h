@@ -1,5 +1,5 @@
-#ifndef ELY_TEST_HARNESS_H
-#define ELY_TEST_HARNESS_H
+#ifndef VTX_TEST_HARNESS_H
+#define VTX_TEST_HARNESS_H
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -9,13 +9,13 @@
 /**
  * Global test execution context tracking runs and failures.
  */
-typedef struct ElyTestContext {
+typedef struct VtxTestContext {
     size_t tests_run;
     size_t tests_failed;
     size_t failed_assertions;
-} ElyTestContext;
+} VtxTestContext;
 
-extern ElyTestContext g_ely_test_ctx;
+extern VtxTestContext g_ely_test_ctx;
 
 // Prototipi delle suite di test
 void run_core_tests(void);
