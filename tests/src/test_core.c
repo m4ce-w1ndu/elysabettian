@@ -3,6 +3,8 @@
 #include <vtx/core/chunk.h>
 #include <vtx/core/opcode.h>
 #include <vtx/core/debug.h>
+#include <stdlib.h>
+#include <string.h>
 
 static void test_nan_boxing_numbers(void) {
     VtxValue val = vtx_value_number(42.5);
@@ -151,6 +153,59 @@ static void test_disassembler(void) {
     vtx_chunk_free(&chunk);
 }
 
+static void test_chunk_copy(void) {
+    VtxChunk src;
+    vtx_chunk_init(&src);
+
+    size_t c_idx = vtx_chunk_add_constant(&src, vtx_value_number(7.5));
+    size_t s_idx = vtx_chunk_add_string_constant(&src, "hello", 5);
+
+    VtxChunk* fn_chunk = (VtxChunk*)malloc(sizeof(VtxChunk));
+    TEST_ASSERT(fn_chunk != NULL);
+    vtx_chunk_init(fn_chunk);
+    vtx_chunk_write(fn_chunk, (uint8_t)VTX_OP_RETURN, 10);
+
+    const char* fn_name = "foo";
+    char* fn_name_copy = (char*)malloc(4);
+    TEST_ASSERT(fn_name_copy != NULL);
+    memcpy(fn_name_copy, fn_name, 4);
+
+    VtxFunctionDescriptor fd = {
+        .arity = 2,
+        .chunk = fn_chunk,
+        .name = fn_name_copy,
+    };
+    size_t f_idx = vtx_chunk_add_function_constant(&src, fd);
+
+    vtx_chunk_write(&src, (uint8_t)VTX_OP_CONSTANT, 1);
+    vtx_chunk_write(&src, (uint8_t)c_idx, 1);
+    vtx_chunk_write(&src, (uint8_t)VTX_OP_RETURN, 2);
+
+    VtxChunk dst;
+    vtx_chunk_copy(&dst, &src);
+
+    TEST_ASSERT_EQ(dst.code_count, src.code_count);
+    TEST_ASSERT_EQ(dst.constants_count, src.constants_count);
+    TEST_ASSERT_EQ(dst.lines_count, src.lines_count);
+    TEST_ASSERT_EQ(dst.string_constants_count, 1);
+    TEST_ASSERT_EQ(dst.function_constants_count, 1);
+    TEST_ASSERT(dst.code != src.code);
+    TEST_ASSERT(dst.constants != src.constants);
+    TEST_ASSERT(dst.string_constants[s_idx] != src.string_constants[s_idx]);
+    TEST_ASSERT(strcmp(dst.string_constants[s_idx], "hello") == 0);
+    TEST_ASSERT(dst.function_constants[f_idx].chunk != src.function_constants[f_idx].chunk);
+    TEST_ASSERT(dst.function_constants[f_idx].name != src.function_constants[f_idx].name);
+    TEST_ASSERT(strcmp(dst.function_constants[f_idx].name, "foo") == 0);
+    TEST_ASSERT_EQ(dst.function_constants[f_idx].arity, 2);
+    TEST_ASSERT_EQ(dst.function_constants[f_idx].chunk->code_count, 1);
+
+    vtx_chunk_free(&src);
+    // dst must remain valid after freeing src
+    TEST_ASSERT(strcmp(dst.string_constants[s_idx], "hello") == 0);
+    TEST_ASSERT_FLOAT_EQ(vtx_value_as_number(dst.constants[c_idx]), 7.5, 1e-9);
+    vtx_chunk_free(&dst);
+}
+
 void run_core_tests(void) {
     RUN_TEST(test_nan_boxing_numbers);
     RUN_TEST(test_nan_boxing_booleans);
@@ -160,4 +215,5 @@ void run_core_tests(void) {
     RUN_TEST(test_nan_boxing_equality);
     RUN_TEST(test_chunk_operations);
     RUN_TEST(test_disassembler);
+    RUN_TEST(test_chunk_copy);
 }

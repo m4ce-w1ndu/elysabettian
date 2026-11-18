@@ -88,6 +88,15 @@ void vtx_chunk_init(VtxChunk* chunk);
 void vtx_chunk_free(VtxChunk* chunk);
 
 /**
+ * Deep-copies all instruction bytes, constants, line info, string literals,
+ * and nested function chunks from `src` into an uninitialised `dst` chunk.
+ *
+ * @param dst Pointer to the destination Chunk structure to populate.
+ * @param src Read-only pointer to the source Chunk structure to clone.
+ */
+void vtx_chunk_copy(VtxChunk* dst, const VtxChunk* src);
+
+/**
  * Appends a raw byte to the instruction stream and records its source line mapping.
  *
  * To optimise memory usage, a new `VtxLineInfo` checkpoint is only recorded

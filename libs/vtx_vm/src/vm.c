@@ -1,5 +1,6 @@
 #include <vtx/vm/vm.h>
 #include <vtx/core/opcode.h>
+#include <vtx/compiler/compiler.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -501,12 +502,61 @@ static void runtime_error(VtxVM* vm, const char* fmt, ...) {
 }
 
 /**
+ * Reads an 8-bit identifier operand from the instruction stream and resolves its 32-bit name hash/ID.
+ *
+ * @param frame Active call frame whose instruction pointer is advanced.
+ * @return Resolved 32-bit name identifier.
+ */
+static uint32_t read_name_id(VtxCallFrame* frame) {
+    assert(frame != NULL && "Frame pointer is NULL.");
+
+    uint8_t const_idx = vtx_call_frame_read_byte(frame);
+    if (const_idx < frame->chunk->string_constants_count) {
+        return vtx_hash_string(frame->chunk->string_constants[const_idx]);
+    }
+
+    if (const_idx < frame->chunk->constants_count && vtx_value_is_obj(frame->chunk->constants[const_idx])) {
+        return (uint32_t)vtx_value_as_obj(frame->chunk->constants[const_idx]);
+    }
+
+    return (uint32_t)const_idx;
+}
+
+/**
  * Core bytecode execution and instruction dispatch loop.
  *
  * @param vm Pointer to the active virtual machine.
  * @return Execution result of the top-level script or active frame.
  */
-static VtxInterpretResult run(VtxVM* vm);
+static VtxInterpretResult run(VtxVM* vm) {
+    assert(vm != NULL && "VM pointer is NULL.");
+
+    while (true) {
+        // Check if there are no more frames to process
+        if (vm->frame_count == 0) return VTX_INTERPRET_OK;
+
+        // Get the last frame and the associated entry opcode
+        VtxCallFrame* frame = &vm->frames[vm->frame_count - 1];
+        VtxOpcode opcode = (VtxOpcode)vtx_call_frame_read_byte(frame);
+
+        // Match the opcode and execute the associated operation
+        switch (opcode) {
+            case VTX_OP_CONSTANT: {
+                VtxValue constant = vtx_call_frame_read_constant(frame);
+                vtx_vm_push(vm, constant);
+                break;
+            }
+            case VTX_OP_NOP: vtx_vm_push(vm, vtx_value_null()); break;
+            case VTX_OP_TRUE: vtx_vm_push(vm, vtx_value_bool(true)); break;
+            case VTX_OP_FALSE: vtx_vm_push(vm, vtx_value_bool(false)); break;
+            case VTX_OP_POP: { VtxValue pop = vtx_vm_pop(vm); (void)pop; break; }
+            case VTX_OP_RETURN: {
+                VtxValue result = vtx_vm_pop(vm);
+                size_t closing_slots = vm->frames[--vm->frame_count].slots;
+            }
+        }
+    }
+}
 
 
 void vtx_vm_init(VtxVM* vm) {
@@ -549,15 +599,60 @@ void vtx_vm_free(VtxVM* vm) {
 }
 
 VtxInterpretResult vtx_vm_interpret_from_source(VtxVM* vm, const char* source) {
-    (void)vm;
-    (void)source;
-    return VTX_INTERPRET_OK;
+    assert(vm != NULL && "VM pointer is NULL.");
+    assert(source != NULL && "Source code string pointer is NULL.");
+
+    // Create and initialise a new chunk
+    VtxChunk chunk;
+    vtx_chunk_init(&chunk);
+
+    // Create and initialise a new compiler
+    VtxCompiler compiler;
+    vtx_compiler_init(&compiler, source, VTX_FT_SCRIPT);
+
+    // Compile the source code
+    bool compile_ok = vtx_compiler_compile(&compiler, &chunk);
+    if (!compile_ok) {
+        vtx_chunk_free(&chunk);
+        return VTX_INTERPRET_COMPILE_ERROR;
+    }
+
+    // Run code interpreter (or JIT)
+    VtxInterpretResult result = vtx_vm_interpret(vm, &chunk);
+    vtx_chunk_free(&chunk);
+
+    return result;
 }
 
 VtxInterpretResult vtx_vm_interpret(VtxVM* vm, const VtxChunk* chunk) {
-    (void)vm;
-    (void)chunk;
-    return VTX_INTERPRET_OK;
+    assert(vm != NULL && "VM pointer is NULL.");
+    assert(chunk != NULL && "Chunk pointer is NULL.");
+
+    // Reset stack and push NOP
+    vtx_vm_reset_stack(vm);
+    vtx_vm_push(vm, vtx_value_null());
+
+    // Initialise a local chunk copy
+    VtxChunk local;
+    vtx_chunk_init(&local);
+
+    // Copy the VM chunk to this local copy
+    vtx_chunk_copy(&local, chunk);
+
+    // Initialise frames
+    vtx_call_frame_init(&vm->frames[0], &local, 0);
+    vm->frame_count = 1;
+
+    // Load all chunk objects
+    load_chunk_objects(vm, &local);
+
+    // Run the interpreter
+    VtxInterpretResult result = run(vm);
+    
+    // Free temporary objects
+    vtx_chunk_free(&local);
+
+    return result;
 }
 
 void vtx_vm_push(VtxVM* vm, VtxValue value) {

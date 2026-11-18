@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 void vtx_chunk_init(VtxChunk* chunk) {
     assert(chunk != NULL && "Chunk pointer is null.");
@@ -50,6 +51,79 @@ void vtx_chunk_free(VtxChunk* chunk) {
 
     // Init clean up
     vtx_chunk_init(chunk);
+}
+
+static char* dup_cstr(const char* src) {
+    if (src == NULL) return NULL;
+    const size_t len = strlen(src);
+    char* copy = (char*)malloc(len + 1);
+    assert(copy != NULL && "Out of memory, cannot duplicate string.");
+    memcpy(copy, src, len + 1);
+    return copy;
+}
+
+void vtx_chunk_copy(VtxChunk* dst, const VtxChunk* src) {
+    assert(dst != NULL && "Destination chunk pointer is NULL.");
+    assert(src != NULL && "Source chunk pointer is NULL.");
+    if (dst == src) return;
+
+    vtx_chunk_init(dst);
+
+    if (src->code_count > 0) {
+        dst->code = (uint8_t*)malloc(sizeof(uint8_t) * src->code_count);
+        assert(dst->code != NULL && "Out of memory, cannot copy code buffer.");
+        memcpy(dst->code, src->code, sizeof(uint8_t) * src->code_count);
+        dst->code_count = src->code_count;
+        dst->code_capacity = src->code_count;
+    }
+
+    if (src->constants_count > 0) {
+        dst->constants = (VtxValue*)malloc(sizeof(VtxValue) * src->constants_count);
+        assert(dst->constants != NULL && "Out of memory, cannot copy constants buffer.");
+        memcpy(dst->constants, src->constants, sizeof(VtxValue) * src->constants_count);
+        dst->constants_count = src->constants_count;
+        dst->constants_capacity = src->constants_count;
+    }
+
+    if (src->lines_count > 0) {
+        dst->lines = (VtxLineInfo*)malloc(sizeof(VtxLineInfo) * src->lines_count);
+        assert(dst->lines != NULL && "Out of memory, cannot copy lines buffer.");
+        memcpy(dst->lines, src->lines, sizeof(VtxLineInfo) * src->lines_count);
+        dst->lines_count = src->lines_count;
+        dst->lines_capacity = src->lines_count;
+    }
+
+    if (src->string_constants_count > 0) {
+        dst->string_constants = (char**)malloc(sizeof(char*) * src->string_constants_count);
+        assert(dst->string_constants != NULL && "Out of memory, cannot copy string constants buffer.");
+        dst->string_constants_count = src->string_constants_count;
+        dst->string_constants_capacity = src->string_constants_count;
+        for (size_t i = 0; i < src->string_constants_count; ++i) {
+            dst->string_constants[i] = dup_cstr(src->string_constants[i]);
+        }
+    }
+
+    if (src->function_constants_count > 0) {
+        dst->function_constants = (VtxFunctionDescriptor*)malloc(
+            sizeof(VtxFunctionDescriptor) * src->function_constants_count
+        );
+        assert(dst->function_constants != NULL && "Out of memory, cannot copy function constants buffer.");
+        dst->function_constants_count = src->function_constants_count;
+        dst->function_constants_capacity = src->function_constants_count;
+        for (size_t i = 0; i < src->function_constants_count; ++i) {
+            const VtxFunctionDescriptor* src_fd = &src->function_constants[i];
+            VtxFunctionDescriptor* dst_fd = &dst->function_constants[i];
+            dst_fd->arity = src_fd->arity;
+            dst_fd->name = dup_cstr(src_fd->name);
+            if (src_fd->chunk != NULL) {
+                dst_fd->chunk = (VtxChunk*)malloc(sizeof(VtxChunk));
+                assert(dst_fd->chunk != NULL && "Out of memory, cannot allocate copied function chunk.");
+                vtx_chunk_copy(dst_fd->chunk, src_fd->chunk);
+            } else {
+                dst_fd->chunk = NULL;
+            }
+        }
+    }
 }
 
 void vtx_chunk_write(VtxChunk* chunk, uint8_t byte, size_t line) {
