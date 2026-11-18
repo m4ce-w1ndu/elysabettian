@@ -550,10 +550,52 @@ static VtxInterpretResult run(VtxVM* vm) {
             case VTX_OP_TRUE: vtx_vm_push(vm, vtx_value_bool(true)); break;
             case VTX_OP_FALSE: vtx_vm_push(vm, vtx_value_bool(false)); break;
             case VTX_OP_POP: { VtxValue pop = vtx_vm_pop(vm); (void)pop; break; }
+            case VTX_OP_GETLOCAL: {
+                uint8_t slot = vtx_call_frame_read_byte(frame);
+                if (frame->slots + slot >= vm->stack_count) {
+                    runtime_error(vm, "Error: out of bounds stack read access. Aborting...");
+                    return VTX_INTERPRET_RUNTIME_ERROR;
+                }
+
+                VtxValue local = vm->stack[frame->slots + slot];
+                vtx_vm_push(vm, local);
+                break;
+            }
+            case VTX_OP_SETLOCAL: {
+                uint8_t slot = vtx_call_frame_read_byte(frame);
+                if (vm->stack_count < 1 || frame->slots + slot >= vm->stack_count) {
+                    runtime_error(vm, "Error: out of bounds stack write access. Aborting...");
+                    return VTX_INTERPRET_RUNTIME_ERROR;
+                }
+
+                VtxValue local = vtx_vm_peek(vm, 0);
+                vm->stack[frame->slots + slot] = local;
+                break;
+            }
+            case VTX_OP_DEFINEGLOBAL: {
+                if (vm->stack_count < 1) {
+                    runtime_error(vm, "Error: VM stack is empty. Aborting...");
+                    return VTX_INTERPRET_RUNTIME_ERROR;
+                }
+
+                uint32_t name_id = read_name_id(frame);
+                VtxValue value = vtx_vm_pop(vm);
+                vtx_table_set_value_by_hash(&vm->globals, name_id, value);
+
+                break;
+            }
             case VTX_OP_RETURN: {
                 VtxValue result = vtx_vm_pop(vm);
                 size_t closing_slots = vm->frames[--vm->frame_count].slots;
+                close_upvalue(vm, closing_slots);
+
+                vm->stack_count = closing_slots;
+                vtx_vm_push(vm, result);
+
+                if (vm->frame_count == 0) return VTX_INTERPRET_OK;
+                break;
             }
+
         }
     }
 }
